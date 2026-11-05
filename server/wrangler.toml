@@ -7,4 +7,4 @@ keep_vars = true
 [[d1_databases]]
 binding = "DB"
 database_name = "apple_quest"
-database_id = "여기에-D1-데이터베이스-ID"
+database_id = "bddf3ecd-b2a0-4918-8cfa-cd85d2ad4424"
