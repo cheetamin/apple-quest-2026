@@ -1226,7 +1226,15 @@
     btn.disabled = true; err.textContent = '';
     const r = await api('/api/student/login', body);
     btn.disabled = false;
-    if (!r.ok) { err.textContent = r.error || '들어가지 못했어요.'; AU.bad(); return; }
+    if (!r.ok) {
+      err.textContent = r.error || '들어가지 못했어요.'; AU.bad();
+      if (r.offline || r.status >= 500) { // 서버가 잠시 안 될 때도 공부는 할 수 있게
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'btn ghost'; b.style.marginTop = '8px'; b.textContent = '이 기기에서 먼저 하기 (나중에 다시 로그인)';
+        b.onclick = () => { S.name = body.nickname; save(); form.closest('.loginov').remove(); toast('이 기기에 먼저 저장해요. 다음에 로그인하면 이어서 할 수 있어요.', 3000); const a = loginScreen.after; loginScreen.after = null; a && a(); };
+        err.append(document.createElement('br'), b);
+      }
+      return;
+    }
     const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls });
     clockOffset = (r.server_now || Date.now()) - Date.now();
     const hadLocal = !S.account && S.exp > 0; // 서버 연결 전 이 기기에서 하던 기록은 새 계정으로 옮겨 줌

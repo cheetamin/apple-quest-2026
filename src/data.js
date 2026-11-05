@@ -131,7 +131,7 @@
   const CREATOR = '치타민';
 
   /* 학급 서버(Cloudflare Worker) 주소. 비워 두면 기록은 각 기기에만 저장됩니다. 예: 'https://apple-quest-api.이름.workers.dev' */
-  const API_BASE = '';
+  const API_BASE = 'https://apple-quest-2026.rkdrkals0227.workers.dev';
 
   root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH, API_BASE };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
