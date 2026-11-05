@@ -106,3 +106,12 @@ test('CORS: 다른 주소(GitHub Pages)에서 오는 요청을 허용', async ()
   assert.ok(h.includes('Authorization') && h.includes('X-Admin-Password') && h.includes('Content-Type'));
   assert.strictEqual(res.headers.get('Access-Control-Allow-Origin'), '*');
 });
+
+test('제작자 전체 백업: 비밀번호 해시는 빼고 모든 기록을 내보낸다', async () => {
+  assert.strictEqual((await call('/api/admin/backup')).status, 401);
+  const r = await call('/api/admin/backup', undefined, ADMIN);
+  assert.ok(r.body.students.length >= 2 && r.body.teachers.length >= 1);
+  const txt = JSON.stringify(r.body);
+  assert.ok(!txt.includes('pin_hash') && !txt.includes('pass_hash') && !txt.includes('export_key'));
+  assert.strictEqual(r.body.students.find(s => s.nickname === '사과용사').state.exp, 55);
+});

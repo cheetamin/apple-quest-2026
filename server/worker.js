@@ -85,11 +85,13 @@ async function notify(env, subject, text) {
 }
 
 /* ---------------- 학교 검색 (나이스 교육정보 개방포털) ---------------- */
-async function searchSchools(env, q) {
+async function searchSchools(env, q, office) {
   q = str(q, 30); if (q.length < 2) return [];
+  office = /^[A-Z]\d{2}$/.test(office || '') ? office : '';
   const u = new URL('https://open.neis.go.kr/hub/schoolInfo');
   u.searchParams.set('Type', 'json'); u.searchParams.set('pIndex', '1'); u.searchParams.set('pSize', '30');
   u.searchParams.set('SCHUL_KND_SC_NM', '초등학교'); u.searchParams.set('SCHUL_NM', q);
+  if (office) u.searchParams.set('ATPT_OFCDC_SC_CODE', office);
   if (env.NEIS_KEY) u.searchParams.set('KEY', env.NEIS_KEY);
   const r = await fetch(u.toString(), { cf: { cacheTtl: 86400, cacheEverything: true } });
   const d = await r.json();
@@ -200,7 +202,7 @@ async function route(req, env) {
   const body = req.method === 'POST' ? await req.json().catch(() => ({})) : {};
 
   if (p === '/api/health') return json({ ok: true, server_now: Date.now() });
-  if (p === '/api/schools') { try { return json({ ok: true, schools: await searchSchools(env, url.searchParams.get('q')) }); } catch (e) { return fail('학교 검색이 잠시 안 돼요. 잠시 뒤 다시 해 주세요.', 502); } }
+  if (p === '/api/schools') { try { return json({ ok: true, schools: await searchSchools(env, url.searchParams.get('q'), url.searchParams.get('office')), limited: !env.NEIS_KEY }); } catch (e) { return fail('학교 검색이 잠시 안 돼요. 잠시 뒤 다시 해 주세요.', 502); } }
 
   if (p === '/api/student/login' && req.method === 'POST') return studentLogin(env, body);
   if (p === '/api/student/save' && req.method === 'POST') return studentSave(env, req, body);
@@ -255,6 +257,12 @@ async function route(req, env) {
       const st = body.approve ? 'approved' : 'rejected';
       await env.DB.prepare('UPDATE teachers SET status=?, decided_at=? WHERE id=?').bind(st, Date.now(), int(body.id, 1, 1e12)).run();
       return json({ ok: true, status: st });
+    }
+    if (p === '/api/admin/backup') { // 전체 백업(JSON): 학생 기록·선생님·만족도 — 비밀번호 해시는 제외
+      const st = await env.DB.prepare('SELECT id,school_code,school_name,grade,cls,num,nickname,state,summary,created_at,updated_at FROM students ORDER BY school_name,grade,cls,num').all();
+      const te = await env.DB.prepare('SELECT id,school_code,school_name,grade,cls,teacher_name,contact,status,created_at,decided_at FROM teachers ORDER BY school_name,grade,cls').all();
+      const sv = await env.DB.prepare('SELECT * FROM surveys ORDER BY id').all();
+      return json({ ok: true, exported_at: Date.now(), students: st.results.map(r => ({ ...r, state: r.state ? JSON.parse(r.state) : null, summary: r.summary ? JSON.parse(r.summary) : null })), teachers: te.results, surveys: sv.results });
     }
     if (p === '/api/admin/surveys') {
       const { results } = await env.DB.prepare('SELECT rating,comment,info,school_name,created_at FROM surveys ORDER BY id DESC LIMIT 1000').all();

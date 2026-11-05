@@ -1057,6 +1057,19 @@
     },
     adminout: () => { adminOK = false; adminPw = ''; toast('관리실을 잠갔어요'); go('me'); },
     adecide: d => adminDecide(+d.v, d.ok === '1'),
+    abackup: async () => {
+      toast('백업 파일을 만드는 중…', 1500);
+      const r = await api('/api/admin/backup', undefined, { admin: adminPw, timeout: 30000 });
+      if (!r.ok) { toast(r.error || '백업을 받지 못했어요.'); return; }
+      delete r.status;
+      const day = new Date(now()).toISOString().slice(0, 10);
+      saveFile(`애플왕_백업_${day}.json`, JSON.stringify(r, null, 1), 'application/json');
+      const head = ['학교', '학년', '반', '번호', '닉네임', '레벨', '경험치', '진화 단계', '완료 단원 수', '정답률(%)', '학습 시간(분)', '마지막 학습', '가입일'];
+      const cell = v => { const x = String(v == null ? '' : v); return /[",\n]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; };
+      const rows = r.students.map(x => { const m = x.summary || {}; return [x.school_name, x.grade, x.cls, x.num, x.nickname, m.level, m.exp, m.stage, m.unitsDone, m.accuracy, m.minutes, m.lastStudy ? new Date(m.lastStudy).toLocaleString('ko-KR') : '', new Date(x.created_at).toLocaleDateString('ko-KR')]; });
+      setTimeout(() => saveFile(`애플왕_학생목록_${day}.csv`, '\uFEFF' + [head].concat(rows).map(a => a.map(cell).join(',')).join('\n'), 'text/csv'), 600);
+      toast(`백업 완료! 학생 ${r.students.length}명 · 선생님 ${r.teachers.length}명 · 만족도 ${r.surveys.length}개`, 3200);
+    },
     ttab: d => { TV = d.v; renderTeach(); },
     tlogout: () => { TS = null; lsSet(TSESS_KEY, null); TLIST = null; renderTeach(); },
     treload: () => loadTeach(),
@@ -1065,6 +1078,13 @@
     tpin: d => confirmSheet(`${d.n}번 학생의 비밀번호를 초기화할까요?`, '학생이 다음에 들어올 때 새로 입력하는 4자리가 새 비밀번호가 돼요.', '초기화', async () => { const r = await api('/api/teacher/reset-pin', { id: +d.v }, { token: TS.token }); toast(r.ok ? '초기화했어요' : r.error); loadTeach(); }),
     tdel: d => confirmSheet(`${d.n}번 학생 기록을 지울까요?`, '이 학생의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '지우기', async () => { const r = await api('/api/teacher/delete-student', { id: +d.v }, { token: TS.token }); toast(r.ok ? '지웠어요' : r.error); loadTeach(); }),
     tdelall: () => confirmSheet('우리 반 기록을 모두 지울까요?', '학년이 끝났을 때 쓰는 기능이에요. 우리 반 학생들의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '모두 지우기', async () => { const r = await api('/api/teacher/delete-class', {}, { token: TS.token }); toast(r.ok ? '모두 지웠어요' : r.error); loadTeach(); }),
+    spmanual: (d, el) => {
+      const box = el.closest('.sp'), office = box.querySelector('.sp-office').value;
+      let name = box.querySelector('.sp-input').value.trim().replace(/\s+/g, ''); if (!/초등학교$/.test(name)) name = name.replace(/초$/, '') + '초등학교';
+      const region = (OFFICES.find(o => o[0] === office) || ['', ''])[1];
+      // 직접 등록한 학교도 같은 시·도 + 같은 이름이면 같은 학교로 묶여요(선생님과 학생이 똑같이 적어야 해요)
+      ACT.spick({ code: `M-${office || 'X00'}-${name}`, name, addr: `${region || '지역 미선택'} · 직접 등록` }, el);
+    },
     spick: (d, el) => { const box = el.closest('.sp'); box.dataset.code = d.code; box.dataset.name = d.name; box.querySelector('.sp-sel').innerHTML = `✅ <b>${esc(d.name)}</b> <small>${esc(d.addr || '')}</small>`; box.querySelector('.sp-list').innerHTML = ''; box.querySelector('.sp-input').value = d.name; lsSet(LAST_SCHOOL, { code: d.code, name: d.name, addr: d.addr }); },
     switchkid: () => { cloudFlush(); SESS = null; lsSet(SESS_KEY, null); const intro = S.introSeen; S = migrate({}); S.introSeen = intro; S.createdAt = now(); S.cardAt[0] = now(); save(); toast('다른 친구로 시작해요'); const t = document.querySelector('.title'); if (t) { t.remove(); boot(); } },
     rename: () => nameSheet(),
@@ -1125,6 +1145,10 @@
     } catch (e) { return { ok: false, error: '인터넷 연결을 확인해 주세요.', offline: true }; }
     finally { clearTimeout(tm); }
   }
+  function saveFile(name, text, type) {
+    try { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type: type + ';charset=utf-8' })); a.download = name; document.body.append(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+    catch (e) { showText(text); }
+  }
   function copyText(t, msg) {
     if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => toast(msg)).catch(() => showText(t)); else showText(t);
   }
@@ -1171,26 +1195,33 @@
     } else if (r.status === 401) { SESS = null; lsSet(SESS_KEY, null); go('home'); loginScreen(after); }
     else { toast('인터넷이 연결되지 않아 이 기기의 기록으로 시작해요.', 2800); after(); }
   }
+  const OFFICES = [['', '전국'], ['B10', '서울'], ['C10', '부산'], ['D10', '대구'], ['E10', '인천'], ['F10', '광주'], ['G10', '대전'], ['H10', '울산'], ['I10', '세종'], ['J10', '경기'], ['K10', '강원'], ['M10', '충북'], ['N10', '충남'], ['P10', '전북'], ['Q10', '전남'], ['R10', '경북'], ['S10', '경남'], ['T10', '제주']];
   function schoolPickerHTML(id) {
     const last = lsGet(LAST_SCHOOL);
+    const off = last && last.code ? (last.code.match(/^(?:M-)?([A-Z]\d{2})/) || [])[1] || '' : '';
     return `<div class="sp" id="${id}" ${last ? `data-code="${esc(last.code)}" data-name="${esc(last.name)}"` : ''}>
-      <div class="sp-row"><input class="field sp-input" id="${id}-q" placeholder="학교 이름 2글자 이상 (예: 사과초)" autocomplete="off" value="${last ? esc(last.name) : ''}" aria-label="학교 이름 검색"><button type="button" class="btn sp-go" data-sp="${id}">검색</button></div>
-      <div class="sp-sel">${last ? `✅ <b>${esc(last.name)}</b> <small>${esc(last.addr || '')}</small>` : '<small>학교를 검색해서 골라 주세요</small>'}</div>
+      <div class="sp-row"><select class="field sp-office" id="${id}-o" aria-label="시·도">${OFFICES.map(([c, n]) => `<option value="${c}" ${c === off ? 'selected' : ''}>${n}</option>`).join('')}</select>
+        <input class="field sp-input" id="${id}-q" placeholder="학교 이름 (예: 금호초)" autocomplete="off" value="${last ? esc(last.name) : ''}" aria-label="학교 이름 검색"><button type="button" class="btn sp-go" data-sp="${id}">검색</button></div>
+      <div class="sp-sel">${last ? `✅ <b>${esc(last.name)}</b> <small>${esc(last.addr || '')}</small>` : '<small>시·도를 고르고 학교를 검색해서 골라 주세요</small>'}</div>
       <div class="sp-list"></div></div>`;
   }
   let spT = null;
   async function spSearch(box) {
     const q = box.querySelector('.sp-input').value.trim().replace(/초등학교$|초$/, '');
+    const office = box.querySelector('.sp-office').value;
     const list = box.querySelector('.sp-list');
     if (q.length < 2) { list.innerHTML = '<p class="sp-msg">2글자 이상 적어 주세요.</p>'; return; }
     list.innerHTML = '<p class="sp-msg">찾는 중…</p>';
-    const r = await api('/api/schools?q=' + encodeURIComponent(q));
+    const r = await api('/api/schools?q=' + encodeURIComponent(q) + (office ? '&office=' + office : ''));
     if (!r.ok) { list.innerHTML = `<p class="sp-msg">${esc(r.error || '검색이 안 돼요.')}</p>`; return; }
-    list.innerHTML = r.schools.length ? r.schools.map(x => `<button type="button" class="sp-item" data-act="spick" data-code="${esc(x.code)}" data-name="${esc(x.name)}" data-addr="${esc(x.addr || x.region)}"><b>${esc(x.name)}</b><small>${esc(x.addr || x.region)} · ${esc(x.office)}</small></button>`).join('') + (r.schools.length >= 5 ? '<p class="sp-msg">찾는 학교가 없으면 이름을 더 자세히 적어 보세요.</p>' : '')
-      : '<p class="sp-msg">찾는 학교가 없어요. 이름을 다시 확인해 주세요.</p>';
+    const manual = `<button type="button" class="sp-item manual" data-act="spmanual" data-sp="-">✏️ 목록에 없어요 · <b>${esc(q)}초등학교</b>(으)로 직접 등록${office ? '' : ' <small>(시·도를 먼저 고르면 더 정확해요)</small>'}</button>`;
+    list.innerHTML = (r.schools.length ? r.schools.map(x => `<button type="button" class="sp-item" data-act="spick" data-code="${esc(x.code)}" data-name="${esc(x.name)}" data-addr="${esc(x.addr || x.region)}"><b>${esc(x.name)}</b><small>${esc(x.addr || x.region)} · ${esc(x.office)}</small></button>`).join('')
+      + (r.limited && r.schools.length >= 5 ? `<p class="sp-msg">결과가 5개까지만 보여요. ${office ? '이름을 더 자세히 적어 보세요.' : '위에서 시·도를 고르면 찾기 쉬워요.'}</p>` : '')
+      : '<p class="sp-msg">찾는 학교가 없어요. 이름을 다시 확인하거나 시·도를 바꿔 보세요.</p>') + manual;
   }
   document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('sp-input')) { const box = e.target.closest('.sp'); delete box.dataset.code; box.querySelector('.sp-sel').innerHTML = '<small>학교를 검색해서 골라 주세요</small>'; clearTimeout(spT); spT = setTimeout(() => spSearch(box), 450); } });
-  document.addEventListener('click', e => { const b = e.target.closest('[data-sp]'); if (b) spSearch(document.getElementById(b.dataset.sp)); });
+  document.addEventListener('click', e => { const b = e.target.closest('[data-sp]'); if (b && b.dataset.sp !== '-') spSearch(document.getElementById(b.dataset.sp)); });
+  document.addEventListener('change', e => { if (e.target.classList && e.target.classList.contains('sp-office')) { const box = e.target.closest('.sp'); if (box.querySelector('.sp-input').value.trim().length >= 2) spSearch(box); } });
   const opts = (n, sel, unit) => Array.from({ length: n }, (_, k) => `<option value="${k + 1}" ${k + 1 === sel ? 'selected' : ''}>${k + 1}${unit}</option>`).join('');
   function classSelectHTML(prefix, withNum) {
     const last = lsGet(LAST_SCHOOL) || {};
@@ -1333,6 +1364,7 @@
     const pend = ADMIN.teachers.filter(x => x.status === 'pending').length;
     return `<div class="section-h">👩‍🏫 선생님 등록 승인 ${pend ? `<span class="badge-n">${pend}</span>` : ''}</div>
       <div class="glass approvals"><p class="sv-note" style="margin:0 0 8px">전체 학생 ${ADMIN.students}명 · 등록 반 ${ADMIN.teachers.filter(x => x.status === 'approved').length}개</p>
+      <button class="btn ghost" data-act="abackup" style="margin-bottom:6px">💾 전체 백업 받기 (모든 학교·학생·선생님·만족도)</button>
       ${ADMIN.teachers.map(x => `<div class="ap-row ${x.status}"><div><b>${esc(x.school_name)} ${x.grade}학년 ${x.cls}반</b><small>${esc(x.teacher_name || '')}${x.contact ? ' · ' + esc(x.contact) : ''} · ${new Date(x.created_at).toLocaleDateString('ko-KR')}</small></div>
         <span class="st ${x.status === 'approved' ? 'done' : x.status === 'pending' ? 'studying' : 'locked'}">${ST[x.status]}</span>
         <div class="ap-btns">${x.status !== 'approved' ? `<button data-act="adecide" data-v="${x.id}" data-ok="1">승인</button>` : ''}${x.status !== 'rejected' ? `<button data-act="adecide" data-v="${x.id}" data-ok="0">${x.status === 'approved' ? '승인 취소' : '거절'}</button>` : ''}</div></div>`).join('') || '<p class="sv-note">아직 등록 요청이 없어요.</p>'}</div>`;
