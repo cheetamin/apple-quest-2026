@@ -1174,3 +1174,19 @@ body { background: #070b14; display: grid; place-items: center; }
 .heart { display: grid; place-items: center; }
 .heart svg { width: 44px; height: 44px; fill: #e4dcef; stroke: #c9bfdc; stroke-width: 1.2; }
 .heart.on svg { fill: #ff3d63; stroke: #c4123a; filter: drop-shadow(0 0 6px rgba(255, 61, 99, .55)); }
+
+/* 제작자 관리실 · 만족도 결과 */
+.survey-box { color: #eef3ff; }
+.sv-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+.sv-avg { font-family: var(--f-en); font-size: 44px; color: #ff6b88; letter-spacing: .02em; }
+.sv-of { font-family: var(--f-en); font-weight: 700; font-size: 18px; color: #a9bce0; margin-left: 4px; }
+.sv-meta { text-align: right; font-weight: 700; font-size: 15px; } .sv-meta small { font-weight: 500; font-size: 11.5px; color: #a9bce0; }
+.sv-dist { display: grid; gap: 6px; }
+.sv-row { display: grid; grid-template-columns: 74px 1fr 28px; align-items: center; gap: 8px; font-size: 13px; }
+.sv-row span { color: #ff6b88; letter-spacing: 1px; text-align: right; } .sv-row b { font-family: var(--f-en); text-align: right; }
+.sv-bar { height: 12px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; } .sv-bar i { display: block; height: 100%; background: linear-gradient(90deg, #ff9ab0, #ff3d63); }
+.sv-comments { margin-top: 12px; display: grid; gap: 8px; max-height: 320px; overflow-y: auto; }
+.sv-c { padding: 8px 10px; border-radius: 4px; background: rgba(255,255,255,.08); }
+.sv-c .sv-h { color: #ff6b88; font-size: 12px; letter-spacing: 1px; } .sv-c p { margin: 2px 0; font-size: 14px; line-height: 1.5; } .sv-c small { color: #8fa2c8; font-size: 11px; }
+.sv-note { margin: 8px 0 0; font-size: 13px; color: #a9bce0; }
+.sv-top > div:first-child { white-space: nowrap; flex: 0 0 auto; } .sv-meta { flex: 1; min-width: 0; }

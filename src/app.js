@@ -1,7 +1,25 @@
 /* 애플왕의 진화 모험 — 화면과 상호작용 */
 (function () {
   'use strict';
-  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR } = AQ_DATA;
+  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH } = AQ_DATA;
+  /* SHA-256 (비밀번호 확인용, 외부 라이브러리 없이) */
+  function sha256(str) {
+    const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
+    const bytes = Array.from(new TextEncoder().encode(str)); const l = bytes.length * 8;
+    bytes.push(0x80); while (bytes.length % 64 !== 56) bytes.push(0);
+    for (let i = 7; i >= 0; i--) bytes.push(i > 3 ? 0 : (l >>> (i * 8)) & 0xff);
+    let H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+    const r = (x, n) => (x >>> n) | (x << (32 - n));
+    for (let o = 0; o < bytes.length; o += 64) {
+      const w = []; for (let i = 0; i < 16; i++) w[i] = (bytes[o + i * 4] << 24) | (bytes[o + i * 4 + 1] << 16) | (bytes[o + i * 4 + 2] << 8) | bytes[o + i * 4 + 3];
+      for (let i = 16; i < 64; i++) { const s0 = r(w[i - 15], 7) ^ r(w[i - 15], 18) ^ (w[i - 15] >>> 3), s1 = r(w[i - 2], 17) ^ r(w[i - 2], 19) ^ (w[i - 2] >>> 10); w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0; }
+      let [a, b, c, d, e, f, g, h] = H;
+      for (let i = 0; i < 64; i++) { const t1 = (h + (r(e, 6) ^ r(e, 11) ^ r(e, 25)) + ((e & f) ^ (~e & g)) + K[i] + w[i]) | 0, t2 = ((r(a, 2) ^ r(a, 13) ^ r(a, 22)) + ((a & b) ^ (a & c) ^ (b & c))) | 0; h = g; g = f; f = e; e = (d + t1) | 0; d = c; c = b; b = a; a = (t1 + t2) | 0; }
+      H = H.map((x, i) => (x + [a, b, c, d, e, f, g, h][i]) | 0);
+    }
+    return H.map(x => (x >>> 0).toString(16).padStart(8, '0')).join('');
+  }
+  let adminOK = false;
   const L = AQ_LOGIC;
   const IMG = AQ_IMG;
   const KEY = 'aq-apple-quest-v1';
@@ -831,7 +849,7 @@
       <div class="section-h">설정</div>
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
       <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
-      <button class="link" data-act="teacher" style="margin-top:8px">🔒 선생님 관리실</button>
+      <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       <p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요. 학급 서버 저장은 다음 개발 단계에서 연결됩니다.</p>`;
   }
@@ -886,13 +904,48 @@
     });
   }
 
-  /* 선생님 관리실 (이 기기 전용 미리보기 버전) */
+  /* 제작자 관리실 */
+  let remoteSurveys = null, remoteState = '';
+  function parseCSV(t) {
+    const rows = []; let row = [], cur = '', q = false;
+    for (let i = 0; i < t.length; i++) { const c = t[i];
+      if (q) { if (c === '"' && t[i + 1] === '"') { cur += '"'; i++; } else if (c === '"') q = false; else cur += c; }
+      else if (c === '"') q = true; else if (c === ',') { row.push(cur); cur = ''; } else if (c === '\n' || c === '\r') { if (c === '\r' && t[i + 1] === '\n') i++; row.push(cur); rows.push(row); row = []; cur = ''; } else cur += c; }
+    if (cur || row.length) { row.push(cur); rows.push(row); }
+    return rows;
+  }
+  function loadRemoteSurveys() {
+    if (!SURVEY.resultsCsv) return;
+    remoteState = '불러오는 중…'; renderTeacher();
+    fetch(SURVEY.resultsCsv, { cache: 'no-store' }).then(r => r.text()).then(t => {
+      const rows = parseCSV(t).slice(1).filter(x => x.length > 1);
+      remoteSurveys = rows.map(x => ({ t: x[0], r: Math.max(0, Math.min(5, parseInt(x[1], 10) || 0)), c: x[2] || '', info: x[3] || '' })).filter(x => x.r > 0);
+      remoteState = ''; if (view === 'teacher') renderTeacher();
+    }).catch(() => { remoteState = '결과를 불러오지 못했어요. 인터넷 연결이나 시트 게시 상태를 확인해 주세요.'; if (view === 'teacher') renderTeacher(); });
+  }
+  function surveyHTML() {
+    const list = remoteSurveys || (S.surveys || []).map(x => ({ t: new Date(x.t).toLocaleString('ko-KR'), r: x.r, c: x.c }));
+    const n = list.length, avg = n ? list.reduce((a, x) => a + x.r, 0) / n : 0;
+    const dist = [5, 4, 3, 2, 1].map(k => [k, list.filter(x => x.r === k).length]);
+    const max = Math.max(1, ...dist.map(d => d[1]));
+    const src = remoteSurveys ? '모든 학생의 응답 (구글 시트)' : SURVEY.resultsCsv ? '이 기기의 응답' : '이 기기의 응답 · 전체 취합은 구글 시트 연결 후 가능';
+    return `<div class="section-h">💗 만족도 조사 결과</div>
+      <div class="glass survey-box">
+        <div class="sv-top"><div><b class="sv-avg">${n ? avg.toFixed(1) : '-'}</b><span class="sv-of">/ 5</span></div><div class="sv-meta">응답 ${n}개<br><small>${src}</small></div></div>
+        <div class="sv-dist">${dist.map(([k, c]) => `<div class="sv-row"><span>${'♥'.repeat(k)}</span><div class="sv-bar"><i style="width:${c / max * 100}%"></i></div><b>${c}</b></div>`).join('')}</div>
+        ${remoteState ? `<p class="sv-note">${remoteState}</p>` : ''}
+        <div class="sv-comments">${list.filter(x => x.c).slice(-30).reverse().map(x => `<div class="sv-c"><span class="sv-h">${'♥'.repeat(x.r)}${'♡'.repeat(5 - x.r)}</span><p>${esc(x.c)}</p><small>${esc(x.t || '')}</small></div>`).join('') || '<p class="sv-note">아직 남겨진 코멘트가 없어요.</p>'}</div>
+        <div class="row-btns">${SURVEY.resultsCsv ? '<button class="btn ghost" data-act="svreload">🔄 새로고침</button>' : ''}<button class="btn ghost" data-act="svcopy">📋 결과 복사</button></div>
+      </div>`;
+  }
   function renderTeacher() {
+    if (!adminOK) { go('me'); return; }
     const r = S.rules;
     const num = (path, label, min = 1, max = 999) => `<div class="rowf"><span>${label}</span><input type="number" id="r-${path}" data-path="${path}" min="${min}" max="${max}" value="${path.split('.').reduce((o, k) => o[k], r)}"></div>`;
     const tg = (k, label) => `<button class="tg" data-act="rtog" data-v="${k}" style="padding-left:0;background:none"><span>${label}</span><span class="sw ${r[k] ? 'on' : ''}"></span></button>`;
-    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>선생님 관리실</h2><p>이 기기 미리보기 버전 · 학급 서버 연결 전</p></div></div>
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>제작자 관리실</h2><p>만족도 조사 결과와 게임 규칙을 관리해요</p></div></div>
       <div class="teacher">
+      ${surveyHTML()}
       <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.id) ? 'on' : ''}" data-act="uopen" data-v="${u.id}">${u.id}</button>`).join('')}</div></div>
       <div class="section-h">경험치·진화 규칙</div><div class="glass">
         ${num('expBasic', '기본 퀴즈 정답 경험치')}${num('expReview', '복습·보스 정답 경험치')}
@@ -904,14 +957,11 @@
       <div class="section-h">미리보기</div>
       <div class="row-btns" style="margin-top:0">${[0, 1, 2].map(i => `<button class="btn ghost" data-act="tzoom" data-v="${i}">${STAGES[i].name}</button>`).join('')}</div>
       <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.id}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
-      <div class="section-h">만족도 조사 (이 기기)</div>
-      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${(S.surveys || []).length ? `응답 ${S.surveys.length}개 · 평균 ${'♥'} ${(S.surveys.reduce((a, x) => a + x.r, 0) / S.surveys.length).toFixed(1)}<br>` + S.surveys.slice(-8).reverse().map(x => `${'♥'.repeat(x.r)}${'♡'.repeat(5 - x.r)} ${esc(x.c || '')}`).join('<br>') : '아직 응답이 없어요.'}
-        <br><span style="color:#a9bce0">${SURVEY.formAction ? '응답은 제작자의 구글 설문지로도 전송돼요.' : '전송 주소가 설정되지 않아 이 기기에만 기록돼요.'}</span></div>
       <div class="section-h">학습 기록</div>
       <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.id}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
-      <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button><button class="btn ghost" data-act="pin">🔑 비밀번호 변경</button></div>
+      <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button></div>
       <div class="row-btns"><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="resetask">이 기기 학습 기록 초기화</button></div>
-      <p class="voice-note">다음 단계(학급 서버)에서는 학급 코드, 학생 계정, 반 전체 현황표, 엑셀 다운로드, 학습 자료 업로드·검토가 여기에 추가됩니다.</p></div>`;
+      <div class="row-btns"><button class="btn ghost" data-act="adminout">🔒 관리실 잠그기</button></div></div>`;
     main.querySelectorAll('input[data-path]').forEach(inp => inp.addEventListener('change', () => {
       const v = Math.max(+inp.min, Math.min(+inp.max, Math.round(+inp.value || 0))); inp.value = v;
       const ks = inp.dataset.path.split('.'); let o = S.rules; while (ks.length > 1) o = o[ks.shift()]; o[ks[0]] = v; save(); toast('저장했어요');
@@ -991,9 +1041,15 @@
       if (S.forest[dd.key]) delete S.forest[dd.key]; else { S.forest[dd.key] = { x: 20 + Math.random() * 60, y: 60 + Math.random() * 30 }; AU.sparkle(); }
       save(); renderForest();
     },
-    teacher: () => openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🔒 선생님 관리실</h3><p class="sub">비밀번호를 입력해 주세요. (처음 비밀번호: 1234 — 들어가서 꼭 바꿔 주세요)</p>
-      <form id="pinform"><input class="field" id="pin-in" type="password" inputmode="numeric" autocomplete="off" aria-label="비밀번호"><div class="row-btns"><button class="btn" type="submit">들어가기</button></div></form>`),
-    pin: () => openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>비밀번호 변경</h3><form id="newpin"><input class="field" id="pin-new" inputmode="numeric" placeholder="새 비밀번호 (4자리 이상)" aria-label="새 비밀번호"><div class="row-btns"><button class="btn" type="submit">저장</button></div></form>`),
+    teacher: () => { if (adminOK) { go('teacher'); loadRemoteSurveys(); return; } openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🔒 제작자 관리실</h3><p class="sub">제작자 비밀번호를 입력해 주세요.</p>
+      <form id="pinform"><input class="field" id="pin-in" type="password" autocomplete="off" autocapitalize="off" aria-label="비밀번호"><div class="row-btns"><button class="btn" type="submit">들어가기</button></div></form>`); setTimeout(() => { const i = $('#pin-in'); i && i.focus(); }, 300); },
+    svreload: () => loadRemoteSurveys(),
+    svcopy: () => {
+      const list = remoteSurveys || (S.surveys || []).map(x => ({ t: new Date(x.t).toLocaleString('ko-KR'), r: x.r, c: x.c }));
+      const text = ['시간,만족도,코멘트'].concat(list.map(x => [x.t, x.r, '"' + String(x.c || '').replace(/"/g, '""') + '"'].join(','))).join('\n');
+      if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
+    },
+    adminout: () => { adminOK = false; toast('관리실을 잠갔어요'); go('me'); },
     rename: () => nameSheet(),
     csv: () => {
       const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.id, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
@@ -1002,7 +1058,7 @@
     },
     resetask: () => openSheet(`<h3>정말 초기화할까요?</h3><p class="sub">이 기기의 경험치, 단원 기록, 카드, 사과숲이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="reset">초기화</button></div>`),
     exit: () => { AU.tap(); openExit(); },
-    reset: () => { const pin = S.pin, rules = S.rules; S = migrate({}); S.pin = pin; S.rules = rules; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
+    reset: () => { const pin = S.pin, rules = S.rules, sv = S.surveys; S = migrate({}); S.pin = pin; S.rules = rules; S.surveys = sv; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
   };
   function showText(t) { openSheet(`<button class="close" data-act="closeSheet">✕</button><h3>아래 내용을 길게 눌러 복사하세요</h3><textarea class="field" id="csv-out" style="height:200px;font-size:13px" readonly>${esc(t)}</textarea>`); }
   function renderPanelKeepFb() { renderPanel(); }
@@ -1015,7 +1071,7 @@
   document.addEventListener('submit', e => {
     e.preventDefault();
     if (e.target.id === 'nameform') { S.name = ($('#name-in').value || '').trim().slice(0, 10) || '모험가'; save(); closeSheet(); render(); const a = nameSheet.after; nameSheet.after = null; a && a(); }
-    if (e.target.id === 'pinform') { if ($('#pin-in').value === S.pin) { closeSheet(); go('teacher'); } else toast('비밀번호가 달라요'); }
+    if (e.target.id === 'pinform') { if (sha256($('#pin-in').value) === ADMIN_HASH) { adminOK = true; closeSheet(); go('teacher'); loadRemoteSurveys(); } else toast('비밀번호가 달라요'); }
     if (e.target.id === 'newpin') { const v = $('#pin-new').value.trim(); if (v.length < 4) return toast('4자리 이상으로 정해 주세요'); S.pin = v; save(); closeSheet(); toast('비밀번호를 바꿨어요'); }
   });
   document.addEventListener('click', e => {
