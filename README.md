@@ -19,12 +19,12 @@
 © 2026 치타민. 모든 권리는 제작자에게 있으며, 비영리 교육 목적의 수업 활용은 환영합니다.
 
 ## 저장 방식
-학습 기록은 **각 기기의 브라우저**에 저장됩니다. 기기를 바꾸거나 브라우저 기록을 지우면 처음부터 시작해요.
-학급 서버 저장(학급 코드·학생 계정·반 전체 현황)은 다음 개발 단계입니다.
+- 학급 서버(Cloudflare) 연결 후: 학교·학년·반·번호·닉네임·비밀번호 4자리로 **어느 기기에서든** 이어서 해요. 선생님 탭에서 우리 반 현황과 구글 시트 연결을 쓸 수 있어요. 설정 방법은 [`SETUP.md`](SETUP.md).
+- 연결 전: 기록은 각 기기의 브라우저에 저장돼요.
 
 ## 수정하고 다시 만들기
 ```
 python3 build.py          # src/ + assets/ → docs/index.html
-node --test tests/logic.test.js
+node --test tests/logic.test.js tests/server.test.mjs
 ```
 `docs/` 폴더가 GitHub Pages로 공개되는 파일입니다. 자세한 구조는 `CLAUDE.md` 참고.

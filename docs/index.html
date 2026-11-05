@@ -1211,6 +1211,65 @@ body { background: #070b14; display: grid; place-items: center; }
 .s-logo img { width: 100%; height: 100%; object-fit: contain; object-position: left center; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
 @media (max-width: 400px) { .logo { width: 100px; } }
 @media (max-width: 359px) { .logo { width: 84px; } }
+
+/* ---------- 학생 로그인 ---------- */
+.loginov { position: fixed; inset: 0; z-index: 88; overflow-y: auto; padding: 18px max(16px, env(safe-area-inset-right, 0px)) 28px max(16px, env(safe-area-inset-left, 0px));
+  background: radial-gradient(70% 40% at 50% 10%, rgba(255, 230, 150, .25), transparent 70%), linear-gradient(180deg, #0d2c55, #0f4a44 60%, #0a2a2c); }
+.loginbox { max-width: 400px; margin: 0 auto; padding: 16px; border-radius: 6px; color: var(--ink); background: linear-gradient(180deg, #fffdf4, #f3eedc); box-shadow: 0 0 0 3px #ffd45c, 0 0 30px rgba(255, 212, 92, .5), 0 10px 30px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 6px; }
+.login-logo { width: 150px; align-self: center; margin-top: -4px; filter: drop-shadow(0 3px 4px rgba(0,0,0,.35)); }
+.loginbox h3 { margin: 0; text-align: center; font-family: var(--f-display); font-weight: 400; font-size: 24px; letter-spacing: .06em; }
+.loginbox .sub { margin: 0 0 4px; text-align: center; font-size: 13.5px; color: var(--ink-soft); line-height: 1.5; }
+.lb { margin-top: 6px; font-weight: 800; font-size: 14px; letter-spacing: .03em; color: var(--ink); }
+.lb small { font-weight: 500; color: var(--ink-soft); }
+.field { min-height: 46px; font-size: 16px; }
+select.field { padding: 6px 8px; appearance: auto; }
+.field.pin { letter-spacing: .6em; font-family: var(--f-en); font-weight: 800; font-size: 22px; text-align: center; }
+.cls-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(80px, 1fr)); gap: 8px; margin-top: 6px; }
+.cls-row label { display: flex; flex-direction: column; gap: 4px; font-weight: 800; font-size: 13px; }
+.login-err { min-height: 20px; margin: 4px 0 0; color: #c8281e; font-weight: 700; font-size: 13.5px; line-height: 1.4; }
+.login-note { margin: 4px 0 0; font-size: 12px; line-height: 1.5; color: var(--ink-soft); }
+.sp-row { display: flex; gap: 6px; }
+.sp-row .field { flex: 1; min-width: 0; }
+.sp-go { flex: 0 0 auto; min-height: 46px; padding: 0 16px; }
+.sp-sel { margin-top: 6px; font-size: 14px; color: #1d6a2a; }
+.sp-sel small { color: var(--ink-soft); }
+.sp-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; max-height: 240px; overflow-y: auto; }
+.sp-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 9px 12px; border-radius: 4px; text-align: left; color: var(--ink); background: #fff; box-shadow: 0 0 0 1.5px #d8cfa8; }
+.sp-item small { color: var(--ink-soft); font-size: 12px; }
+.sp-item:hover, .sp-item:focus-visible { box-shadow: 0 0 0 2.5px #e5a01a; }
+.sp-msg { margin: 0; font-size: 13px; color: var(--ink-soft); }
+.btn.danger { color: #fff; background: linear-gradient(180deg, #ffb0a0, #ef6a4a 60%, #c8401e); box-shadow: inset 0 2px 0 rgba(255,255,255,.5), 0 0 0 1.5px #8a2a10; }
+
+/* ---------- 선생님 탭 ---------- */
+.tform { color: #eef3ff; display: flex; flex-direction: column; gap: 6px; }
+.tform .lb { color: #fff; } .tform .lb small, .tform .login-note { color: #a9bce0; }
+.tform .sp-sel { color: #9be88a; } .tform .sp-sel small { color: #a9bce0; }
+.tform .login-err { color: #ffb0a0; }
+.tinfo { display: flex; justify-content: space-between; align-items: center; gap: 8px; color: #fff; flex-wrap: wrap; }
+.tinfo span { color: #a9bce0; font-size: 13.5px; }
+.ttable-wrap { overflow-x: auto; border-radius: 4px; box-shadow: inset 0 0 0 1.5px rgba(255,212,92,.4); background: rgba(255,255,255,.06); }
+.ttable { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 13px; color: #eef3ff; font-variant-numeric: tabular-nums; }
+.ttable th { position: sticky; top: 0; background: #1d3a6a; color: #ffe27a; font-weight: 800; padding: 8px 6px; text-align: left; white-space: nowrap; }
+.ttable td { padding: 8px 6px; border-top: 1px solid rgba(255,255,255,.08); white-space: nowrap; }
+.ttable td.tw { white-space: normal; min-width: 120px; color: #ffc8b8; }
+.tact { display: flex; gap: 4px; }
+.tact button { padding: 4px 8px; border-radius: 4px; font-size: 12px; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); color: #fff; }
+.tag-reset { color: #ffd45c; font-size: 11px; }
+.gsheet { color: #eef3ff; font-size: 14px; line-height: 1.6; display: flex; flex-direction: column; gap: 8px; }
+.gsheet ol { margin: 0; padding-left: 20px; }
+.gsheet a { color: #9be8ff; }
+.formula { display: block; padding: 10px; border-radius: 4px; background: #0a1430; color: #9be88a; font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 12px; word-break: break-all; user-select: all; }
+.gsheet .login-note { color: #a9bce0; }
+
+/* ---------- 제작자: 승인 ---------- */
+.approvals { color: #eef3ff; display: flex; flex-direction: column; gap: 8px; }
+.ap-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 10px; align-items: center; padding: 10px; border-radius: 4px; background: rgba(255,255,255,.07); }
+.ap-row.pending { box-shadow: inset 0 0 0 1.5px #ffd45c; }
+.ap-row b { display: block; } .ap-row small { color: #a9bce0; font-size: 12px; }
+.ap-btns { grid-column: 1 / -1; display: flex; gap: 6px; justify-content: flex-end; }
+.ap-btns button { padding: 6px 14px; border-radius: 4px; font-weight: 800; font-size: 13px; background: rgba(255,255,255,.12); box-shadow: inset 0 0 0 1px rgba(255,255,255,.3); color: #fff; }
+.ap-btns button[data-ok="1"] { background: linear-gradient(180deg, #8ee87a, #2fa84a); color: #08320f; box-shadow: none; }
+.badge-n { display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; border-radius: 11px; background: #ef4a4a; color: #fff; font-size: 13px; margin-left: 6px; }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -1368,7 +1427,10 @@ body { background: #070b14; display: grid; place-items: center; }
   const ADMIN_HASH = '03b00cc653103ede76f12cb62547e58390efd27699f8fb5c432315ef866bd611';
   const CREATOR = '치타민';
 
-  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH };
+  /* 학급 서버(Cloudflare Worker) 주소. 비워 두면 기록은 각 기기에만 저장됩니다. 예: 'https://apple-quest-api.이름.workers.dev' */
+  const API_BASE = '';
+
+  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH, API_BASE };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
@@ -1709,7 +1771,8 @@ body { background: #070b14; display: grid; place-items: center; }
   const KEY = 'aq-apple-quest-v1';
   const $ = s => document.querySelector(s);
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const now = () => Date.now();
+  let clockOffset = 0; // 서버 시간과의 차이(기기 시계를 바꿔도 퇴화 판정이 흔들리지 않게)
+  const now = () => Date.now() + clockOffset;
   const main = $('#main'), layer = $('#layer');
 
   /* ---------- 저장 ---------- */
@@ -1723,7 +1786,7 @@ body { background: #070b14; display: grid; place-items: center; }
     return s;
   }
   function load() { try { const t = localStorage.getItem(KEY); if (t) return migrate(JSON.parse(t)); } catch (e) {} return migrate({}); }
-  let saveT; function save() { clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 120); }
+  let saveT, cloudDirty = false; function save() { cloudDirty = true; clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 120); }
   let S = load();
   if (!S.createdAt) { S.createdAt = now(); S.cardAt[0] = now(); }
 
@@ -2081,7 +2144,7 @@ body { background: #070b14; display: grid; place-items: center; }
       if (R.win) { AU.fanfare(); if (Q.boss === 3) setTimeout(() => toast('🏆 전설 카드 장식과 특별 도감 배지를 얻었어요!', 3200), 600); }
     }
     Q.summary = R; Q.phase = 'result';
-    save();
+    save(); cloudFlush();
     if (view === 'boss') { renderBossState(true); renderPanel(); } else render();
     updateHUD();
     if (R.ok >= R.n - 1) setTimeout(() => setMood('dance', 1800), 200);
@@ -2161,7 +2224,7 @@ body { background: #070b14; display: grid; place-items: center; }
   function doEvolve() {
     const from = S.stage;
     if (!L.evolve(S)) { toast('아직 진화 조건이 남았어요. 나의 성장에서 확인해 보세요!'); return; }
-    S.cardAt[S.stage] = now(); save();
+    S.cardAt[S.stage] = now(); save(); cloudFlush();
     closeSheet();
     playEvolution(from, S.stage, false);
   }
@@ -2204,7 +2267,7 @@ body { background: #070b14; display: grid; place-items: center; }
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', boss: 'units', teacher: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -2216,7 +2279,7 @@ body { background: #070b14; display: grid; place-items: center; }
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, boss: renderBoss, teacher: renderTeacher }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
   }
   function autoQ(unitId) {
@@ -2534,9 +2597,11 @@ body { background: #070b14; display: grid; place-items: center; }
       <div class="section-h">설정</div>
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
       <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
+      ${SESS ? `<p class="voice-note">🏫 ${esc(SESS.school_name)} ${SESS.grade}학년 ${SESS.cls}반 ${SESS.num}번 · 기록은 학급 서버에 자동 저장돼요.</p>` : ''}
+      <button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
-      <p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요. 학급 서버 저장은 다음 개발 단계에서 연결됩니다.</p>`;
+      ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
   }
 
   /* 사과숲 */
@@ -2600,6 +2665,7 @@ body { background: #070b14; display: grid; place-items: center; }
     return rows;
   }
   function loadRemoteSurveys() {
+    if (API) { loadAdmin(); return; }
     if (!SURVEY.resultsCsv) return;
     remoteState = '불러오는 중…'; renderTeacher();
     fetch(SURVEY.resultsCsv, { cache: 'no-store' }).then(r => r.text()).then(t => {
@@ -2613,14 +2679,14 @@ body { background: #070b14; display: grid; place-items: center; }
     const n = list.length, avg = n ? list.reduce((a, x) => a + x.r, 0) / n : 0;
     const dist = [5, 4, 3, 2, 1].map(k => [k, list.filter(x => x.r === k).length]);
     const max = Math.max(1, ...dist.map(d => d[1]));
-    const src = remoteSurveys ? '모든 학생의 응답 (구글 시트)' : SURVEY.resultsCsv ? '이 기기의 응답' : '이 기기의 응답 · 전체 취합은 구글 시트 연결 후 가능';
+    const src = remoteSurveys ? (API ? '모든 학생의 응답 (학급 서버)' : '모든 학생의 응답 (구글 시트)') : SURVEY.resultsCsv ? '이 기기의 응답' : '이 기기의 응답 · 전체 취합은 학급 서버 연결 후 가능';
     return `<div class="section-h">💗 만족도 조사 결과</div>
       <div class="glass survey-box">
         <div class="sv-top"><div><b class="sv-avg">${n ? avg.toFixed(1) : '-'}</b><span class="sv-of">/ 5</span></div><div class="sv-meta">응답 ${n}개<br><small>${src}</small></div></div>
         <div class="sv-dist">${dist.map(([k, c]) => `<div class="sv-row"><span>${'♥'.repeat(k)}</span><div class="sv-bar"><i style="width:${c / max * 100}%"></i></div><b>${c}</b></div>`).join('')}</div>
         ${remoteState ? `<p class="sv-note">${remoteState}</p>` : ''}
         <div class="sv-comments">${list.filter(x => x.c).slice(-30).reverse().map(x => `<div class="sv-c"><span class="sv-h">${'♥'.repeat(x.r)}${'♡'.repeat(5 - x.r)}</span><p>${esc(x.c)}</p><small>${esc(x.t || '')}</small></div>`).join('') || '<p class="sv-note">아직 남겨진 코멘트가 없어요.</p>'}</div>
-        <div class="row-btns">${SURVEY.resultsCsv ? '<button class="btn ghost" data-act="svreload">🔄 새로고침</button>' : ''}<button class="btn ghost" data-act="svcopy">📋 결과 복사</button></div>
+        <div class="row-btns">${SURVEY.resultsCsv || API ? '<button class="btn ghost" data-act="svreload">🔄 새로고침</button>' : ''}<button class="btn ghost" data-act="svcopy">📋 결과 복사</button></div>
       </div>`;
   }
   function renderTeacher() {
@@ -2630,6 +2696,7 @@ body { background: #070b14; display: grid; place-items: center; }
     const tg = (k, label) => `<button class="tg" data-act="rtog" data-v="${k}" style="padding-left:0;background:none"><span>${label}</span><span class="sw ${r[k] ? 'on' : ''}"></span></button>`;
     main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>제작자 관리실</h2><p>만족도 조사 결과와 게임 규칙을 관리해요</p></div></div>
       <div class="teacher">
+      ${API ? adminTeachersHTML() : ''}
       ${surveyHTML()}
       <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.id) ? 'on' : ''}" data-act="uopen" data-v="${u.id}">${u.id}</button>`).join('')}</div></div>
       <div class="section-h">경험치·진화 규칙</div><div class="glass">
@@ -2734,7 +2801,18 @@ body { background: #070b14; display: grid; place-items: center; }
       const text = ['시간,만족도,코멘트'].concat(list.map(x => [x.t, x.r, '"' + String(x.c || '').replace(/"/g, '""') + '"'].join(','))).join('\n');
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
     },
-    adminout: () => { adminOK = false; toast('관리실을 잠갔어요'); go('me'); },
+    adminout: () => { adminOK = false; adminPw = ''; toast('관리실을 잠갔어요'); go('me'); },
+    adecide: d => adminDecide(+d.v, d.ok === '1'),
+    ttab: d => { TV = d.v; renderTeach(); },
+    tlogout: () => { TS = null; lsSet(TSESS_KEY, null); TLIST = null; renderTeach(); },
+    treload: () => loadTeach(),
+    tcopyf: () => copyText(sheetFormula(), '수식을 복사했어요! 구글 시트 A1 칸에 붙여 넣으세요.'),
+    tcsv: () => { if (!TLIST) return; copyText(TLIST.map(x => [x.num, x.nickname, x.level || 1, x.stage || '풋애플', x.unitsDone || 0, (x.accuracy || 0) + '%', fmtDate(x.lastStudy)].join('\t')).join('\n'), '복사했어요! 엑셀이나 시트에 붙여 넣으세요.'); },
+    tpin: d => confirmSheet(`${d.n}번 학생의 비밀번호를 초기화할까요?`, '학생이 다음에 들어올 때 새로 입력하는 4자리가 새 비밀번호가 돼요.', '초기화', async () => { const r = await api('/api/teacher/reset-pin', { id: +d.v }, { token: TS.token }); toast(r.ok ? '초기화했어요' : r.error); loadTeach(); }),
+    tdel: d => confirmSheet(`${d.n}번 학생 기록을 지울까요?`, '이 학생의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '지우기', async () => { const r = await api('/api/teacher/delete-student', { id: +d.v }, { token: TS.token }); toast(r.ok ? '지웠어요' : r.error); loadTeach(); }),
+    tdelall: () => confirmSheet('우리 반 기록을 모두 지울까요?', '학년이 끝났을 때 쓰는 기능이에요. 우리 반 학생들의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '모두 지우기', async () => { const r = await api('/api/teacher/delete-class', {}, { token: TS.token }); toast(r.ok ? '모두 지웠어요' : r.error); loadTeach(); }),
+    spick: (d, el) => { const box = el.closest('.sp'); box.dataset.code = d.code; box.dataset.name = d.name; box.querySelector('.sp-sel').innerHTML = `✅ <b>${esc(d.name)}</b> <small>${esc(d.addr || '')}</small>`; box.querySelector('.sp-list').innerHTML = ''; box.querySelector('.sp-input').value = d.name; lsSet(LAST_SCHOOL, { code: d.code, name: d.name, addr: d.addr }); },
+    switchkid: () => { cloudFlush(); SESS = null; lsSet(SESS_KEY, null); const intro = S.introSeen; S = migrate({}); S.introSeen = intro; S.createdAt = now(); S.cardAt[0] = now(); save(); toast('다른 친구로 시작해요'); const t = document.querySelector('.title'); if (t) { t.remove(); boot(); } },
     rename: () => nameSheet(),
     csv: () => {
       const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.id, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
@@ -2755,8 +2833,10 @@ body { background: #070b14; display: grid; place-items: center; }
   }
   document.addEventListener('submit', e => {
     e.preventDefault();
-    if (e.target.id === 'nameform') { S.name = ($('#name-in').value || '').trim().slice(0, 10) || '모험가'; save(); closeSheet(); render(); const a = nameSheet.after; nameSheet.after = null; a && a(); }
-    if (e.target.id === 'pinform') { if (sha256($('#pin-in').value) === ADMIN_HASH) { adminOK = true; closeSheet(); go('teacher'); loadRemoteSurveys(); } else toast('비밀번호가 달라요'); }
+    if (e.target.id === 'nameform') { S.name = ($('#name-in').value || '').trim().slice(0, 10) || '모험가'; save(); if (SESS) { SESS.nickname = S.name; lsSet(SESS_KEY, SESS); cloudFlush(); } closeSheet(); render(); const a = nameSheet.after; nameSheet.after = null; a && a(); }
+    if (e.target.id === 'pinform') { const pw = $('#pin-in').value; if (sha256(pw) === ADMIN_HASH) { adminOK = true; adminPw = pw; closeSheet(); go('teacher'); loadRemoteSurveys(); } else toast('비밀번호가 달라요'); }
+    if (e.target.id === 'slogin') studentLoginSubmit(e.target);
+    if (e.target.id === 'tlogin' || e.target.id === 'treg') teacherSubmit(e.target);
     if (e.target.id === 'newpin') { const v = $('#pin-new').value.trim(); if (v.length < 4) return toast('4자리 이상으로 정해 주세요'); S.pin = v; save(); closeSheet(); toast('비밀번호를 바꿨어요'); }
   });
   document.addEventListener('click', e => {
@@ -2768,6 +2848,233 @@ body { background: #070b14; display: grid; place-items: center; }
 
   /* 학습 시간 측정 */
   setInterval(() => { if (!document.hidden && (view === 'study' || ((view === 'play' || view === 'home' || view === 'boss') && Q))) { S.stats.ms += 5000; save(); } }, 5000);
+
+  /* ================= 학급 서버: 로그인 · 자동 저장 · 선생님 탭 · 승인 ================= */
+  const API = (AQ_DATA.API_BASE || '').replace(/\/+$/, '');
+  const SESS_KEY = 'aq-session-v1', TSESS_KEY = 'aq-teacher-v1', LAST_SCHOOL = 'aq-last-school';
+  const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
+  const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+  let SESS = API ? lsGet(SESS_KEY) : null, TS = API ? lsGet(TSESS_KEY) : null, TV = 'login', TLIST = null, TERR = '', adminPw = '', ADMIN = null;
+  const acct = s => s ? `${s.school_code}|${s.grade}|${s.cls}|${s.num}` : '';
+  const fmtDate = t => { if (!t) return '-'; const d = new Date(t); return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+  async function api(path, body, opt = {}) {
+    if (!API) return { ok: false, error: '학급 서버가 아직 연결되지 않았어요.' };
+    const ctrl = new AbortController(); const tm = setTimeout(() => ctrl.abort(), opt.timeout || 12000);
+    try {
+      const headers = {};
+      if (body !== undefined) headers['Content-Type'] = 'application/json';
+      if (opt.token) headers.Authorization = 'Bearer ' + opt.token;
+      if (opt.admin) headers['X-Admin-Password'] = opt.admin;
+      const r = await fetch(API + path, { method: body === undefined ? 'GET' : 'POST', headers, body: body === undefined ? undefined : JSON.stringify(body), signal: ctrl.signal, keepalive: !!opt.keepalive });
+      const j = await r.json().catch(() => ({ ok: false, error: '서버 응답을 읽지 못했어요.' }));
+      j.status = r.status; return j;
+    } catch (e) { return { ok: false, error: '인터넷 연결을 확인해 주세요.', offline: true }; }
+    finally { clearTimeout(tm); }
+  }
+  function copyText(t, msg) {
+    if (navigator.clipboard) navigator.clipboard.writeText(t).then(() => toast(msg)).catch(() => showText(t)); else showText(t);
+  }
+  function confirmSheet(title, sub, label, fn) {
+    openSheet(`<h3>${title}</h3><p class="sub">${sub}</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn danger" id="cfm">${label}</button></div>`);
+    $('#cfm').addEventListener('click', () => { closeSheet(); fn(); });
+  }
+  function summary() {
+    const done = L.doneIds(S);
+    return { level: L.level(S.exp), exp: S.exp, stage: STAGES[S.stage].name, unitsDone: done.length, doneUnits: done,
+      accuracy: S.stats.answered ? Math.round(S.stats.correct / S.stats.answered * 100) : 0, minutes: Math.round(S.stats.ms / 60000), streak: S.streak,
+      bosses: BOSSES.filter(b => S.bosses[b.id]).map(b => b.id + '차'), wrongTop: Object.entries(S.wrong).sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(x => x[0]), lastStudy: S.lastStudy };
+  }
+  let cloudBusy = false, cloudWarned = false;
+  async function cloudFlush(keepalive) {
+    if (!API || !SESS || cloudBusy) return;
+    cloudBusy = true; cloudDirty = false;
+    S.account = acct(SESS); S.savedAt = now();
+    const r = await api('/api/student/save', { state: S, summary: summary(), nickname: SESS.nickname }, { token: SESS.token, keepalive });
+    cloudBusy = false;
+    if (r.ok) { S.cloudAt = r.server_now || S.savedAt; cloudWarned = false; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+    else {
+      cloudDirty = true;
+      if (r.status === 401) { SESS = null; lsSet(SESS_KEY, null); toast('로그인이 풀렸어요. 다음에 시작할 때 다시 들어와 주세요.', 3200); }
+      else if (!cloudWarned) { cloudWarned = true; toast('인터넷이 연결되지 않아 이 기기에 먼저 저장해 둘게요.', 2800); }
+    }
+  }
+  setInterval(() => { if (cloudDirty && SESS) cloudFlush(); }, 60000);
+  document.addEventListener('visibilitychange', () => { if (document.hidden && cloudDirty && SESS) cloudFlush(true); });
+  function adoptState(st) {
+    const intro = S.introSeen, settings = S.settings;
+    S = migrate(st || {}); S.introSeen = intro || S.introSeen; if (!st) { S.createdAt = now(); S.cardAt[0] = now(); S.settings = settings; }
+    S.account = acct(SESS); S.name = SESS.nickname; save();
+  }
+  async function resumeCloud(after) {
+    toast('기록을 불러오는 중…', 1200);
+    const r = await api('/api/student/state', undefined, { token: SESS.token });
+    if (r.ok) {
+      clockOffset = (r.server_now || Date.now()) - Date.now();
+      const mine = S.account === acct(SESS);
+      if (!mine || !(S.savedAt && S.savedAt > (r.updated_at || 0) && cloudDirty)) { if (r.state || !mine) adoptState(r.state); }
+      S.name = r.nickname || S.name; SESS.nickname = S.name; lsSet(SESS_KEY, SESS);
+      after(); if (mine && cloudDirty) cloudFlush();
+    } else if (r.status === 401) { SESS = null; lsSet(SESS_KEY, null); go('home'); loginScreen(after); }
+    else { toast('인터넷이 연결되지 않아 이 기기의 기록으로 시작해요.', 2800); after(); }
+  }
+  function schoolPickerHTML(id) {
+    const last = lsGet(LAST_SCHOOL);
+    return `<div class="sp" id="${id}" ${last ? `data-code="${esc(last.code)}" data-name="${esc(last.name)}"` : ''}>
+      <div class="sp-row"><input class="field sp-input" id="${id}-q" placeholder="학교 이름 2글자 이상 (예: 사과초)" autocomplete="off" value="${last ? esc(last.name) : ''}" aria-label="학교 이름 검색"><button type="button" class="btn sp-go" data-sp="${id}">검색</button></div>
+      <div class="sp-sel">${last ? `✅ <b>${esc(last.name)}</b> <small>${esc(last.addr || '')}</small>` : '<small>학교를 검색해서 골라 주세요</small>'}</div>
+      <div class="sp-list"></div></div>`;
+  }
+  let spT = null;
+  async function spSearch(box) {
+    const q = box.querySelector('.sp-input').value.trim().replace(/초등학교$|초$/, '');
+    const list = box.querySelector('.sp-list');
+    if (q.length < 2) { list.innerHTML = '<p class="sp-msg">2글자 이상 적어 주세요.</p>'; return; }
+    list.innerHTML = '<p class="sp-msg">찾는 중…</p>';
+    const r = await api('/api/schools?q=' + encodeURIComponent(q));
+    if (!r.ok) { list.innerHTML = `<p class="sp-msg">${esc(r.error || '검색이 안 돼요.')}</p>`; return; }
+    list.innerHTML = r.schools.length ? r.schools.map(x => `<button type="button" class="sp-item" data-act="spick" data-code="${esc(x.code)}" data-name="${esc(x.name)}" data-addr="${esc(x.addr || x.region)}"><b>${esc(x.name)}</b><small>${esc(x.addr || x.region)} · ${esc(x.office)}</small></button>`).join('') + (r.schools.length >= 5 ? '<p class="sp-msg">찾는 학교가 없으면 이름을 더 자세히 적어 보세요.</p>' : '')
+      : '<p class="sp-msg">찾는 학교가 없어요. 이름을 다시 확인해 주세요.</p>';
+  }
+  document.addEventListener('input', e => { if (e.target.classList && e.target.classList.contains('sp-input')) { const box = e.target.closest('.sp'); delete box.dataset.code; box.querySelector('.sp-sel').innerHTML = '<small>학교를 검색해서 골라 주세요</small>'; clearTimeout(spT); spT = setTimeout(() => spSearch(box), 450); } });
+  document.addEventListener('click', e => { const b = e.target.closest('[data-sp]'); if (b) spSearch(document.getElementById(b.dataset.sp)); });
+  const opts = (n, sel, unit) => Array.from({ length: n }, (_, k) => `<option value="${k + 1}" ${k + 1 === sel ? 'selected' : ''}>${k + 1}${unit}</option>`).join('');
+  function classSelectHTML(prefix, withNum) {
+    const last = lsGet(LAST_SCHOOL) || {};
+    return `<div class="cls-row"><label>학년<select class="field" id="${prefix}-g">${opts(6, last.grade || 4, '학년')}</select></label>
+      <label>반<select class="field" id="${prefix}-c">${opts(20, last.cls || 1, '반')}</select></label>
+      ${withNum ? `<label>번호<select class="field" id="${prefix}-n">${opts(40, 1, '번')}</select></label>` : ''}</div>`;
+  }
+  function loginScreen(after) {
+    const ov = document.createElement('div'); ov.className = 'loginov';
+    ov.innerHTML = `<form class="loginbox" id="slogin" autocomplete="off">
+      <img class="login-logo" src="${AQ_LOGO}" alt="">
+      <h3>모험을 시작해요!</h3>
+      <p class="sub">처음이면 새 모험이 시작되고, 전에 했다면 <b>어느 기기에서든</b> 이어서 할 수 있어요.</p>
+      <label class="lb">우리 학교</label>${schoolPickerHTML('sp-s')}
+      ${classSelectHTML('s', true)}
+      <label class="lb" for="s-nick">닉네임 <small>(진짜 이름 대신 별명도 좋아요)</small></label>
+      <input class="field" id="s-nick" maxlength="10" placeholder="예: 사과용사" value="${esc(S.name || '')}">
+      <label class="lb" for="s-pin">비밀번호 숫자 4자리 <small>(꼭 기억해 두세요!)</small></label>
+      <input class="field pin" id="s-pin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••">
+      <p class="login-err" id="s-err"></p>
+      <button class="btn" type="submit">시작하기</button>
+      <p class="login-note">학교·반·번호와 비밀번호는 내 캐릭터를 지키는 열쇠예요. 친구에게 알려 주지 마세요.</p>
+    </form>`;
+    layer.append(ov);
+    loginScreen.after = after;
+  }
+  async function studentLoginSubmit(form) {
+    const box = form.querySelector('.sp'), err = form.querySelector('#s-err'), btn = form.querySelector('[type=submit]');
+    const body = { school_code: box.dataset.code, school_name: box.dataset.name, grade: +$('#s-g').value, cls: +$('#s-c').value, num: +$('#s-n').value, nickname: $('#s-nick').value.trim(), pin: $('#s-pin').value.trim() };
+    if (!body.school_code) { err.textContent = '학교를 검색해서 목록에서 골라 주세요.'; return; }
+    if (!body.nickname) { err.textContent = '닉네임을 적어 주세요.'; return; }
+    if (!/^\d{4}$/.test(body.pin)) { err.textContent = '비밀번호는 숫자 4자리로 적어 주세요.'; return; }
+    btn.disabled = true; err.textContent = '';
+    const r = await api('/api/student/login', body);
+    btn.disabled = false;
+    if (!r.ok) { err.textContent = r.error || '들어가지 못했어요.'; AU.bad(); return; }
+    const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls });
+    clockOffset = (r.server_now || Date.now()) - Date.now();
+    const hadLocal = !S.account && S.exp > 0; // 서버 연결 전 이 기기에서 하던 기록은 새 계정으로 옮겨 줌
+    SESS = { token: r.token, school_code: body.school_code, school_name: body.school_name, grade: body.grade, cls: body.cls, num: body.num, nickname: r.nickname };
+    lsSet(SESS_KEY, SESS);
+    if (r.created && hadLocal) { S.account = acct(SESS); S.name = r.nickname; save(); }
+    else adoptState(r.state);
+    form.closest('.loginov').remove(); AU.good();
+    toast(r.created ? `환영해요, ${esc(r.nickname)}! 새 모험을 시작해요.` : `다시 만나서 반가워요, ${esc(r.nickname)}!`, 2400);
+    cloudFlush();
+    const a = loginScreen.after; loginScreen.after = null; a && a();
+  }
+
+  /* 선생님 탭 */
+  function sheetFormula() { return TS ? `=IMPORTDATA("${API}/api/export.csv?key=${TS.export_key}")` : ''; }
+  async function loadTeach() {
+    if (!TS) return;
+    TERR = '불러오는 중…'; renderTeach();
+    const r = await api('/api/teacher/students', undefined, { token: TS.token });
+    if (r.ok) { TLIST = r.students; TS.export_key = r.export_key || TS.export_key; lsSet(TSESS_KEY, TS); TERR = ''; }
+    else if (r.status === 401) { TS = null; lsSet(TSESS_KEY, null); TERR = '다시 로그인해 주세요.'; }
+    else TERR = r.error;
+    if (view === 'tch') renderTeach();
+  }
+  function renderTeach() {
+    let h = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>선생님 탭</h2><p>우리 반 아이들의 학습 현황을 확인해요</p></div></div>`;
+    if (!API) { main.innerHTML = h + `<div class="glass" style="color:#eef3ff;line-height:1.6">학급 서버가 연결되면 사용할 수 있어요.<br><small style="color:#a9bce0">제작자가 서버 주소를 설정하면 열려요.</small></div>`; return; }
+    if (!TS) {
+      h += `<div class="tabs"><button class="${TV === 'login' ? 'on' : ''}" data-act="ttab" data-v="login">로그인</button><button class="${TV === 'reg' ? 'on' : ''}" data-act="ttab" data-v="reg">처음 등록하기</button></div>
+        <form class="glass tform" id="${TV === 'login' ? 'tlogin' : 'treg'}" autocomplete="off">
+          <label class="lb">학교</label>${schoolPickerHTML('sp-t')}
+          ${classSelectHTML('t', false)}
+          ${TV === 'reg' ? `<label class="lb" for="t-name">선생님 성함</label><input class="field" id="t-name" maxlength="20" placeholder="예: 김사과">
+            <label class="lb" for="t-contact">연락처 <small>(선택 · 승인 안내용 이메일 등)</small></label><input class="field" id="t-contact" maxlength="60" placeholder="예: teacher@school.kr">` : ''}
+          <label class="lb" for="t-pw">선생님 비밀번호 ${TV === 'reg' ? '<small>(6자 이상, 새로 정해요)</small>' : ''}</label><input class="field" id="t-pw" type="password" maxlength="40">
+          <p class="login-err" id="t-err">${esc(TERR)}</p>
+          <button class="btn" type="submit">${TV === 'login' ? '들어가기' : '등록 요청 보내기'}</button>
+          <p class="login-note">${TV === 'reg' ? '등록 요청을 보내면 제작자가 확인한 뒤 승인해요. 승인되면 같은 학교·학년·반과 비밀번호로 들어올 수 있어요. 다른 반 학생 정보는 볼 수 없어요.' : '아직 등록하지 않았다면 "처음 등록하기"를 눌러 주세요.'}</p>
+        </form>`;
+      main.innerHTML = h; return;
+    }
+    const L2 = TLIST || [];
+    const today = new Date(now()); today.setHours(0, 0, 0, 0);
+    const active = L2.filter(x => x.lastStudy && x.lastStudy >= today.getTime()).length;
+    const accAvg = L2.length ? Math.round(L2.reduce((a, x) => a + (x.accuracy || 0), 0) / L2.length) : 0;
+    const needReview = L2.filter(x => !x.lastStudy || now() - x.lastStudy > 7 * L.DAY).length;
+    h += `<div class="glass tinfo"><b>🏫 ${esc(TS.school_name)} ${TS.grade}학년 ${TS.cls}반</b><span>${esc(TS.teacher_name || '')} 선생님</span></div>
+      <div class="stats" style="margin-top:10px"><div class="stat"><small>등록 학생</small><b>${L2.length}<em>명</em></b></div><div class="stat"><small>오늘 학습</small><b>${active}<em>명</em></b></div>
+      <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
+      ${TERR ? `<p class="sv-note">${esc(TERR)}</p>` : ''}
+      <div class="section-h">우리 반 학생</div>
+      <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
+      ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
+        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
+      </tbody></table></div>
+      <div class="row-btns"><button class="btn ghost" data-act="treload">🔄 새로고침</button><button class="btn ghost" data-act="tcsv">📋 표 복사</button></div>
+      <div class="section-h">📊 구글 시트로 보기</div>
+      <div class="glass gsheet"><ol><li><a href="https://sheets.new" target="_blank" rel="noopener">새 구글 시트</a>를 만들어요.</li><li>아래 수식을 복사해서 <b>A1 칸</b>에 붙여 넣어요.</li><li>우리 반 기록이 표로 들어오고, 시트를 열 때마다 새로 갱신돼요.</li></ol>
+        <code class="formula">${esc(sheetFormula())}</code>
+        <button class="btn" data-act="tcopyf">수식 복사하기</button>
+        <p class="login-note">이 수식에는 우리 반 전용 열쇠가 들어 있어요. 다른 사람과 공유하지 마세요.</p></div>
+      <div class="row-btns"><button class="btn danger" data-act="tdelall">학년 말: 우리 반 기록 모두 지우기</button></div>
+      <div class="row-btns"><button class="btn ghost" data-act="tlogout">로그아웃</button></div>`;
+    main.innerHTML = h;
+  }
+  async function teacherSubmit(form) {
+    const reg = form.id === 'treg', box = form.querySelector('.sp'), err = form.querySelector('#t-err'), btn = form.querySelector('[type=submit]');
+    const body = { school_code: box.dataset.code, school_name: box.dataset.name, grade: +$('#t-g').value, cls: +$('#t-c').value, password: $('#t-pw').value };
+    if (!body.school_code) { err.textContent = '학교를 검색해서 목록에서 골라 주세요.'; return; }
+    if (reg) { body.teacher_name = $('#t-name').value.trim(); body.contact = $('#t-contact').value.trim(); }
+    btn.disabled = true; err.textContent = '';
+    const r = await api(reg ? '/api/teacher/register' : '/api/teacher/login', body);
+    btn.disabled = false;
+    if (!r.ok) { err.textContent = r.error; return; }
+    const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls });
+    if (reg) { TV = 'login'; TERR = ''; renderTeach(); openSheet(`<h3>등록 요청을 보냈어요</h3><p class="sub">${esc(body.school_name)} ${body.grade}학년 ${body.cls}반<br>제작자가 확인하고 승인하면 같은 정보와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="closeSheet">확인</button></div>`); return; }
+    TS = { token: r.token, school_name: r.school_name, grade: r.grade, cls: r.cls, teacher_name: r.teacher_name, export_key: r.export_key };
+    lsSet(TSESS_KEY, TS); TERR = ''; loadTeach();
+  }
+
+  /* 제작자: 선생님 승인 · 전체 응답 */
+  async function loadAdmin() {
+    remoteState = '불러오는 중…'; if (view === 'teacher') renderTeacher();
+    const [t, sv] = await Promise.all([api('/api/admin/teachers', undefined, { admin: adminPw }), api('/api/admin/surveys', undefined, { admin: adminPw })]);
+    if (t.ok) ADMIN = t; if (sv.ok) remoteSurveys = sv.surveys.map(x => ({ t: new Date(x.created_at).toLocaleString('ko-KR') + (x.school_name ? ' · ' + x.school_name : ''), r: x.rating, c: x.comment || '' })).reverse();
+    remoteState = t.ok && sv.ok ? '' : (t.error || sv.error || '서버에서 불러오지 못했어요.');
+    if (view === 'teacher') renderTeacher();
+  }
+  async function adminDecide(id, ok) {
+    const r = await api('/api/admin/decide', { id, approve: ok }, { admin: adminPw });
+    toast(r.ok ? (ok ? '승인했어요' : '거절했어요') : r.error); loadAdmin();
+  }
+  function adminTeachersHTML() {
+    if (!ADMIN) return `<div class="section-h">👩‍🏫 선생님 등록 승인</div><div class="glass" style="color:#a9bce0">불러오는 중…</div>`;
+    const ST = { pending: '승인 대기', approved: '승인됨', rejected: '거절됨' };
+    const pend = ADMIN.teachers.filter(x => x.status === 'pending').length;
+    return `<div class="section-h">👩‍🏫 선생님 등록 승인 ${pend ? `<span class="badge-n">${pend}</span>` : ''}</div>
+      <div class="glass approvals"><p class="sv-note" style="margin:0 0 8px">전체 학생 ${ADMIN.students}명 · 등록 반 ${ADMIN.teachers.filter(x => x.status === 'approved').length}개</p>
+      ${ADMIN.teachers.map(x => `<div class="ap-row ${x.status}"><div><b>${esc(x.school_name)} ${x.grade}학년 ${x.cls}반</b><small>${esc(x.teacher_name || '')}${x.contact ? ' · ' + esc(x.contact) : ''} · ${new Date(x.created_at).toLocaleDateString('ko-KR')}</small></div>
+        <span class="st ${x.status === 'approved' ? 'done' : x.status === 'pending' ? 'studying' : 'locked'}">${ST[x.status]}</span>
+        <div class="ap-btns">${x.status !== 'approved' ? `<button data-act="adecide" data-v="${x.id}" data-ok="1">승인</button>` : ''}${x.status !== 'rejected' ? `<button data-act="adecide" data-v="${x.id}" data-ok="0">${x.status === 'approved' ? '승인 취소' : '거절'}</button>` : ''}</div></div>`).join('') || '<p class="sv-note">아직 등록 요청이 없어요.</p>'}</div>`;
+  }
 
   /* ---------- 시작 ---------- */
   function afterGate() {
@@ -2822,6 +3129,7 @@ body { background: #070b14; display: grid; place-items: center; }
   }
   function submitSurvey(r, c) {
     S.surveys = S.surveys || []; S.surveys.push({ r, c, t: now() }); if (S.surveys.length > 100) S.surveys.shift(); save();
+    if (API) { api('/api/survey', { rating: r, comment: c, school_name: SESS ? SESS.school_name : '', info: `Lv.${L.level(S.exp)} · ${STAGES[S.stage].name} · 완료 단원 ${L.unitsDone(S)}` }, { keepalive: true }); cloudFlush(true); }
     if (!SURVEY.formAction) return;
     try {
       const fd = new URLSearchParams();
@@ -2843,7 +3151,7 @@ body { background: #070b14; display: grid; place-items: center; }
       다음에도 사과숲에서 또 만나요!</p>
       <p class="sign">— ${CREATOR} 드림</p>
       <button class="btn" data-th="home">처음 화면으로</button>
-      <p class="close-note">이제 창을 닫아도 괜찮아요. 기록은 이 기기에 저장되어 있어요.</p>
+      <p class="close-note">이제 창을 닫아도 괜찮아요. ${SESS ? '기록은 학급 서버에 저장되어 어느 기기에서든 이어서 할 수 있어요.' : '기록은 이 기기에 저장되어 있어요.'}</p>
       ${copyrightHTML()}
     </div>`;
     layer.append(ov);
@@ -2860,21 +3168,26 @@ body { background: #070b14; display: grid; place-items: center; }
     t.innerHTML = `<div class="frame916"><div class="title-bg" style="background-image:url(${AQ_TITLE})"></div><div class="title-shade"></div>
       ${Array.from({ length: 12 }, (_, k) => `<i class="tspark" style="left:${(k * 37) % 100}%;top:${40 + (k * 53) % 55}%;animation-delay:${(k % 6) * .5}s"></i>`).join('')}
       <div class="title-bottom">
-        ${returning ? `<p class="title-hello">${esc(S.name)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : ''}
+        ${SESS ? `<p class="title-hello">${esc(SESS.school_name)} ${SESS.grade}-${SESS.cls} ${SESS.num}번 ${esc(SESS.nickname)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : returning && !API ? `<p class="title-hello">${esc(S.name)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : ''}
         <button class="startgame" data-t="start"><span>게임 시작하기</span></button>
-        <button class="title-sound" data-t="sound">${S.settings.sound ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'}</button>
+        <div class="title-links"><button class="title-sound" data-t="sound">${S.settings.sound ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'}</button>${SESS ? '<button class="title-sound" data-act="switchkid">👥 다른 친구로 시작하기</button>' : ''}</div>
       </div></div>`;
     layer.append(t);
-    const proceed = () => { AU.bgm(true); if (!S.name) { go('home'); nameSheet(afterGate); } else afterGate(); };
+    const proceed = () => {
+      AU.bgm(true);
+      if (API) { if (SESS) resumeCloud(afterGate); else { go('home'); loginScreen(afterGate); } return; }
+      if (!S.name) { go('home'); nameSheet(afterGate); } else afterGate();
+    };
     t.addEventListener('click', e => {
       const b = e.target.closest('[data-t]'); if (!b) return;
       AU.init(); AU.tap();
+      if (b.dataset.act) return;
       if (b.dataset.t === 'sound') { S.settings.sound = !S.settings.sound; S.settings.music = S.settings.sound; save(); b.textContent = S.settings.sound ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'; return; }
       t.remove();
       playIntro(proceed); // 게임 시작하기 → 언제나 인트로 영상부터
     });
   }
-  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, playEvolution, playIntro, L, render, save, get Q() { return Q; } };
+  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, cloudFlush, playEvolution, playIntro, L, render, save, get Q() { return Q; } };
   boot();
 })();
 </script>

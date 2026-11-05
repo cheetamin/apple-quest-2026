@@ -1,0 +1,10 @@
+# Cloudflare Worker 설정 — 자세한 방법은 SETUP.md
+name = "apple-quest-api"
+main = "worker.js"
+compatibility_date = "2025-06-01"
+keep_vars = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "apple_quest"
+database_id = "여기에-D1-데이터베이스-ID"

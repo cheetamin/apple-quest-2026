@@ -16,7 +16,8 @@ src/style.css   홀로그램 카드·게임 UI 스타일
 src/index.html  셸 템플릿
 assets/         원본 진화 이미지에서 잘라낸 캐릭터 3장 (webp, 배경 투명)
 build.py        → dist/index.html 한 파일로 묶음 (이미지 base64 포함, 약 240KB)
-tests/          node --test tests/logic.test.js
+server/         Cloudflare Worker(학급 서버) + wrangler.toml — 설정은 SETUP.md
+tests/          node --test tests/logic.test.js tests/server.test.mjs  (tests/devserver.mjs = 로컬 서버)
 ```
 
 ## 코딩 규칙
@@ -43,7 +44,7 @@ tests/          node --test tests/logic.test.js
 | 사과숲 꾸미기(11개 장식, 끌어서 배치, 캐릭터 산책·말하기) | 완료 |
 | 미접속 퇴화(주말 일시정지, 복습으로 복구) | 완료 (기기 시간 기준 — 서버 시간은 3차) |
 | 선생님 관리실(단원 열기, 규칙 조정, 미리보기, CSV 복사, 초기화) | 이 기기 전용 버전 |
-| 학급 코드 · 학생 계정 · 서버 저장 · 반 전체 현황 | **미구현 (3차)** |
+| 학생 로그인(학교·학년·반·번호·닉네임·PIN) · 서버 자동 저장 · 선생님 탭 · 제작자 승인 · 만족도 취합 | 완료 (server/worker.js, 로컬 node:sqlite로 E2E 시험) — Cloudflare 배포는 SETUP.md |
 | 다중 학급 · 마스코트 업로드 · 자료 업로드(PDF/DOCX/XLSX/CSV) | **미구현 (4차)** |
 | AI 진화 캐릭터 생성 | **보류** (무료로 안정적인 방식 없음 → 직접 업로드 우선) |
 

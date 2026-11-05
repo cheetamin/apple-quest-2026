@@ -130,6 +130,9 @@
   const ADMIN_HASH = '03b00cc653103ede76f12cb62547e58390efd27699f8fb5c432315ef866bd611';
   const CREATOR = '치타민';
 
-  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH };
+  /* 학급 서버(Cloudflare Worker) 주소. 비워 두면 기록은 각 기기에만 저장됩니다. 예: 'https://apple-quest-api.이름.workers.dev' */
+  const API_BASE = '';
+
+  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH, API_BASE };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
