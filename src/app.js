@@ -1160,7 +1160,7 @@
     S.account = acct(SESS); S.name = SESS.nickname; save();
   }
   async function resumeCloud(after) {
-    toast('기록을 불러오는 중…', 1200);
+    go('home'); toast('기록을 불러오는 중…', 1200);
     const r = await api('/api/student/state', undefined, { token: SESS.token });
     if (r.ok) {
       clockOffset = (r.server_now || Date.now()) - Date.now();
