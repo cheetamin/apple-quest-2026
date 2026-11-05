@@ -14,13 +14,13 @@
 2. 왼쪽 메뉴 **Storage & Databases → D1 SQL Database → Create**.
 3. 이름에 `apple_quest` 를 적고 **Create**.
 4. 만들어진 화면의 **Database ID**(긴 영문·숫자)를 복사해서 Claude에게 보내 주세요.
-   → Claude가 `server/wrangler.toml`에 넣어 GitHub에 올려요.
+   → Claude가 `wrangler.toml`에 넣어 GitHub에 올려요.
 
 ## 2단계. 서버(Worker) 올리기 — GitHub와 연결
 1. 왼쪽 메뉴 **Workers & Pages → Create → Import a repository**.
 2. GitHub 저장소 **apple-quest-2026**을 골라요.
    (목록에 없으면 GitHub 설정 → Applications → *Cloudflare Workers and Pages* → Configure에서 이 저장소를 추가)
-3. **Root directory(루트 디렉터리)** 를 `server` 로 바꿔요. 나머지는 그대로 두고 **Deploy**.
+3. 설정은 그대로 두고 **Deploy** (저장소 맨 위의 `wrangler.toml`이 `server/worker.js`를 배포해요).
 4. 배포가 끝나면 보이는 주소(예: `https://apple-quest-api.○○○.workers.dev`)를 Claude에게 보내 주세요.
    → Claude가 게임에 이 주소를 넣어 학생 로그인을 켜요.
 
