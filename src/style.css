@@ -1190,3 +1190,10 @@ body { background: #070b14; display: grid; place-items: center; }
 .sv-c .sv-h { color: #ff6b88; font-size: 12px; letter-spacing: 1px; } .sv-c p { margin: 2px 0; font-size: 14px; line-height: 1.5; } .sv-c small { color: #8fa2c8; font-size: 11px; }
 .sv-note { margin: 8px 0 0; font-size: 13px; color: #a9bce0; }
 .sv-top > div:first-child { white-space: nowrap; flex: 0 0 auto; } .sv-meta { flex: 1; min-width: 0; }
+
+/* 로고 이미지 */
+.logo { width: 112px; margin-top: 0; }
+.logo img { width: 100%; height: auto; display: block; filter: drop-shadow(0 3px 5px rgba(0,0,0,.55)); }
+.s-logo img { width: 100%; height: 100%; object-fit: contain; object-position: left center; filter: drop-shadow(0 4px 6px rgba(0,0,0,.6)); }
+@media (max-width: 400px) { .logo { width: 100px; } }
+@media (max-width: 359px) { .logo { width: 84px; } }

@@ -115,6 +115,7 @@
   function applySettings() { document.documentElement.classList.toggle('reduce', !!S.settings.reduceMotion); }
   if (S.settings.reduceMotion === false && window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches && !S.createdAt2) { S.settings.reduceMotion = true; S.createdAt2 = 1; }
   applySettings();
+  { const li = document.getElementById('logoImg'); if (li) li.src = AQ_LOGO; }
   { const bg = document.getElementById('bgimg'); if (bg) bg.style.backgroundImage = `url(${AQ_TPL})`; }
 
   const unitById = id => UNITS.find(u => u.id === id);
@@ -573,7 +574,7 @@
       ${i > 0 ? `<div class="stg-tint t${i}" style="${P(163, 122, 920, 1000)}"></div>` : ''}
       ${legend ? `<div class="stg-legend" style="${P(159, 118, 924, 1004)}"></div>` : ''}
       <div class="stg-sheen" style="${P(163, 122, 920, 1000)}"></div>
-      <div class="s-logo" style="${P(4, 8, 182, 88)}">${document.querySelector('.logo svg').outerHTML}</div>
+      <div class="s-logo" style="${P(4, 0, 178, 110)}"><img src="${AQ_LOGO}" alt="애플왕의 진화 모험 English Quest"></div>
       <button class="s-stat" style="${P(196, 40, 410, 84)}" data-tip="⚡ 성장 에너지: 꾸준히 공부하면 가득 차요"><span class="ic">⚡</span><b><span id="sEnergy">${S.energy}</span><small>/100</small></b></button>
       <button class="s-stat" style="${P(414, 40, 618, 84)}" data-tip="🍎 사과 포인트: 문제를 맞힐 때마다 쌓이는 누적 경험치"><span class="ic">🍎</span><b id="sExp">${S.exp}</b></button>
       <button class="s-stat" style="${P(622, 40, 828, 84)}" data-tip="💎 성장 보석: 단원을 완료하면 1개씩 받아요"><span class="ic">💎</span><b id="sFruit">${S.fruits}</b></button>

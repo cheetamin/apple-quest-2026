@@ -6,6 +6,8 @@ imgs = [base64.b64encode((R / 'assets' / f'stage{i}.webp').read_bytes()).decode(
 arts = [base64.b64encode((R / 'assets' / f'art{i}.webp').read_bytes()).decode() for i in (1, 2, 3)]
 img_js = 'window.AQ_ART=[' + ','.join(f'"data:image/webp;base64,{b}"' for b in arts) + '];window.AQ_IMG=[' + ','.join(f'"data:image/webp;base64,{b}"' for b in imgs) + '];'
 title = base64.b64encode((R / 'assets' / 'title.webp').read_bytes()).decode()
+logo = base64.b64encode((R / 'assets' / 'logo.webp').read_bytes()).decode()
+img_js += f'window.AQ_LOGO="data:image/webp;base64,{logo}";'
 tpl = base64.b64encode((R / 'assets' / 'template916.webp').read_bytes()).decode()
 img_js += f'window.AQ_TPL="data:image/webp;base64,{tpl}";'
 img_js += f'window.AQ_TITLE="data:image/webp;base64,{title}";'
