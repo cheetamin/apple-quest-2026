@@ -121,6 +121,12 @@
     openUnits: [1,2,3,4,5,6,7,8,9,10,11],
   };
 
-  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES };
+  /* 만족도 조사 보내기 설정 (제작자용)
+   * 구글 설문지 주소와 질문 번호(entry.숫자)를 넣으면 학생 응답이 제작자의 구글 설문지로 모입니다.
+   * 비워 두면 응답은 그 기기의 선생님 관리실에만 기록됩니다. */
+  const SURVEY = { formAction: '', entryRating: '', entryComment: '', entryInfo: '' };
+  const CREATOR = '치타민';
+
+  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);

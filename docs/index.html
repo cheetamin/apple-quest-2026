@@ -1158,6 +1158,36 @@ body { background: #070b14; display: grid; place-items: center; }
 .s-nav span { font-size: 25px; }
 .s-art .bubble, .s-art .bubble .en { font-size: 28px; }
 .s-art .art-btn { font-size: 32px; }
+
+/* ---------- 나가기 · 만족도 조사 · 감사 화면 ---------- */
+.s-exit { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 22px; font-family: var(--f-display); font-size: 22px; letter-spacing: .06em; color: #fff; line-height: 1;
+  background: linear-gradient(180deg, rgba(40, 54, 100, .92), rgba(16, 24, 56, .92)); box-shadow: inset 0 0 0 3px #8aa4e0, 0 4px 10px rgba(0,0,0,.45); text-shadow: 0 2px 0 #000; }
+.s-exit span { font-size: 32px; }
+.exitov, .thanks { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); background: rgba(4, 10, 24, .72); animation: fade .2s; }
+.exitbox { width: 100%; max-width: 380px; padding: 20px 18px 18px; border-radius: 6px; color: var(--ink); text-align: center;
+  background: linear-gradient(180deg, #fffdf4, #f3eedc); box-shadow: 0 0 0 3px #ffd45c, 0 0 30px rgba(255, 212, 92, .6), 0 10px 30px rgba(0,0,0,.5); animation: pop .3s; }
+.exitbox h3 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 400; font-size: 24px; letter-spacing: .05em; }
+.exit-sub { display: block; margin: 0 0 10px; font-size: 13.5px; font-weight: 500; letter-spacing: .02em; color: var(--ink-soft); }
+.exit-sub b { color: #d81e18; }
+.hearts { display: flex; justify-content: center; gap: 6px; }
+.heart { width: 52px; height: 52px; font-size: 40px; line-height: 1; color: #d9d2e6; transition: transform .15s, color .15s; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
+.heart.on { color: #ff4f6d; text-shadow: 0 0 12px rgba(255, 79, 109, .6); transform: scale(1.1); }
+.heart:active { transform: scale(.9); }
+.heart-label { margin: 4px 0 14px; min-height: 20px; font-weight: 700; font-size: 15px; letter-spacing: .03em; color: #d83a5a; }
+.exit-ta { height: 86px; resize: none; font-size: 14.5px; line-height: 1.5; margin-bottom: 4px; }
+.thanks { background: radial-gradient(70% 50% at 50% 35%, rgba(255, 230, 150, .25), transparent 70%), linear-gradient(180deg, #0d2c55, #0f4a44 60%, #0a2a2c); overflow-y: auto; align-items: flex-start; }
+.thanks-in { width: 100%; max-width: 400px; margin: auto; text-align: center; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; animation: pop .4s; }
+.thanks-in img { width: 140px; filter: drop-shadow(0 0 20px rgba(255, 230, 150, .7)); animation: idle 2.4s ease-in-out infinite; }
+.thanks-in h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 28px; letter-spacing: .06em; color: #ffe27a; text-shadow: 0 2px 0 #000; }
+.thanks-in p { margin: 0; font-size: 14.5px; font-weight: 500; line-height: 1.75; letter-spacing: .02em; color: #eef3ff; }
+.thanks-in .sign { align-self: flex-end; margin-right: 8px; font-family: var(--f-display); font-size: 17px; letter-spacing: .08em; color: #ffe27a; }
+.thanks-in .btn { width: 100%; max-width: 280px; margin-top: 6px; }
+.thanks-in .close-note { font-size: 12.5px; color: #a9bce0; }
+.copyright { margin-top: 14px !important; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.18); font-size: 10.5px !important; line-height: 1.6 !important; color: #8fa2c8 !important; text-align: left; letter-spacing: .01em !important; }
+
+.heart { display: grid; place-items: center; }
+.heart svg { width: 44px; height: 44px; fill: #e4dcef; stroke: #c9bfdc; stroke-width: 1.2; }
+.heart.on svg { fill: #ff3d63; stroke: #c4123a; filter: drop-shadow(0 0 6px rgba(255, 61, 99, .55)); }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -1324,7 +1354,13 @@ body { background: #070b14; display: grid; place-items: center; }
     openUnits: [1,2,3,4,5,6,7,8,9,10,11],
   };
 
-  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES };
+  /* 만족도 조사 보내기 설정 (제작자용)
+   * 구글 설문지 주소와 질문 번호(entry.숫자)를 넣으면 학생 응답이 제작자의 구글 설문지로 모입니다.
+   * 비워 두면 응답은 그 기기의 선생님 관리실에만 기록됩니다. */
+  const SURVEY = { formAction: '', entryRating: '', entryComment: '', entryInfo: '' };
+  const CREATOR = '치타민';
+
+  root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
@@ -1641,7 +1677,7 @@ body { background: #070b14; display: grid; place-items: center; }
 <script>/* 애플왕의 진화 모험 — 화면과 상호작용 */
 (function () {
   'use strict';
-  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES } = AQ_DATA;
+  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR } = AQ_DATA;
   const L = AQ_LOGIC;
   const IMG = AQ_IMG;
   const KEY = 'aq-apple-quest-v1';
@@ -2204,6 +2240,7 @@ body { background: #070b14; display: grid; place-items: center; }
       <div class="s-railtab" style="${P(30, 222, 156, 266)}">진화 라인</div>
       ${[350, 522, 690].map((cy, k) => `<div class="s-pt ${S.stage === k ? 'cur' : ''} ${S.cards.includes(k) ? '' : 'lock'}" style="${P(88 - 62, cy - 62, 88 + 62, cy + 62)}"><img src="${IMG[k]}" alt="${STAGES[k].name}"></div>`).join('')}
       <button class="s-forest" style="${P(22, 832, 156, 908)}" data-act="go" data-v="forest"><span>🌳</span>사과숲</button>
+      <button class="s-exit" style="${P(24, 112, 154, 196)}" data-act="exit" aria-label="나가기"><span>🚪</span>나가기</button>
 
       <div class="s-tier" style="${P(182, 171, 304, 207)}">${TIER[i]}</div>
       <div class="s-name" style="${P(316, 160, 558, 224)}">${st.name}</div>
@@ -2471,6 +2508,7 @@ body { background: #070b14; display: grid; place-items: center; }
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
       <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 선생님 관리실</button>
+      <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       <p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요. 학급 서버 저장은 다음 개발 단계에서 연결됩니다.</p>`;
   }
 
@@ -2542,6 +2580,9 @@ body { background: #070b14; display: grid; place-items: center; }
       <div class="section-h">미리보기</div>
       <div class="row-btns" style="margin-top:0">${[0, 1, 2].map(i => `<button class="btn ghost" data-act="tzoom" data-v="${i}">${STAGES[i].name}</button>`).join('')}</div>
       <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.id}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
+      <div class="section-h">만족도 조사 (이 기기)</div>
+      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${(S.surveys || []).length ? `응답 ${S.surveys.length}개 · 평균 ${'♥'} ${(S.surveys.reduce((a, x) => a + x.r, 0) / S.surveys.length).toFixed(1)}<br>` + S.surveys.slice(-8).reverse().map(x => `${'♥'.repeat(x.r)}${'♡'.repeat(5 - x.r)} ${esc(x.c || '')}`).join('<br>') : '아직 응답이 없어요.'}
+        <br><span style="color:#a9bce0">${SURVEY.formAction ? '응답은 제작자의 구글 설문지로도 전송돼요.' : '전송 주소가 설정되지 않아 이 기기에만 기록돼요.'}</span></div>
       <div class="section-h">학습 기록</div>
       <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.id}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
       <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button><button class="btn ghost" data-act="pin">🔑 비밀번호 변경</button></div>
@@ -2636,6 +2677,7 @@ body { background: #070b14; display: grid; place-items: center; }
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
     },
     resetask: () => openSheet(`<h3>정말 초기화할까요?</h3><p class="sub">이 기기의 경험치, 단원 기록, 카드, 사과숲이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="reset">초기화</button></div>`),
+    exit: () => { AU.tap(); openExit(); },
     reset: () => { const pin = S.pin, rules = S.rules; S = migrate({}); S.pin = pin; S.rules = rules; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
   };
   function showText(t) { openSheet(`<button class="close" data-act="closeSheet">✕</button><h3>아래 내용을 길게 눌러 복사하세요</h3><textarea class="field" id="csv-out" style="height:200px;font-size:13px" readonly>${esc(t)}</textarea>`); }
@@ -2675,6 +2717,77 @@ body { background: #070b14; display: grid; place-items: center; }
     } else if (away >= 3) setTimeout(() => { setMood('greet', 1800); say('보고 싶었어! 다시 와 줘서 고마워!'); }, 600);
     else setTimeout(() => { setMood('happy'); say(`${S.name || '친구'}, 안녕! 오늘도 같이 공부하자!`); }, 600);
   }
+  /* ---------- 나가기 · 만족도 조사 ---------- */
+  const HEART_LABEL = ['', '아쉬웠어요', '조금 아쉬워요', '괜찮았어요', '재미있었어요', '최고예요!'];
+  function copyrightHTML() {
+    return `<p class="copyright">© 2026 ${CREATOR}. 「애플왕의 진화 모험 — English Quest」의 기획, 디자인, 캐릭터, 영상, 프로그램에 대한 저작권과 모든 권리는 제작자 ${CREATOR}에게 있습니다.
+      학교 수업과 같은 비영리 교육 목적의 이용은 환영하지만, 제작자의 허락 없이 복제·수정·재배포하거나 상업적으로 이용할 수 없습니다.
+      영어 단어와 문장은 초등학교 4학년 영어 교육과정을 참고해 정리했으며, 교과서 원문의 저작권은 해당 저작권자에게 있습니다.</p>`;
+  }
+  function openExit() {
+    clearTimeout(autoNextT);
+    const ov = document.createElement('div'); ov.className = 'exitov';
+    let rating = 0;
+    ov.innerHTML = `<div class="exitbox">
+      <h3>오늘 모험은 어땠나요?</h3>
+      <p class="exit-sub">하트를 눌러 만족도를 알려 주세요. <b>(필수)</b></p>
+      <div class="hearts" role="radiogroup" aria-label="만족도">${[1, 2, 3, 4, 5].map(k => `<button class="heart" data-h="${k}" role="radio" aria-checked="false" aria-label="하트 ${k}개"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C 6 16.5 2 13 2 8.5 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8.5 C 22 13 18 16.5 12 21Z"/></svg></button>`).join('')}</div>
+      <p class="heart-label" id="hlabel">하트를 눌러 주세요</p>
+      <label class="exit-sub" for="exit-comment">하고 싶은 말이 있다면 남겨 주세요. (선택)</label>
+      <textarea id="exit-comment" class="field exit-ta" maxlength="200" placeholder="예: 진화 장면이 멋졌어요! 문제가 조금 더 많았으면 좋겠어요."></textarea>
+      <div class="row-btns"><button class="btn ghost" data-e="stay">계속 할래요</button><button class="btn" data-e="send" disabled>보내고 나가기</button></div>
+    </div>`;
+    layer.append(ov);
+    const send = ov.querySelector('[data-e=send]');
+    ov.addEventListener('click', e => {
+      const h = e.target.closest('[data-h]');
+      if (h) {
+        rating = +h.dataset.h; AU.tap();
+        ov.querySelectorAll('.heart').forEach(x => { const on = +x.dataset.h <= rating; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(+x.dataset.h === rating)); });
+        ov.querySelector('#hlabel').textContent = HEART_LABEL[rating]; send.disabled = false; return;
+      }
+      const b = e.target.closest('[data-e]'); if (!b) return;
+      if (b.dataset.e === 'stay') { ov.remove(); return; }
+      if (b.dataset.e === 'send') {
+        if (!rating) { toast('하트를 1개 이상 눌러 주세요'); return; }
+        const comment = ov.querySelector('#exit-comment').value.trim().slice(0, 200);
+        submitSurvey(rating, comment); ov.remove(); showThanks();
+      }
+    });
+  }
+  function submitSurvey(r, c) {
+    S.surveys = S.surveys || []; S.surveys.push({ r, c, t: now() }); if (S.surveys.length > 100) S.surveys.shift(); save();
+    if (!SURVEY.formAction) return;
+    try {
+      const fd = new URLSearchParams();
+      fd.append(SURVEY.entryRating, String(r));
+      if (SURVEY.entryComment) fd.append(SURVEY.entryComment, c);
+      if (SURVEY.entryInfo) fd.append(SURVEY.entryInfo, `Lv.${L.level(S.exp)} · ${STAGES[S.stage].name} · 완료 단원 ${L.unitsDone(S)}`);
+      fetch(SURVEY.formAction, { method: 'POST', mode: 'no-cors', body: fd }).catch(() => {});
+    } catch (e) {}
+  }
+  function showThanks() {
+    AU.bgm(false); AU.fanfare();
+    const ov = document.createElement('div'); ov.className = 'thanks';
+    ov.innerHTML = `<div class="thanks-in">
+      <img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}">
+      <h3>함께해 줘서 고마워요!</h3>
+      <p>오늘도 영어 모험에 함께해 주셔서 진심으로 감사합니다.<br>
+      여러분이 익힌 단어와 문장 하나하나가 ${STAGES[S.stage].name}을 더 크고 멋지게 키워 주었어요.<br>
+      소중한 의견은 더 재미있는 모험을 만드는 데 꼭 반영할게요.<br>
+      다음에도 사과숲에서 또 만나요!</p>
+      <p class="sign">— ${CREATOR} 드림</p>
+      <button class="btn" data-th="home">처음 화면으로</button>
+      <p class="close-note">이제 창을 닫아도 괜찮아요. 기록은 이 기기에 저장되어 있어요.</p>
+      ${copyrightHTML()}
+    </div>`;
+    layer.append(ov);
+    ov.addEventListener('click', e => {
+      if (!e.target.closest('[data-th=home]')) return;
+      ov.remove(); closeSheet(); Q = null; boot();
+    });
+  }
+
   function boot() {
     const t = document.createElement('div'); t.className = 'title';
     const returning = S.name && S.introSeen;

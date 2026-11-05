@@ -1144,3 +1144,33 @@ body { background: #070b14; display: grid; place-items: center; }
 .s-nav span { font-size: 25px; }
 .s-art .bubble, .s-art .bubble .en { font-size: 28px; }
 .s-art .art-btn { font-size: 32px; }
+
+/* ---------- 나가기 · 만족도 조사 · 감사 화면 ---------- */
+.s-exit { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; border-radius: 22px; font-family: var(--f-display); font-size: 22px; letter-spacing: .06em; color: #fff; line-height: 1;
+  background: linear-gradient(180deg, rgba(40, 54, 100, .92), rgba(16, 24, 56, .92)); box-shadow: inset 0 0 0 3px #8aa4e0, 0 4px 10px rgba(0,0,0,.45); text-shadow: 0 2px 0 #000; }
+.s-exit span { font-size: 32px; }
+.exitov, .thanks { position: fixed; inset: 0; z-index: 85; display: flex; align-items: center; justify-content: center; padding: 20px max(16px, env(safe-area-inset-right, 0px)) 20px max(16px, env(safe-area-inset-left, 0px)); background: rgba(4, 10, 24, .72); animation: fade .2s; }
+.exitbox { width: 100%; max-width: 380px; padding: 20px 18px 18px; border-radius: 6px; color: var(--ink); text-align: center;
+  background: linear-gradient(180deg, #fffdf4, #f3eedc); box-shadow: 0 0 0 3px #ffd45c, 0 0 30px rgba(255, 212, 92, .6), 0 10px 30px rgba(0,0,0,.5); animation: pop .3s; }
+.exitbox h3 { margin: 0 0 6px; font-family: var(--f-display); font-weight: 400; font-size: 24px; letter-spacing: .05em; }
+.exit-sub { display: block; margin: 0 0 10px; font-size: 13.5px; font-weight: 500; letter-spacing: .02em; color: var(--ink-soft); }
+.exit-sub b { color: #d81e18; }
+.hearts { display: flex; justify-content: center; gap: 6px; }
+.heart { width: 52px; height: 52px; font-size: 40px; line-height: 1; color: #d9d2e6; transition: transform .15s, color .15s; text-shadow: 0 2px 0 rgba(0,0,0,.08); }
+.heart.on { color: #ff4f6d; text-shadow: 0 0 12px rgba(255, 79, 109, .6); transform: scale(1.1); }
+.heart:active { transform: scale(.9); }
+.heart-label { margin: 4px 0 14px; min-height: 20px; font-weight: 700; font-size: 15px; letter-spacing: .03em; color: #d83a5a; }
+.exit-ta { height: 86px; resize: none; font-size: 14.5px; line-height: 1.5; margin-bottom: 4px; }
+.thanks { background: radial-gradient(70% 50% at 50% 35%, rgba(255, 230, 150, .25), transparent 70%), linear-gradient(180deg, #0d2c55, #0f4a44 60%, #0a2a2c); overflow-y: auto; align-items: flex-start; }
+.thanks-in { width: 100%; max-width: 400px; margin: auto; text-align: center; color: #fff; display: flex; flex-direction: column; align-items: center; gap: 10px; animation: pop .4s; }
+.thanks-in img { width: 140px; filter: drop-shadow(0 0 20px rgba(255, 230, 150, .7)); animation: idle 2.4s ease-in-out infinite; }
+.thanks-in h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 28px; letter-spacing: .06em; color: #ffe27a; text-shadow: 0 2px 0 #000; }
+.thanks-in p { margin: 0; font-size: 14.5px; font-weight: 500; line-height: 1.75; letter-spacing: .02em; color: #eef3ff; }
+.thanks-in .sign { align-self: flex-end; margin-right: 8px; font-family: var(--f-display); font-size: 17px; letter-spacing: .08em; color: #ffe27a; }
+.thanks-in .btn { width: 100%; max-width: 280px; margin-top: 6px; }
+.thanks-in .close-note { font-size: 12.5px; color: #a9bce0; }
+.copyright { margin-top: 14px !important; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.18); font-size: 10.5px !important; line-height: 1.6 !important; color: #8fa2c8 !important; text-align: left; letter-spacing: .01em !important; }
+
+.heart { display: grid; place-items: center; }
+.heart svg { width: 44px; height: 44px; fill: #e4dcef; stroke: #c9bfdc; stroke-width: 1.2; }
+.heart.on svg { fill: #ff3d63; stroke: #c4123a; filter: drop-shadow(0 0 6px rgba(255, 61, 99, .55)); }

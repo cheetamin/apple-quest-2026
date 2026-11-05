@@ -1,7 +1,7 @@
 /* 애플왕의 진화 모험 — 화면과 상호작용 */
 (function () {
   'use strict';
-  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES } = AQ_DATA;
+  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR } = AQ_DATA;
   const L = AQ_LOGIC;
   const IMG = AQ_IMG;
   const KEY = 'aq-apple-quest-v1';
@@ -564,6 +564,7 @@
       <div class="s-railtab" style="${P(30, 222, 156, 266)}">진화 라인</div>
       ${[350, 522, 690].map((cy, k) => `<div class="s-pt ${S.stage === k ? 'cur' : ''} ${S.cards.includes(k) ? '' : 'lock'}" style="${P(88 - 62, cy - 62, 88 + 62, cy + 62)}"><img src="${IMG[k]}" alt="${STAGES[k].name}"></div>`).join('')}
       <button class="s-forest" style="${P(22, 832, 156, 908)}" data-act="go" data-v="forest"><span>🌳</span>사과숲</button>
+      <button class="s-exit" style="${P(24, 112, 154, 196)}" data-act="exit" aria-label="나가기"><span>🚪</span>나가기</button>
 
       <div class="s-tier" style="${P(182, 171, 304, 207)}">${TIER[i]}</div>
       <div class="s-name" style="${P(316, 160, 558, 224)}">${st.name}</div>
@@ -831,6 +832,7 @@
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
       <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 선생님 관리실</button>
+      <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       <p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요. 학급 서버 저장은 다음 개발 단계에서 연결됩니다.</p>`;
   }
 
@@ -902,6 +904,9 @@
       <div class="section-h">미리보기</div>
       <div class="row-btns" style="margin-top:0">${[0, 1, 2].map(i => `<button class="btn ghost" data-act="tzoom" data-v="${i}">${STAGES[i].name}</button>`).join('')}</div>
       <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.id}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
+      <div class="section-h">만족도 조사 (이 기기)</div>
+      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${(S.surveys || []).length ? `응답 ${S.surveys.length}개 · 평균 ${'♥'} ${(S.surveys.reduce((a, x) => a + x.r, 0) / S.surveys.length).toFixed(1)}<br>` + S.surveys.slice(-8).reverse().map(x => `${'♥'.repeat(x.r)}${'♡'.repeat(5 - x.r)} ${esc(x.c || '')}`).join('<br>') : '아직 응답이 없어요.'}
+        <br><span style="color:#a9bce0">${SURVEY.formAction ? '응답은 제작자의 구글 설문지로도 전송돼요.' : '전송 주소가 설정되지 않아 이 기기에만 기록돼요.'}</span></div>
       <div class="section-h">학습 기록</div>
       <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.id}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
       <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button><button class="btn ghost" data-act="pin">🔑 비밀번호 변경</button></div>
@@ -996,6 +1001,7 @@
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
     },
     resetask: () => openSheet(`<h3>정말 초기화할까요?</h3><p class="sub">이 기기의 경험치, 단원 기록, 카드, 사과숲이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="reset">초기화</button></div>`),
+    exit: () => { AU.tap(); openExit(); },
     reset: () => { const pin = S.pin, rules = S.rules; S = migrate({}); S.pin = pin; S.rules = rules; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
   };
   function showText(t) { openSheet(`<button class="close" data-act="closeSheet">✕</button><h3>아래 내용을 길게 눌러 복사하세요</h3><textarea class="field" id="csv-out" style="height:200px;font-size:13px" readonly>${esc(t)}</textarea>`); }
@@ -1035,6 +1041,77 @@
     } else if (away >= 3) setTimeout(() => { setMood('greet', 1800); say('보고 싶었어! 다시 와 줘서 고마워!'); }, 600);
     else setTimeout(() => { setMood('happy'); say(`${S.name || '친구'}, 안녕! 오늘도 같이 공부하자!`); }, 600);
   }
+  /* ---------- 나가기 · 만족도 조사 ---------- */
+  const HEART_LABEL = ['', '아쉬웠어요', '조금 아쉬워요', '괜찮았어요', '재미있었어요', '최고예요!'];
+  function copyrightHTML() {
+    return `<p class="copyright">© 2026 ${CREATOR}. 「애플왕의 진화 모험 — English Quest」의 기획, 디자인, 캐릭터, 영상, 프로그램에 대한 저작권과 모든 권리는 제작자 ${CREATOR}에게 있습니다.
+      학교 수업과 같은 비영리 교육 목적의 이용은 환영하지만, 제작자의 허락 없이 복제·수정·재배포하거나 상업적으로 이용할 수 없습니다.
+      영어 단어와 문장은 초등학교 4학년 영어 교육과정을 참고해 정리했으며, 교과서 원문의 저작권은 해당 저작권자에게 있습니다.</p>`;
+  }
+  function openExit() {
+    clearTimeout(autoNextT);
+    const ov = document.createElement('div'); ov.className = 'exitov';
+    let rating = 0;
+    ov.innerHTML = `<div class="exitbox">
+      <h3>오늘 모험은 어땠나요?</h3>
+      <p class="exit-sub">하트를 눌러 만족도를 알려 주세요. <b>(필수)</b></p>
+      <div class="hearts" role="radiogroup" aria-label="만족도">${[1, 2, 3, 4, 5].map(k => `<button class="heart" data-h="${k}" role="radio" aria-checked="false" aria-label="하트 ${k}개"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21 C 6 16.5 2 13 2 8.5 A5 5 0 0 1 12 6 A5 5 0 0 1 22 8.5 C 22 13 18 16.5 12 21Z"/></svg></button>`).join('')}</div>
+      <p class="heart-label" id="hlabel">하트를 눌러 주세요</p>
+      <label class="exit-sub" for="exit-comment">하고 싶은 말이 있다면 남겨 주세요. (선택)</label>
+      <textarea id="exit-comment" class="field exit-ta" maxlength="200" placeholder="예: 진화 장면이 멋졌어요! 문제가 조금 더 많았으면 좋겠어요."></textarea>
+      <div class="row-btns"><button class="btn ghost" data-e="stay">계속 할래요</button><button class="btn" data-e="send" disabled>보내고 나가기</button></div>
+    </div>`;
+    layer.append(ov);
+    const send = ov.querySelector('[data-e=send]');
+    ov.addEventListener('click', e => {
+      const h = e.target.closest('[data-h]');
+      if (h) {
+        rating = +h.dataset.h; AU.tap();
+        ov.querySelectorAll('.heart').forEach(x => { const on = +x.dataset.h <= rating; x.classList.toggle('on', on); x.setAttribute('aria-checked', String(+x.dataset.h === rating)); });
+        ov.querySelector('#hlabel').textContent = HEART_LABEL[rating]; send.disabled = false; return;
+      }
+      const b = e.target.closest('[data-e]'); if (!b) return;
+      if (b.dataset.e === 'stay') { ov.remove(); return; }
+      if (b.dataset.e === 'send') {
+        if (!rating) { toast('하트를 1개 이상 눌러 주세요'); return; }
+        const comment = ov.querySelector('#exit-comment').value.trim().slice(0, 200);
+        submitSurvey(rating, comment); ov.remove(); showThanks();
+      }
+    });
+  }
+  function submitSurvey(r, c) {
+    S.surveys = S.surveys || []; S.surveys.push({ r, c, t: now() }); if (S.surveys.length > 100) S.surveys.shift(); save();
+    if (!SURVEY.formAction) return;
+    try {
+      const fd = new URLSearchParams();
+      fd.append(SURVEY.entryRating, String(r));
+      if (SURVEY.entryComment) fd.append(SURVEY.entryComment, c);
+      if (SURVEY.entryInfo) fd.append(SURVEY.entryInfo, `Lv.${L.level(S.exp)} · ${STAGES[S.stage].name} · 완료 단원 ${L.unitsDone(S)}`);
+      fetch(SURVEY.formAction, { method: 'POST', mode: 'no-cors', body: fd }).catch(() => {});
+    } catch (e) {}
+  }
+  function showThanks() {
+    AU.bgm(false); AU.fanfare();
+    const ov = document.createElement('div'); ov.className = 'thanks';
+    ov.innerHTML = `<div class="thanks-in">
+      <img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}">
+      <h3>함께해 줘서 고마워요!</h3>
+      <p>오늘도 영어 모험에 함께해 주셔서 진심으로 감사합니다.<br>
+      여러분이 익힌 단어와 문장 하나하나가 ${STAGES[S.stage].name}을 더 크고 멋지게 키워 주었어요.<br>
+      소중한 의견은 더 재미있는 모험을 만드는 데 꼭 반영할게요.<br>
+      다음에도 사과숲에서 또 만나요!</p>
+      <p class="sign">— ${CREATOR} 드림</p>
+      <button class="btn" data-th="home">처음 화면으로</button>
+      <p class="close-note">이제 창을 닫아도 괜찮아요. 기록은 이 기기에 저장되어 있어요.</p>
+      ${copyrightHTML()}
+    </div>`;
+    layer.append(ov);
+    ov.addEventListener('click', e => {
+      if (!e.target.closest('[data-th=home]')) return;
+      ov.remove(); closeSheet(); Q = null; boot();
+    });
+  }
+
   function boot() {
     const t = document.createElement('div'); t.className = 'title';
     const returning = S.name && S.introSeen;
