@@ -874,24 +874,24 @@
   /* 사과숲 */
   let forestT = null;
   function stopForest() { clearInterval(forestT); forestT = null; }
-  function decorHTML(d) {
-    if (d.key === 'pond') return '<div class="pond"></div>';
-    if (d.key === 'goldtree') return `<svg viewBox="0 0 60 70" width="64" aria-hidden="true"><rect x="26" y="40" width="8" height="30" rx="3" fill="#7a4a2a"/><circle cx="30" cy="28" r="22" fill="#ffd45c"/><circle cx="18" cy="34" r="12" fill="#f0b21a"/><circle cx="42" cy="34" r="12" fill="#f0b21a"/><circle cx="24" cy="22" r="4" fill="#fff6a0"/><circle cx="38" cy="30" r="4" fill="#fff6a0"/><circle cx="30" cy="40" r="4" fill="#fff6a0"/></svg>`;
-    return d.e;
-  }
+  const FX = AQ_FOREST;
+  const depthS = y => 0.5 + (Math.max(44, Math.min(98, y)) - 44) / 54 * 0.72; // 멀수록 작게
+  const placeStyle = (x, y, w) => `left:${x}%;top:${y}%;--s:${depthS(y).toFixed(3)};--w:${w}px;z-index:${Math.round(y * 10)}`;
+  function decorHTML(d) { return (FX.DECOR[d.key] || (() => d.e))(); }
   function renderForest() {
     const unlocked = DECOR.filter(decorDone);
     const placed = DECOR.filter(d => S.forest[d.key] && unlocked.includes(d));
-    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="home" aria-label="뒤로">←</button><div><h2>${esc(S.name || '나')}의 사과숲</h2><p>장식을 눌러 놓고, 끌어서 옮겨요</p></div></div>
-      <div class="forest" id="forest"><div class="hill"></div><div class="bgtree" style="left:6%"></div><div class="bgtree" style="right:8%;top:22%;width:18%"></div>
-        <svg class="maintree" viewBox="0 0 120 130" aria-hidden="true"><rect x="52" y="70" width="16" height="60" rx="5" fill="#7a4a2a"/><circle cx="60" cy="48" r="40" fill="#3fae5a"/><circle cx="32" cy="62" r="22" fill="#4cbf5e"/><circle cx="88" cy="62" r="22" fill="#4cbf5e"/>${[[44, 40], [72, 34], [60, 62], [30, 66], [90, 64]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="6" fill="#e2453a"/>`).join('')}</svg>
-        ${placed.map(d => `<div class="item ${['flowers', 'garden', 'mushroom'].includes(d.key) ? 'sway' : ''}" data-k="${d.key}" style="left:${S.forest[d.key].x}%;top:${S.forest[d.key].y}%">${decorHTML(d)}</div>`).join('')}
-        <div class="walker" id="walker" style="left:50%;top:82%"><img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}"></div>
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="home" aria-label="뒤로">←</button><div><h2>${esc(S.name || '나')}의 사과숲</h2><p>장식을 눌러 놓고, 끌어서 옮겨요 · 앞으로 끌면 커져요</p></div></div>
+      <div class="forest f3d" id="forest">${FX.DEFS}${FX.scene()}
+        <div class="f-item f-tree" style="${placeStyle(50, 60, 190)}">${FX.tree(false)}</div>
+        ${placed.map(d => { const p = S.forest[d.key]; const y = Math.max(46, p.y); return `<div class="item f-item ${['flowers', 'garden', 'mushroom'].includes(d.key) ? 'sway' : ''}" data-k="${d.key}" style="${placeStyle(p.x, y, FX.SIZE[d.key] || 80)}">${decorHTML(d)}</div>`; }).join('')}
+        <div class="walker f-item" id="walker" style="${placeStyle(50, 84, 74)}"><img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}"></div>
+        ${FX.overlay()}
       </div>
-      <div class="tray">${DECOR.map(d => { const u = unlocked.includes(d); const p = !!S.forest[d.key] && u; return `<button class="slot ${u ? '' : 'lock'} ${p ? 'placed' : ''}" data-act="decor" data-v="${d.key}"><span>${u ? (d.e || (d.key === 'pond' ? '💧' : '🌟')) : '🔒'}</span>${d.name}<br><small>${u ? (p ? '놓았어요 · 누르면 치우기' : '눌러서 놓기') : d.unit + '단원 완료'}</small></button>`; }).join('')}</div>`;
+      <div class="tray">${DECOR.map(d => { const u = unlocked.includes(d); const p = !!S.forest[d.key] && u; return `<button class="slot ${u ? '' : 'lock'} ${p ? 'placed' : ''}" data-act="decor" data-v="${d.key}"><span class="ico">${u ? decorHTML(d) : '🔒'}</span>${d.name}<br><small>${u ? (p ? '놓았어요 · 누르면 치우기' : '눌러서 놓기') : d.unit + '단원 완료'}</small></button>`; }).join('')}</div>`;
     bindForest();
     const w = $('#walker');
-    const wander = () => { if (!w.isConnected) return stopForest(); const x = 12 + Math.random() * 76, y = 66 + Math.random() * 26; w.classList.toggle('flipx', x < parseFloat(w.style.left)); w.style.left = x + '%'; w.style.top = y + '%'; };
+    const wander = () => { if (!w.isConnected) return stopForest(); const x = 12 + Math.random() * 76, y = 70 + Math.random() * 24; w.classList.toggle('flipx', x < parseFloat(w.style.left)); w.style.cssText = placeStyle(x, y, 74); };
     if (!S.settings.reduceMotion) { forestT = setInterval(wander, 3600); setTimeout(wander, 400); }
   }
   function bindForest() {
@@ -903,8 +903,12 @@
     f.addEventListener('pointermove', e => {
       if (!drag) return; if (Math.abs(e.clientX - sx) + Math.abs(e.clientY - sy) > 6) moved = true;
       const r = f.getBoundingClientRect();
-      const x = Math.max(6, Math.min(94, (e.clientX - r.left) / r.width * 100)), y = Math.max(30, Math.min(98, (e.clientY - r.top) / r.height * 100));
-      drag.style.left = x + '%'; drag.style.top = y + '%';
+      const x = Math.max(6, Math.min(94, (e.clientX - r.left) / r.width * 100)), y = Math.max(46, Math.min(98, (e.clientY - r.top) / r.height * 100));
+      drag.style.cssText = placeStyle(x, y, FX.SIZE[drag.dataset.k] || 80);
+    });
+    if (!S.settings.reduceMotion) f.addEventListener('pointermove', e => { // 시점 살짝 움직이기(입체감)
+      if (drag) return; const r = f.getBoundingClientRect();
+      f.style.setProperty('--px', ((e.clientX - r.left) / r.width - .5).toFixed(3)); f.style.setProperty('--py', ((e.clientY - r.top) / r.height - .5).toFixed(3));
     });
     const up = () => {
       if (!drag) return; drag.classList.remove('drag');
@@ -1057,7 +1061,7 @@
     decor: d => {
       const dd = DECOR.find(x => x.key === d.v);
       if (!decorDone(dd)) { toast(`${dd.unit}단원을 완료하면 ${dd.name}을(를) 얻어요!`); return; }
-      if (S.forest[dd.key]) delete S.forest[dd.key]; else { S.forest[dd.key] = { x: 20 + Math.random() * 60, y: 60 + Math.random() * 30 }; AU.sparkle(); }
+      if (S.forest[dd.key]) delete S.forest[dd.key]; else { S.forest[dd.key] = { x: 18 + Math.random() * 64, y: 62 + Math.random() * 30 }; AU.sparkle(); }
       save(); renderForest();
     },
     teacher: () => { if (adminOK) { go('teacher'); loadRemoteSurveys(); return; } openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🔒 제작자 관리실</h3><p class="sub">제작자 비밀번호를 입력해 주세요.</p>

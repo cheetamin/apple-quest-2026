@@ -12,7 +12,7 @@ tpl = base64.b64encode((R / 'assets' / 'template916.webp').read_bytes()).decode(
 img_js += f'window.AQ_TPL="data:image/webp;base64,{tpl}";'
 img_js += f'window.AQ_TITLE="data:image/webp;base64,{title}";'
 html = src('index.html')
-for k, v in {'CSS': src('style.css'), 'DATA': src('data.js'), 'COURSES': src('courses.js'), 'LOGIC': src('logic.js'), 'IMG': img_js, 'APP': src('app.js')}.items():
+for k, v in {'CSS': src('style.css'), 'DATA': src('data.js'), 'COURSES': src('courses.js'), 'FOREST': src('forest.js'), 'LOGIC': src('logic.js'), 'IMG': img_js, 'APP': src('app.js')}.items():
     html = html.replace(f'/*@@{k}@@*/', v)
 (R / 'dist').mkdir(exist_ok=True)
 (R / 'dist' / 'index.html').write_text(html, encoding='utf-8')

@@ -1280,3 +1280,63 @@ select.field { padding: 6px 8px; appearance: auto; }
 .course-btn i { position: absolute; top: -9px; right: 8px; padding: 2px 8px; border-radius: 3px; font-style: normal; font-size: 11px; font-weight: 800; color: #5a3300; background: #ffd45c; }
 .course-btn:active { transform: scale(.97); }
 .linkish { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; font-size: inherit; }
+
+/* ===== 사과숲 3D 디오라마 ===== */
+.forest.f3d { --px: 0; --py: 0; background: #7cc4ea; box-shadow: 0 0 0 2px rgba(255,212,92,.7), 0 0 24px rgba(255,212,92,.35), 0 12px 30px rgba(0,0,0,.5); isolation: isolate; }
+.f3d .fdefs { position: absolute; width: 0; height: 0; }
+.f3d .f-layer { position: absolute; left: -4%; right: -4%; pointer-events: none; transition: transform .6s ease-out; }
+.f3d .f-sky { top: 0; height: 60%; z-index: 0;
+  background: radial-gradient(40% 32% at 78% 18%, rgba(255,246,200,.95), rgba(255,220,150,.35) 45%, transparent 70%),
+              linear-gradient(180deg, #4fa6e0 0%, #8fd0f2 38%, #d8f0f4 70%, #ffe9c4 100%);
+  transform: translate(calc(var(--px) * -4px), calc(var(--py) * -2px)); }
+.f3d .f-sun { position: absolute; right: 18%; top: 10%; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle, #fffef0 30%, #fff2b0 60%, rgba(255,240,170,0) 72%); filter: blur(.5px); }
+.f3d .f-cloud { position: absolute; height: 18px; border-radius: 20px; background: linear-gradient(180deg, #fff, #e4eef6); box-shadow: 14px -8px 0 2px #fff, 30px 0 0 -2px #f4f8fc; opacity: .9; filter: blur(.4px); animation: fdrift 60s linear infinite; }
+.f3d .f-cloud.c1 { top: 14%; width: 60px; left: 8%; }
+.f3d .f-cloud.c2 { top: 26%; width: 44px; left: 52%; opacity: .7; animation-duration: 85s; animation-delay: -30s; }
+@keyframes fdrift { from { transform: translateX(-30vw); } to { transform: translateX(60vw); } }
+.f3d .f-far { top: 6%; height: 48%; width: 108%; z-index: 1; transform: translate(calc(var(--px) * -8px), calc(var(--py) * -3px)); }
+.f3d .f-ground { top: 42%; bottom: 0; z-index: 2; transform: translate(calc(var(--px) * -14px), calc(var(--py) * -4px)); }
+.f3d .f-ground svg { width: 100%; height: 100%; display: block; }
+.f3d .f-ground::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(220,240,255,.55), transparent 22%), radial-gradient(80% 50% at 50% 100%, transparent 60%, rgba(10,40,20,.35)); }
+.f3d .f-rays { position: absolute; inset: 0; z-index: 3; pointer-events: none; mix-blend-mode: screen; opacity: .5;
+  background: repeating-conic-gradient(from 200deg at 80% -6%, rgba(255,245,200,.0) 0deg 6deg, rgba(255,245,200,.35) 7deg 9deg, rgba(255,245,200,0) 10deg 15deg);
+  -webkit-mask: linear-gradient(180deg, #000 10%, transparent 85%); mask: linear-gradient(180deg, #000 10%, transparent 85%); animation: frays 9s ease-in-out infinite alternate; }
+@keyframes frays { from { opacity: .3; } to { opacity: .6; } }
+
+.f3d .f-item { position: absolute; width: calc(var(--w) * var(--s)); transform: translate(-50%, -100%); font-size: calc(40px * var(--s)); line-height: 1; user-select: none;
+  translate: calc(var(--px) * var(--s) * -10px) 0; filter: drop-shadow(0 calc(3px * var(--s)) calc(3px * var(--s)) rgba(0,30,10,.35)) saturate(calc(.8 + var(--s) * .25)) brightness(calc(.88 + var(--s) * .12)); }
+.f3d .f-item > svg { display: block; width: 100%; height: auto; overflow: visible; }
+.f3d .f-item::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: -7%; height: 16%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,30,10,.5), rgba(0,30,10,0)); z-index: -1; }
+.f3d .f-tree { pointer-events: none; }
+.f3d .item { cursor: grab; }
+.f3d .item.drag { transform: translate(-50%, -108%) scale(1.08); cursor: grabbing; filter: drop-shadow(0 14px 10px rgba(0,30,10,.4)) brightness(1.08); z-index: 2000 !important; }
+.f3d .item.drag::before { bottom: -16%; opacity: .6; transform: scale(.85); }
+.f3d .item.sway { animation: none; }
+.f3d .item.sway > svg { animation: sway 3.4s ease-in-out infinite; transform-origin: 50% 100%; }
+.f3d .walker { transition: left 2.6s ease-in-out, top 2.6s ease-in-out, width 2.6s ease-in-out; cursor: pointer; }
+.f3d .walker img { width: 100%; display: block; }
+.f3d .walker .bubble { font-size: 13px; }
+.f3d .ripple { animation: fripple 3s ease-out infinite; transform-origin: 50% 57%; transform-box: view-box; }
+@keyframes fripple { from { transform: scale(.4); opacity: .9; } to { transform: scale(1.5); opacity: 0; } }
+.f3d .lamp { animation: flamp 2.6s ease-in-out infinite alternate; }
+@keyframes flamp { from { opacity: .45; } to { opacity: .95; } }
+.f3d .smoke { animation: fsmoke 3.5s ease-out infinite; }
+@keyframes fsmoke { from { transform: translate(0, 0) scale(.6); opacity: .7; } to { transform: translate(8px, -26px) scale(1.8); opacity: 0; } }
+.f3d .spray { animation: fspray 1.2s ease-in-out infinite alternate; }
+@keyframes fspray { from { opacity: .55; stroke-dasharray: 6 4; stroke-dashoffset: 0; } to { opacity: .95; stroke-dasharray: 6 4; stroke-dashoffset: -20; } }
+.f3d .twinkle { animation: ftw 1.8s ease-in-out infinite; transform-origin: 80px 18px; }
+@keyframes ftw { 0%, 100% { opacity: 0; transform: scale(.4); } 50% { opacity: 1; transform: scale(1); } }
+.f3d .butterfly { animation: fbfly 6s ease-in-out infinite; }
+@keyframes fbfly { 0%, 100% { transform: translate(0, 0); } 25% { transform: translate(20px, -8px); } 50% { transform: translate(-10px, 4px); } 75% { transform: translate(-24px, -10px); } }
+
+.f3d .f-fx { position: absolute; inset: 0; z-index: 1500; pointer-events: none; overflow: hidden; }
+.f3d .f-fx i { position: absolute; width: 5px; height: 5px; border-radius: 50%; background: #fff8c0; box-shadow: 0 0 8px 3px rgba(255,236,140,.75); animation: ffly 6s ease-in-out infinite; opacity: 0; }
+@keyframes ffly { 0% { opacity: 0; transform: translate(0, 0); } 30% { opacity: .9; } 60% { opacity: .5; transform: translate(14px, -22px); } 100% { opacity: 0; transform: translate(-8px, -40px); } }
+.f3d .f-fx b { position: absolute; top: -6%; width: 10px; height: 6px; border-radius: 0 80% 0 80%; background: linear-gradient(135deg, #a8e070, #3e9a3a); animation: fleaf 10s linear infinite; opacity: .85; }
+@keyframes fleaf { 0% { transform: translate(0, 0) rotate(0); } 50% { transform: translate(26px, 260px) rotate(200deg); } 100% { transform: translate(-10px, 560px) rotate(420deg); } }
+.f3d .f-vignette { position: absolute; inset: 0; z-index: 1600; pointer-events: none; box-shadow: inset 0 0 50px rgba(0,20,10,.45); border-radius: inherit;
+  background: linear-gradient(180deg, transparent 80%, rgba(20,60,20,.25)); }
+@media (prefers-reduced-motion: reduce) { .f3d * { animation: none !important; } }
+
+.tray .slot .ico { display: flex; align-items: flex-end; justify-content: center; width: 44px; height: 36px; margin: 0 auto 2px; font-size: 26px; }
+.tray .slot .ico svg { max-width: 100%; max-height: 100%; width: auto; height: auto; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0,0,0,.35)); }
