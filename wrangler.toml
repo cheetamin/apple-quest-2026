@@ -1,0 +1,10 @@
+# Cloudflare Worker 설정 (저장소 루트에서 배포) — 자세한 방법은 SETUP.md
+name = "apple-quest-2026"
+main = "server/worker.js"
+compatibility_date = "2025-06-01"
+keep_vars = true
+
+[[d1_databases]]
+binding = "DB"
+database_name = "apple_quest"
+database_id = "bddf3ecd-b2a0-4918-8cfa-cd85d2ad4424"
