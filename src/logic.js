@@ -132,7 +132,7 @@
   function bossOpen(s, boss) { return !!(s.units[boss.afterUnit] && s.units[boss.afterUnit].done); }
 
   function unitStatus(s, unit, now) {
-    if (!s.rules.openUnits.includes(unit.id)) return 'locked';
+    if (!s.rules.openUnits.includes(unit.no || unit.id)) return 'locked';
     const u = s.units[unit.id];
     if (!u) return 'open';
     if (u.done) {

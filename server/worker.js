@@ -185,10 +185,10 @@ async function classStudents(env, t) {
   const { results } = await env.DB.prepare('SELECT id,num,nickname,summary,updated_at,created_at,pin_hash IS NULL AS pin_reset FROM students WHERE school_code=? AND grade=? AND cls=? ORDER BY num').bind(t.school_code, t.grade, t.cls).all();
   return results.map(r => ({ id: r.id, num: r.num, nickname: r.nickname, pin_reset: !!r.pin_reset, updated_at: r.updated_at, created_at: r.created_at, ...(r.summary ? JSON.parse(r.summary) : {}) }));
 }
-const CSV_HEAD = ['번호', '닉네임', '레벨', '경험치', '진화 단계', '완료 단원 수', '완료 단원', '정답률(%)', '학습 시간(분)', '연속 학습(일)', '보스전', '자주 틀린 단어', '마지막 학습', '마지막 저장'];
+const CSV_HEAD = ['번호', '닉네임', '교재', '레벨', '경험치', '진화 단계', '완료 단원 수', '완료 단원', '정답률(%)', '학습 시간(분)', '연속 학습(일)', '보스전', '자주 틀린 단어', '마지막 학습', '마지막 저장'];
 function toCSV(list) {
   const fmt = t => t ? new Date(t + 9 * 3600e3).toISOString().slice(0, 16).replace('T', ' ') : '';
-  const rows = list.map(s => [s.num, s.nickname, s.level, s.exp, s.stage, s.unitsDone, (s.doneUnits || []).join(' '), s.accuracy, s.minutes, s.streak, (s.bosses || []).join(' '), (s.wrongTop || []).join(' '), fmt(s.lastStudy), fmt(s.updated_at)]);
+  const rows = list.map(s => [s.num, s.nickname, s.course || '', s.level, s.exp, s.stage, s.unitsDone, (s.doneUnits || []).join(' '), s.accuracy, s.minutes, s.streak, (s.bosses || []).join(' '), (s.wrongTop || []).join(' '), fmt(s.lastStudy), fmt(s.updated_at)]);
   return '﻿' + [CSV_HEAD].concat(rows).map(r => r.map(csvCell).join(',')).join('\n');
 }
 

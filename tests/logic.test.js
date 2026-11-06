@@ -103,3 +103,25 @@ test('정답 확인: 순서 배열은 대소문자/공백 무시', () => {
   assert.ok(L.checkAnswer(q, "It's on the desk."));
   assert.ok(!L.checkAnswer(q, "on It's the desk."));
 });
+
+test('모든 교재(3·4·5·6학년·천재 4학년) 단원에서 퀴즈가 정상적으로 만들어진다', () => {
+  const C = require('../src/courses.js');
+  assert.strictEqual(C.COURSES.length, 5);
+  for (const course of C.COURSES) {
+    assert.strictEqual(course.units.length, 11, course.key);
+    for (const u of course.units) for (const si of [0, 1]) for (let seed = 1; seed < 25; seed++) {
+      const qs = L.buildSet(course.units, u.id, si, seed);
+      assert.strictEqual(qs.length, 5, `${course.key} ${u.id}`);
+      for (const q of qs) {
+        assert.ok(q, `null q ${course.key} ${u.id}`);
+        if (q.options) {
+          assert.ok(q.options.includes(q.answer), `${course.key} u${u.id} ${q.type} answer missing`);
+          assert.strictEqual(new Set(q.options).size, q.options.length, `${course.key} u${u.id} ${q.type} dup ${q.options}`);
+        }
+      }
+    }
+    const boss = L.buildMixed(course.units, course.units.map(u => u.id), 10, 3, 'boss');
+    assert.strictEqual(boss.length, 10, course.key + ' boss');
+  }
+  const ids = C.ALL_UNITS.map(u => u.id); assert.strictEqual(new Set(ids).size, ids.length, '단원 번호 중복');
+});

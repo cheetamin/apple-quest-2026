@@ -1,7 +1,16 @@
 /* 애플왕의 진화 모험 — 화면과 상호작용 */
 (function () {
   'use strict';
-  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH } = AQ_DATA;
+  const { STAGES, DECOR, BOSSES: BASE_BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH } = AQ_DATA;
+  const { COURSES, ALL_UNITS } = AQ_COURSES;
+  let UNITS = COURSES[COURSES.length - 1].units, BOSSES = BASE_BOSSES, COURSE = COURSES[COURSES.length - 1];
+  function setCourse(key) { // 교재 바꾸기: 단원·보스전 범위를 그 교재 것으로
+    COURSE = COURSES.find(c => c.key === key) || COURSES[COURSES.length - 1];
+    UNITS = COURSE.units;
+    BOSSES = BASE_BOSSES.map(b => ({ ...b, afterUnit: UNITS[b.afterUnit - 1].id, range: b.range.map(i => UNITS[i - 1].id) }));
+  }
+  const unitNo = id => { const u = ALL_UNITS.find(x => x.id === id); return u ? u.no : id; };
+  const decorDone = d => COURSES.some(c => { const u = c.units[d.unit - 1]; return u && S.units[u.id] && S.units[u.id].done; });
   /* SHA-256 (비밀번호 확인용, 외부 라이브러리 없이) */
   function sha256(str) {
     const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
@@ -37,12 +46,14 @@
     s.settings = Object.assign(L.newState(DEFAULT_RULES).settings, o.settings || {});
     s.mastered = s.mastered || {}; s.streak = s.streak || 0; s.sentOK = s.sentOK || 0;
     s.cardAt = s.cardAt || {}; s.pin = s.pin || '1234';
+    if (!s.course && o.units && Object.keys(o.units).some(k => +k < 100)) s.course = 'cj4'; // 기존 기록은 천재(이) 4학년
     return s;
   }
   function load() { try { const t = localStorage.getItem(KEY); if (t) return migrate(JSON.parse(t)); } catch (e) {} return migrate({}); }
   let saveT, cloudDirty = false; function save() { cloudDirty = true; clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 120); }
   let S = load();
   if (!S.createdAt) { S.createdAt = now(); S.cardAt[0] = now(); }
+  setCourse(S.course);
 
   /* ---------- 소리 (WebAudio로 직접 합성: 파일 없음) ---------- */
   const AU = {
@@ -119,8 +130,8 @@
   { const li = document.getElementById('logoImg'); if (li) li.src = AQ_LOGO; }
   { const bg = document.getElementById('bgimg'); if (bg) bg.style.backgroundImage = `url(${AQ_TPL})`; }
 
-  const unitById = id => UNITS.find(u => u.id === id);
-  const isOpen = id => S.rules.openUnits.includes(id);
+  const unitById = id => ALL_UNITS.find(u => u.id === id);
+  const isOpen = id => S.rules.openUnits.includes(unitNo(id));
   function currentUnit() {
     const open = UNITS.filter(u => isOpen(u.id));
     return open.find(u => !(S.units[u.id] && S.units[u.id].done)) || open[open.length - 1] || UNITS[0];
@@ -221,7 +232,7 @@
   function startReview() {
     let ids = L.doneIds(S);
     const wrongUnits = [...new Set(Object.values(S.wrong).map(w => w.unit))];
-    ids = [...new Set(ids.concat(wrongUnits))].filter(isOpen);
+    ids = [...new Set(ids.concat(wrongUnits))].filter(id => isOpen(id) && UNITS.some(u => u.id === id));
     if (!ids.length) ids = [currentUnit().id];
     Q = { mode: 'review', units: ids, list: L.buildMixed(UNITS, ids, S.rules.reviewLen, now() & 0xffff, 'review', S.wrong), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
     closeSheet(); go('play');
@@ -229,7 +240,7 @@
   }
   function startBoss(id) {
     const b = BOSSES.find(x => x.id === id);
-    if (!L.bossOpen(S, b)) { toast(`${b.afterUnit}단원을 완료하면 열려요.`); return; }
+    if (!L.bossOpen(S, b)) { toast(`${unitNo(b.afterUnit)}단원을 완료하면 열려요.`); return; }
     Q = { mode: 'boss', boss: id, list: L.buildMixed(UNITS, b.range, S.rules.bossLen, now() & 0xffff, 'boss'), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
     closeSheet(); go('boss');
   }
@@ -239,7 +250,7 @@
     let tag, dots = '', label;
     if (Q.mode === 'set') {
       const u = S.units[Q.unit]; const off = Q.setIdx * 5;
-      tag = `<span class="lesson">Lesson ${Q.unit}</span>`;
+      tag = `<span class="lesson">Lesson ${unitNo(Q.unit)}</span>`;
       for (let k = 0; k < 10; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : '';
@@ -281,7 +292,7 @@
     const nextSet = rec && rec.sets[0] && !rec.sets[1] ? 1 : 0;
     const openBoss = BOSSES.find(b => L.bossOpen(S, b) && !S.bosses[b.id]);
     const decayed = S.stage < S.maxStage;
-    return `<div class="qtop"><span class="lesson">Lesson ${u.id}</span><div class="dots">${[0, 1].map(k => `<i class="${rec && rec.sets[k] ? 'ok' : ''}"></i>`).join('')}<b>세트 ${rec ? rec.sets.filter(Boolean).length : 0} / 2</b></div></div>
+    return `<div class="qtop"><span class="lesson">Lesson ${u.no}</span><div class="dots">${[0, 1].map(k => `<i class="${rec && rec.sets[k] ? 'ok' : ''}"></i>`).join('')}<b>세트 ${rec ? rec.sets.filter(Boolean).length : 0} / 2</b></div></div>
       <div class="ready-card"><h3 class="en">${esc(u.title)}</h3><p>${u.ko} · 단어 ${u.words.length}개 · 문장 ${u.sentences.length}개</p>
       ${decayed ? `<button class="btn blue" data-act="review" style="width:100%;margin-bottom:8px">🔁 복습 퀴즈 5문제로 원래 모습 되찾기</button>` : ''}
       ${openBoss ? `<button class="btn" data-act="bossinfo" data-v="${openBoss.id}" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#d9c8ff,#8a5cff 60%,#5a2ad0);color:#fff">🌳 ${openBoss.title} 보스전 열림!</button>` : ''}
@@ -295,14 +306,14 @@
     const evo = L.canEvolve(S);
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
-      title = R.passed ? (R.newlyDone ? `${Q.unit}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
+      title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
       sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요. (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += `<br>🍎 성장 열매 +1${R.decor ? ` · 🎁 ${R.decor} 해금` : ''}`;
       if (R.boss) sub += `<br>🌳 ${R.boss} 보스전이 열렸어요!`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
       if (!R.passed) btns += `<button class="btn" data-act="set" data-u="${Q.unit}" data-s="${Q.setIdx}">다시 도전</button>`;
       else if (other !== null) btns += `<button class="btn" data-act="set" data-u="${Q.unit}" data-s="${other}">다음 세트 ▶</button>`;
-      else { const nu = currentUnit(); if (nu.id !== Q.unit) btns += `<button class="btn" data-act="set" data-u="${nu.id}" data-s="0">Lesson ${nu.id} ▶</button>`; }
+      else { const nu = currentUnit(); if (nu.id !== Q.unit) btns += `<button class="btn" data-act="set" data-u="${nu.id}" data-s="0">Lesson ${nu.no} ▶</button>`; }
     } else if (Q.mode === 'review') {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
       sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}`;
@@ -384,7 +395,7 @@
       Object.assign(R, r);
       L.markStudy(S, t, 'basic'); touchDay();
       if (r.newlyDone) {
-        const d = DECOR.find(x => x.unit === Q.unit); R.decor = d && d.name;
+        const d = DECOR.find(x => x.unit === unitNo(Q.unit)); R.decor = d && d.name;
         const b = BOSSES.find(x => x.afterUnit === Q.unit); R.boss = b && b.title;
         AU.fanfare();
       } else if (r.passed) AU.sparkle();
@@ -622,7 +633,7 @@
     let tag, dots = '', label;
     if (Q.mode === 'set') {
       const u = S.units[Q.unit], off = Q.setIdx * 5;
-      tag = `Lesson ${Q.unit}`;
+      tag = `Lesson ${unitNo(Q.unit)}`;
       for (let k = 0; k < 10; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
@@ -698,13 +709,13 @@
     if (L.canEvolve(S)) acts.push(['✨ 진화하기!', 'evolve', '']);
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
-      title = R.passed ? (R.newlyDone ? `${Q.unit}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
+      title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
       sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요 (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += ` · 💎 +1${R.decor ? ` · 🎁 ${R.decor}` : ''}`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
       if (!R.passed) acts.push(['다시 도전', 'set', `data-u="${Q.unit}" data-s="${Q.setIdx}"`]);
       else if (other !== null) acts.push(['다음 세트 ▶', 'set', `data-u="${Q.unit}" data-s="${other}"`]);
-      else { const nu = currentUnit(); if (nu.id !== Q.unit) acts.push([`Lesson ${nu.id} ▶`, 'set', `data-u="${nu.id}" data-s="0"`]); }
+      else { const nu = currentUnit(); if (nu.id !== Q.unit) acts.push([`Lesson ${nu.no} ▶`, 'set', `data-u="${nu.id}" data-s="0"`]); }
       if (R.boss) acts.push(['🌳 보스전', 'bossinfo', `data-v="${BOSSES.find(b => b.afterUnit === Q.unit).id}"`]);
     } else {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
@@ -723,20 +734,21 @@
     const LBL = { open: '학습 가능', studying: '공부 중', done: '완료', review: '복습 필요', locked: '아직 안 열림' };
     const rec = S.units[u.id]; const pct = rec ? rec.sets.filter(Boolean).length * 50 : 0;
     return `<button class="unit ${st === 'locked' ? 'locked' : ''}" data-act="unit" data-v="${u.id}">
-      <span class="num">${u.icon}<b>${u.id}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
+      <span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
       <span class="st ${st}">${LBL[st]}</span></button>`;
   }
   function bossRowHTML(b) {
     const open = L.bossOpen(S, b), done = !!S.bosses[b.id];
     return `<button class="bossnode ${open ? '' : 'locked'}" data-act="bossinfo" data-v="${b.id}"><span class="num">${done ? '🌳' : '🥀'}</span>
-      <span><h3>${b.id === 3 ? '최종' : b.id + '차'} 보스전 · ${b.title}</h3><p>${b.range.length > 3 ? '전체 단원' : b.range[0] + '~' + b.range[b.range.length - 1] + '단원'} 복습 · ${b.reward}</p></span>
+      <span><h3>${b.id === 3 ? '최종' : b.id + '차'} 보스전 · ${b.title}</h3><p>${b.range.length > 3 ? '전체 단원' : unitNo(b.range[0]) + '~' + unitNo(b.range[b.range.length - 1]) + '단원'} 복습 · ${b.reward}</p></span>
       <span class="st ${done ? 'done' : open ? 'studying' : 'locked'}">${done ? '성공' : open ? '도전 가능' : '잠김'}</span></button>`;
   }
   function renderUnits() {
-    let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>4학년 영어 1학기 · 2학기 핵심 단어와 문장</p></div></div>`;
-    for (const sem of [1, 2]) {
-      html += `<div class="sem">${sem}학기</div><div class="units">`;
-      for (const u of UNITS.filter(x => x.sem === sem)) {
+    let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>📚 ${COURSE.label} · <button class="linkish" data-act="course">교재 바꾸기</button></p></div></div>`;
+    const groups = COURSE.key === 'cj4' ? [[1, '1학기'], [2, '2학기']] : [[0, `${COURSE.label} · ${COURSE.sub}`]];
+    for (const [sem, gl] of groups) {
+      html += `<div class="sem">${gl}</div><div class="units">`;
+      for (const u of UNITS.filter(x => !sem || x.sem === sem)) {
         html += unitRowHTML(u);
         const b = BOSSES.find(x => x.afterUnit === u.id); if (b) html += bossRowHTML(b);
       }
@@ -748,7 +760,7 @@
     const u = unitById(id);
     if (!isOpen(id)) { toast('선생님이 아직 열지 않은 단원이에요.'); return; }
     const rec = S.units[id];
-    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${id}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
+    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${u.no}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
       <div class="grid2"><button class="btn ghost" data-act="go" data-v="study" data-u="${id}">🎧 공부방<small>단어·문장 카드</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·듣기·빈칸</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>문장 듣기·순서·짝맞추기</small></button>
@@ -758,7 +770,7 @@
   function bossSheet(id) {
     const b = BOSSES.find(x => x.id === id); const open = L.bossOpen(S, b);
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🌳 ${b.title}</h3><p class="sub">${b.goal}</p>
-      <p class="sub">복습 범위: ${b.range.length > 3 ? '1~11단원 전체' : b.range.join(', ') + '단원'} · ${S.rules.bossLen}문제 · ${S.rules.bossPass}문제 이상 맞히면 성공<br>보상: <b>${b.reward}</b>${S.bosses[id] ? ' (이미 받음)' : ''}</p>
+      <p class="sub">복습 범위: ${b.range.length > 3 ? '1~11단원 전체' : b.range.map(unitNo).join(', ') + '단원'} · ${S.rules.bossLen}문제 · ${S.rules.bossPass}문제 이상 맞히면 성공<br>보상: <b>${b.reward}</b>${S.bosses[id] ? ' (이미 받음)' : ''}</p>
       ${open ? `<button class="btn" data-act="boss" data-v="${id}" style="width:100%">도전하기!</button>` : `<button class="btn" disabled style="width:100%">${b.afterUnit}단원을 완료하면 열려요</button>`}`);
   }
 
@@ -769,7 +781,7 @@
     html += `<div class="units">` + BOSSES.map(bossRowHTML).join('') + `</div><div class="sem">단원별 퀴즈</div><div class="units">`;
     for (const u of UNITS) {
       const rec = S.units[u.id], lock = !isOpen(u.id);
-      html += `<div class="unit ${lock ? 'locked' : ''}" style="grid-template-columns:50px 1fr"><span class="num">${u.icon}<b>${u.id}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3>
+      html += `<div class="unit ${lock ? 'locked' : ''}" style="grid-template-columns:50px 1fr"><span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3>
         <div class="row-btns" style="margin-top:6px"><button class="btn" style="min-height:38px;font-size:14px" data-act="set" data-u="${u.id}" data-s="0" ${lock ? 'disabled' : ''}>세트 1 ${rec && rec.sets[0] ? '✅' : ''}</button><button class="btn" style="min-height:38px;font-size:14px" data-act="set" data-u="${u.id}" data-s="1" ${lock ? 'disabled' : ''}>세트 2 ${rec && rec.sets[1] ? '✅' : ''}</button></div></span></div>`;
     }
     main.innerHTML = html + '</div>';
@@ -778,31 +790,31 @@
   /* 공부방 */
   const SD = { unit: null, tab: 'w', i: 0, flip: false };
   function studyItems() {
-    if (SD.tab === 'x') return Object.keys(S.wrong).map(en => { for (const u of UNITS) { const w = u.words.find(x => x.en === en); if (w) return { ...w, unit: u.id }; } return null; }).filter(Boolean);
+    if (SD.tab === 'x') return Object.keys(S.wrong).map(en => { for (const u of ALL_UNITS) { const w = u.words.find(x => x.en === en); if (w) return { ...w, unit: u.id }; } return null; }).filter(Boolean);
     const u = unitById(SD.unit);
     return SD.tab === 'w' ? u.words.map(w => ({ ...w, unit: u.id })) : u.sentences.map(s => ({ ...s, unit: u.id, sent: true }));
   }
   function renderStudy() {
     if (viewArg) { SD.unit = viewArg; SD.i = 0; SD.flip = false; viewArg = null; }
-    if (!SD.unit || !isOpen(SD.unit)) SD.unit = currentUnit().id;
+    if (!SD.unit || !UNITS.some(x => x.id === SD.unit) || !isOpen(SD.unit)) SD.unit = currentUnit().id;
     const items = studyItems(); if (SD.i >= items.length) SD.i = 0;
     const it = items[SD.i];
     const u = unitById(SD.unit), rec = L.unitRec(S, SD.unit);
     const known = it && rec.known[it.en];
     const voiceNote = !TTS.ok ? '이 브라우저는 발음 듣기를 지원하지 않아요. 크롬이나 사파리 최신 버전을 사용해 보세요.' : !TTS.voice ? '영어 음성을 찾는 중이에요. 소리가 나지 않으면 기기 설정에서 영어 음성을 추가해 주세요.' : `발음: ${esc(TTS.voice.name)} (기기·브라우저마다 목소리가 달라요)`;
     main.innerHTML = `<div class="screen-title"><div><h2>영어 공부방</h2><p>카드를 누르면 뒤집혀요</p></div></div>
-      <div class="unit-chips">${UNITS.map(x => `<button class="${x.id === SD.unit && SD.tab !== 'x' ? 'on' : ''}" data-act="sunit" data-v="${x.id}" ${isOpen(x.id) ? '' : 'disabled'}>${x.id}</button>`).join('')}</div>
+      <div class="unit-chips">${UNITS.map(x => `<button class="${x.id === SD.unit && SD.tab !== 'x' ? 'on' : ''}" data-act="sunit" data-v="${x.id}" ${isOpen(x.id) ? '' : 'disabled'}>${x.no}</button>`).join('')}</div>
       <div class="tabs"><button class="${SD.tab === 'w' ? 'on' : ''}" data-act="stab" data-v="w">단어</button><button class="${SD.tab === 's' ? 'on' : ''}" data-act="stab" data-v="s">문장</button><button class="${SD.tab === 'x' ? 'on' : ''}" data-act="stab" data-v="x">오답 노트 ${Object.keys(S.wrong).length || ''}</button></div>
       ${!it ? `<div class="glass" style="text-align:center;padding:28px;color:#fff">틀린 단어가 없어요! 🎉<br><span style="font-size:13px;color:#c9d6f0">퀴즈에서 틀리거나 "더 공부할래요"를 누른 단어가 여기에 모여요.</span></div>` : `
       <div class="flash-wrap"><div class="flash ${SD.flip ? 'flip' : ''}" id="flash" data-act="flip" role="button" tabindex="0" aria-label="카드 뒤집기">
-        <div class="face"><div>${known ? '<span class="tag k">잘 외웠어요</span>' : ''}${it.p ? '<span class="tag" style="left:14px;right:auto;background:#e2efff;color:#1d4fa0">응용 문장</span>' : it.sent ? '<span class="tag" style="left:14px;right:auto;background:#fff2c2;color:#8a5a00">교과서 문장</span>' : ''}<span class="pic">${it.sent ? unitById(it.unit).icon : (it.e || '🍎')}</span><span class="word ${it.sent ? 's' : ''} en">${esc(it.en)}</span><span class="hint">${SD.tab === 'x' ? 'Lesson ' + it.unit + ' · ' : ''}눌러서 뜻 보기</span></div></div>
+        <div class="face"><div>${known ? '<span class="tag k">잘 외웠어요</span>' : ''}${it.p ? '<span class="tag" style="left:14px;right:auto;background:#e2efff;color:#1d4fa0">응용 문장</span>' : it.sent ? `<span class="tag" style="left:14px;right:auto;background:#fff2c2;color:#8a5a00">${(unitById(it.unit) || {}).course === 'cj4' ? '교과서 문장' : '핵심 문장'}</span>` : ''}<span class="pic">${it.sent ? unitById(it.unit).icon : (it.e || '🍎')}</span><span class="word ${it.sent ? 's' : ''} en">${esc(it.en)}</span><span class="hint">${SD.tab === 'x' ? 'Lesson ' + unitNo(it.unit) + ' · ' : ''}눌러서 뜻 보기</span></div></div>
         <div class="face back"><div><span class="mean">${esc(it.ko)}</span><span class="word s en" style="font-size:22px;color:#4a5277">${esc(it.en)}</span><span class="hint">다시 누르면 앞면</span></div></div>
       </div></div>
       <div class="flash-nav"><button class="arrow" data-act="sprev" aria-label="이전">◀</button><span class="count">${SD.i + 1} / ${items.length}</span><button class="arrow" data-act="snext" aria-label="다음">▶</button></div>
       <div class="audio-row"><button class="btn" data-act="say1">🔊<small>듣기</small></button><button class="btn blue" data-act="say2">🐢<small>천천히</small></button><button class="btn ghost" data-act="say3">🔁<small>3번 반복</small></button></div>
       <div class="row-btns"><button class="btn green" data-act="known">😊 잘 외웠어요</button><button class="btn ghost" data-act="more">📖 더 공부할래요</button></div>`}
       <p class="voice-note">${voiceNote}</p>
-      <div class="row-btns"><button class="btn" data-act="set" data-u="${u.id}" data-s="0">Lesson ${u.id} 퀴즈 도전 ▶</button></div>`;
+      <div class="row-btns"><button class="btn" data-act="set" data-u="${u.id}" data-s="0">Lesson ${u.no} 퀴즈 도전 ▶</button></div>`;
   }
 
   /* 도감 */
@@ -850,7 +862,8 @@
       ${wrong.length ? `<div class="wlist">${wrong.map(([en, w]) => `<span><b>${esc(en)}</b>${w.n}회</span>`).join('')}</div><div class="row-btns"><button class="btn blue" data-act="review">틀린 단어 복습하기</button></div>` : `<p style="color:#c9d6f0;font-size:13.5px;margin:0">아직 없어요. 멋져요!</p>`}
       <div class="section-h">설정</div>
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
-      <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
+      <button class="link" data-act="course">📚 교재: <b>${COURSE.label}</b> · 바꾸기</button>
+      <button class="link" data-act="rename" style="margin-top:8px">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       ${SESS ? `<p class="voice-note">🏫 ${esc(SESS.school_name)} ${SESS.grade}학년 ${SESS.cls}반 ${SESS.num}번 · 기록은 학급 서버에 자동 저장돼요.</p>` : ''}
       <button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
@@ -867,7 +880,7 @@
     return d.e;
   }
   function renderForest() {
-    const unlocked = DECOR.filter(d => S.units[d.unit] && S.units[d.unit].done);
+    const unlocked = DECOR.filter(decorDone);
     const placed = DECOR.filter(d => S.forest[d.key] && unlocked.includes(d));
     main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="home" aria-label="뒤로">←</button><div><h2>${esc(S.name || '나')}의 사과숲</h2><p>장식을 눌러 놓고, 끌어서 옮겨요</p></div></div>
       <div class="forest" id="forest"><div class="hill"></div><div class="bgtree" style="left:6%"></div><div class="bgtree" style="right:8%;top:22%;width:18%"></div>
@@ -952,7 +965,7 @@
       <div class="teacher">
       ${API ? adminTeachersHTML() : ''}
       ${surveyHTML()}
-      <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.id) ? 'on' : ''}" data-act="uopen" data-v="${u.id}">${u.id}</button>`).join('')}</div></div>
+      <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.no) ? 'on' : ''}" data-act="uopen" data-v="${u.no}">${u.no}</button>`).join('')}</div></div>
       <div class="section-h">경험치·진화 규칙</div><div class="glass">
         ${num('expBasic', '기본 퀴즈 정답 경험치')}${num('expReview', '복습·보스 정답 경험치')}
         ${num('evo1.exp', '애플왕 진화: 누적 경험치')}${num('evo1.units', '애플왕 진화: 완료 단원 수', 1, 11)}
@@ -962,9 +975,9 @@
         ${num('decayEnergyDays', '에너지 감소 시작 (일)')}${num('decayStageDays', '1단계 하락 (일)')}${num('decayBaseDays', '풋애플까지 하락 (일)')}</div>
       <div class="section-h">미리보기</div>
       <div class="row-btns" style="margin-top:0">${[0, 1, 2].map(i => `<button class="btn ghost" data-act="tzoom" data-v="${i}">${STAGES[i].name}</button>`).join('')}</div>
-      <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.id}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
+      <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.no}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
       <div class="section-h">학습 기록</div>
-      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.id}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
+      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.no}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
       <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button></div>
       <div class="row-btns"><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="resetask">이 기기 학습 기록 초기화</button></div>
       <div class="row-btns"><button class="btn ghost" data-act="adminout">🔒 관리실 잠그기</button></div></div>`;
@@ -1043,7 +1056,7 @@
     uopen: d => { const id = +d.v, a = S.rules.openUnits; const k = a.indexOf(id); if (k >= 0) a.splice(k, 1); else a.push(id); a.sort((x, y) => x - y); save(); renderTeacher(); },
     decor: d => {
       const dd = DECOR.find(x => x.key === d.v);
-      if (!(S.units[dd.unit] && S.units[dd.unit].done)) { toast(`${dd.unit}단원을 완료하면 ${dd.name}을(를) 얻어요!`); return; }
+      if (!decorDone(dd)) { toast(`${dd.unit}단원을 완료하면 ${dd.name}을(를) 얻어요!`); return; }
       if (S.forest[dd.key]) delete S.forest[dd.key]; else { S.forest[dd.key] = { x: 20 + Math.random() * 60, y: 60 + Math.random() * 30 }; AU.sparkle(); }
       save(); renderForest();
     },
@@ -1074,7 +1087,7 @@
     tlogout: () => { TS = null; lsSet(TSESS_KEY, null); TLIST = null; renderTeach(); },
     treload: () => loadTeach(),
     tcopyf: () => copyText(sheetFormula(), '수식을 복사했어요! 구글 시트 A1 칸에 붙여 넣으세요.'),
-    tcsv: () => { if (!TLIST) return; copyText(TLIST.map(x => [x.num, x.nickname, x.level || 1, x.stage || '풋애플', x.unitsDone || 0, (x.accuracy || 0) + '%', fmtDate(x.lastStudy)].join('\t')).join('\n'), '복사했어요! 엑셀이나 시트에 붙여 넣으세요.'); },
+    tcsv: () => { if (!TLIST) return; copyText(TLIST.map(x => [x.num, x.nickname, x.course || '', x.level || 1, x.stage || '풋애플', x.unitsDone || 0, (x.accuracy || 0) + '%', fmtDate(x.lastStudy)].join('\t')).join('\n'), '복사했어요! 엑셀이나 시트에 붙여 넣으세요.'); },
     tpin: d => confirmSheet(`${d.n}번 학생의 비밀번호를 초기화할까요?`, '학생이 다음에 들어올 때 새로 입력하는 4자리가 새 비밀번호가 돼요.', '초기화', async () => { const r = await api('/api/teacher/reset-pin', { id: +d.v }, { token: TS.token }); toast(r.ok ? '초기화했어요' : r.error); loadTeach(); }),
     tdel: d => confirmSheet(`${d.n}번 학생 기록을 지울까요?`, '이 학생의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '지우기', async () => { const r = await api('/api/teacher/delete-student', { id: +d.v }, { token: TS.token }); toast(r.ok ? '지웠어요' : r.error); loadTeach(); }),
     tdelall: () => confirmSheet('우리 반 기록을 모두 지울까요?', '학년이 끝났을 때 쓰는 기능이에요. 우리 반 학생들의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '모두 지우기', async () => { const r = await api('/api/teacher/delete-class', {}, { token: TS.token }); toast(r.ok ? '모두 지웠어요' : r.error); loadTeach(); }),
@@ -1089,12 +1102,13 @@
     switchkid: () => { cloudFlush(); SESS = null; lsSet(SESS_KEY, null); const intro = S.introSeen; S = migrate({}); S.introSeen = intro; S.createdAt = now(); S.cardAt[0] = now(); save(); toast('다른 친구로 시작해요'); const t = document.querySelector('.title'); if (t) { t.remove(); boot(); } },
     rename: () => nameSheet(),
     csv: () => {
-      const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.id, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
+      const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.no, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
       const text = rows.map(r => r.join(',')).join('\n');
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
     },
     resetask: () => openSheet(`<h3>정말 초기화할까요?</h3><p class="sub">이 기기의 경험치, 단원 기록, 카드, 사과숲이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="reset">초기화</button></div>`),
     exit: () => { AU.tap(); openExit(); },
+    course: () => { AU.tap(); closeSheet(); coursePicker(() => go('home'), false); },
     reset: () => { const pin = S.pin, rules = S.rules, sv = S.surveys; S = migrate({}); S.pin = pin; S.rules = rules; S.surveys = sv; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
   };
   function showText(t) { openSheet(`<button class="close" data-act="closeSheet">✕</button><h3>아래 내용을 길게 눌러 복사하세요</h3><textarea class="field" id="csv-out" style="height:200px;font-size:13px" readonly>${esc(t)}</textarea>`); }
@@ -1157,8 +1171,8 @@
     $('#cfm').addEventListener('click', () => { closeSheet(); fn(); });
   }
   function summary() {
-    const done = L.doneIds(S);
-    return { level: L.level(S.exp), exp: S.exp, stage: STAGES[S.stage].name, unitsDone: done.length, doneUnits: done,
+    const done = L.doneIds(S).map(id => { const u = unitById(id); return u ? `${COURSES.find(c => c.key === u.course).label.replace('학년', '')}-${u.no}` : id; });
+    return { course: COURSE.label, level: L.level(S.exp), exp: S.exp, stage: STAGES[S.stage].name, unitsDone: done.length, doneUnits: done,
       accuracy: S.stats.answered ? Math.round(S.stats.correct / S.stats.answered * 100) : 0, minutes: Math.round(S.stats.ms / 60000), streak: S.streak,
       bosses: BOSSES.filter(b => S.bosses[b.id]).map(b => b.id + '차'), wrongTop: Object.entries(S.wrong).sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(x => x[0]), lastStudy: S.lastStudy };
   }
@@ -1181,7 +1195,7 @@
   function adoptState(st) {
     const intro = S.introSeen, settings = S.settings;
     S = migrate(st || {}); S.introSeen = intro || S.introSeen; if (!st) { S.createdAt = now(); S.cardAt[0] = now(); S.settings = settings; }
-    S.account = acct(SESS); S.name = SESS.nickname; save();
+    S.account = acct(SESS); S.name = SESS.nickname; setCourse(S.course); Q = null; save();
   }
   async function resumeCloud(after) {
     go('home'); toast('기록을 불러오는 중…', 1200);
@@ -1317,9 +1331,9 @@
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
       ${TERR ? `<p class="sv-note">${esc(TERR)}</p>` : ''}
       <div class="section-h">우리 반 학생</div>
-      <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
-      ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
-        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
+      <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>교재</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
+      ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.course || '-')}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
+        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="10" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
       </tbody></table></div>
       <div class="row-btns"><button class="btn ghost" data-act="treload">🔄 새로고침</button><button class="btn ghost" data-act="tcsv">📋 표 복사</button></div>
       <div class="section-h">📊 구글 시트로 보기</div>
@@ -1372,6 +1386,8 @@
 
   /* ---------- 시작 ---------- */
   function afterGate() {
+    if (!S.course) { go('home'); coursePicker(afterGate, true); return; }
+    setCourse(S.course);
     const t = now();
     const away = S.lastSeen ? L.inactiveDays(S.lastSeen, t, false) : 0;
     const dec = L.applyDecay(S, t);
@@ -1383,6 +1399,33 @@
     } else if (away >= 3) setTimeout(() => { setMood('greet', 1800); say('보고 싶었어! 다시 와 줘서 고마워!'); }, 600);
     else setTimeout(() => { setMood('happy'); say(`${S.name || '친구'}, 안녕! 오늘도 같이 공부하자!`); }, 600);
   }
+  /* ---------- 교재 고르기 ---------- */
+  function coursePicker(after, first) {
+    const ov = document.createElement('div'); ov.className = 'courseov';
+    const rec = SESS ? 'g' + SESS.grade : '';
+    ov.innerHTML = `<div class="coursebox">
+      <img class="login-logo" src="${AQ_LOGO}" alt="">
+      <h3>${first ? '어떤 교재로 모험할까요?' : '교재 바꾸기'}</h3>
+      <p class="sub">${first ? '내 학년이나 우리 반 교과서를 골라요. 나중에 나의 성장에서 바꿀 수 있어요.' : '교재를 바꿔도 캐릭터·경험치·카드는 그대로예요. 단원 진도는 교재마다 따로 기록돼요.'}</p>
+      <div class="course-grid">${COURSES.map(c => `<button class="course-btn ${c.key === 'cj4' ? 'tb' : ''} ${S.course === c.key ? 'cur' : ''} ${rec === c.key ? 'rec' : ''}" data-c="${c.key}">
+        <b>${c.label}</b><small>${c.sub}</small>${S.course === c.key ? '<i>지금 교재</i>' : rec === c.key ? '<i>내 학년</i>' : ''}</button>`).join('')}</div>
+      ${first ? '' : '<button class="btn ghost" data-c="">닫기</button>'}
+    </div>`;
+    layer.append(ov);
+    ov.addEventListener('click', e => {
+      const b = e.target.closest('[data-c]'); if (!b) return;
+      AU.tap();
+      if (b.dataset.c) {
+        const changed = S.course !== b.dataset.c;
+        S.course = b.dataset.c; setCourse(S.course); if (changed) { Q = null; SD.unit = null; }
+        save(); cloudFlush();
+        toast(`📚 ${COURSE.label}으로 공부해요!`, 1800);
+      }
+      if (!b.dataset.c && first) return;
+      ov.remove(); after && after();
+    });
+  }
+
   /* ---------- 나가기 · 만족도 조사 ---------- */
   const HEART_LABEL = ['', '아쉬웠어요', '조금 아쉬워요', '괜찮았어요', '재미있었어요', '최고예요!'];
   function copyrightHTML() {

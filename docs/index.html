@@ -1275,6 +1275,25 @@ select.field { padding: 6px 8px; appearance: auto; }
 .sp-item.manual { display: block; color: #8a5a00; background: #fff8dc; box-shadow: 0 0 0 1.5px #e5b23a; font-size: 13.5px; }
 .sp-item.manual small { color: var(--ink-soft); }
 @media (max-width: 380px) { .sp-row { flex-wrap: wrap; } .sp-office { width: 100%; } }
+
+/* ---------- 교재 고르기 ---------- */
+.courseov { position: fixed; inset: 0; z-index: 89; overflow-y: auto; padding: 22px max(16px, env(safe-area-inset-right, 0px)) 28px max(16px, env(safe-area-inset-left, 0px));
+  background: radial-gradient(70% 40% at 50% 10%, rgba(255, 230, 150, .25), transparent 70%), linear-gradient(180deg, #0d2c55, #0f4a44 60%, #0a2a2c); animation: fade .2s; }
+.coursebox { max-width: 400px; margin: 0 auto; padding: 16px; border-radius: 6px; color: var(--ink); text-align: center; display: flex; flex-direction: column; gap: 10px;
+  background: linear-gradient(180deg, #fffdf4, #f3eedc); box-shadow: 0 0 0 3px #ffd45c, 0 0 30px rgba(255, 212, 92, .5), 0 10px 30px rgba(0,0,0,.5); }
+.coursebox h3 { margin: 0; font-family: var(--f-display); font-weight: 400; font-size: 24px; letter-spacing: .05em; }
+.coursebox .sub { margin: 0; font-size: 13.5px; line-height: 1.5; color: var(--ink-soft); }
+.course-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.course-btn { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 86px; padding: 10px 6px; border-radius: 5px; color: #fff;
+  background: linear-gradient(180deg, #5a86d8, #2f58b0 55%, #1d3a84); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(0,0,30,.35), 0 0 0 2px #0d1e4a, 0 3px 8px rgba(0,0,0,.3); }
+.course-btn b { font-family: var(--f-display); font-weight: 400; font-size: 26px; letter-spacing: .06em; text-shadow: 0 2px 0 rgba(0,0,0,.4); }
+.course-btn small { font-size: 11.5px; font-weight: 700; letter-spacing: .02em; opacity: .9; }
+.course-btn.tb { grid-column: 1 / -1; min-height: 76px; background: linear-gradient(180deg, #ff8a6a, #e2453a 55%, #a8231c); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(60,0,0,.35), 0 0 0 2px #5a0f0a, 0 3px 8px rgba(0,0,0,.3); }
+.course-btn.tb b { font-size: 24px; }
+.course-btn.cur, .course-btn.rec { box-shadow: inset 0 2px 0 rgba(255,255,255,.6), 0 0 0 3px #ffd45c, 0 0 18px rgba(255, 212, 92, .9); }
+.course-btn i { position: absolute; top: -9px; right: 8px; padding: 2px 8px; border-radius: 3px; font-style: normal; font-size: 11px; font-weight: 800; color: #5a3300; background: #ffd45c; }
+.course-btn:active { transform: scale(.97); }
+.linkish { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; font-size: inherit; }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -1439,6 +1458,181 @@ select.field { padding: 6px 8px; appearance: auto; }
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
+<script>/* 애플왕의 진화 모험 — 학년별 교재(코스)
+ *
+ * 3·4·5·6학년: 2022 개정 영어과 교육과정 「기본 어휘 목록」 중 초등 권장 어휘(*)와
+ *   학년군별 의사소통 기능을 바탕으로 제작자가 새로 구성한 단원입니다. (교과서 원문이 아님)
+ *   교육과정은 3~4학년군·5~6학년군 단위로만 제시하므로, 학년별 배치는 쉬운 것부터 나눈 것입니다.
+ * 천재(이) 4학년: 선생님이 제공한 학습지(data.js의 UNITS)를 그대로 사용합니다.
+ *
+ * 단원 번호: 3학년 301~311, 4학년 401~411, 5학년 501~511, 6학년 601~611, 천재(이) 4학년 1~11
+ * (보스전은 각 교재의 3·6·11번째 단원 뒤, 사과숲 장식은 n번째 단원을 끝내면 열려요.)
+ */
+(function (root) {
+  const D = root.AQ_DATA || (typeof require !== 'undefined' ? require('./data.js') : null);
+  const W = (en, ko, e = '') => ({ en, ko, e });
+  const S = (en, ko) => ({ en, ko });
+  const U = (id, title, ko, icon, words, sentences) => ({ id, title, ko, icon, words, sentences });
+
+  const G3 = [
+    U(301, 'Hello, I\'m Mina', '안녕, 나는 미나야', '👋',
+      [W('hello', '안녕', '👋'), W('goodbye', '잘 가', '🙋'), W('name', '이름', '📛'), W('friend', '친구', '🧑‍🤝‍🧑'), W('nice', '좋은, 반가운', '😊'), W('meet', '만나다', '🤝'), W('boy', '소년', '👦'), W('girl', '소녀', '👧')],
+      [S('Hello, I\'m Mina.', '안녕, 나는 미나야.'), S('What\'s your name?', '너의 이름은 뭐니?'), S('My name is Tom.', '내 이름은 톰이야.'), S('Nice to meet you.', '만나서 반가워.'), S('Goodbye, see you.', '잘 가, 또 만나.')]),
+    U(302, 'What\'s This?', '이것은 뭐니?', '❓',
+      [W('book', '책', '📕'), W('pen', '펜', '🖊️'), W('bag', '가방', '🎒'), W('cap', '모자', '🧢'), W('ball', '공', '⚽'), W('desk', '책상', '🧑‍💻'), W('robot', '로봇', '🤖'), W('doll', '인형', '🪆')],
+      [S('What\'s this?', '이것은 뭐니?'), S('It\'s a book.', '그것은 책이야.'), S('Is it a ball?', '그것은 공이니?'), S('Yes, it is.', '응, 맞아.'), S('No, it isn\'t.', '아니, 그렇지 않아.')]),
+    U(303, 'Sit Down, Please', '앉아 주세요', '🪑',
+      [W('sit', '앉다', '🪑'), W('stand', '서다', '🧍'), W('open', '열다', '📂'), W('close', '닫다', '🚪'), W('door', '문', '🚪'), W('window', '창문', '🪟'), W('quiet', '조용한', '🤫'), W('please', '부탁해요', '🙏')],
+      [S('Sit down, please.', '앉아 주세요.'), S('Stand up, please.', '일어서 주세요.'), S('Open the door, please.', '문을 열어 주세요.'), S('Close the window.', '창문을 닫으렴.'), S('Be quiet, please.', '조용히 해 주세요.')]),
+    U(304, 'How Many Apples?', '사과가 몇 개니?', '🍎',
+      [W('one', '하나(1)', '1️⃣'), W('two', '둘(2)', '2️⃣'), W('three', '셋(3)', '3️⃣'), W('four', '넷(4)', '4️⃣'), W('five', '다섯(5)', '5️⃣'), W('six', '여섯(6)', '6️⃣'), W('seven', '일곱(7)', '7️⃣'), W('ten', '열(10)', '🔟'), W('apple', '사과', '🍎')],
+      [S('How many apples?', '사과가 몇 개니?'), S('Three apples.', '사과 세 개.'), S('How many dogs?', '개가 몇 마리니?'), S('Five dogs.', '개 다섯 마리.'), S('I have two pens.', '나는 펜이 두 개 있어.')]),
+    U(305, 'I Like Pizza', '나는 피자를 좋아해', '🍕',
+      [W('pizza', '피자', '🍕'), W('chicken', '치킨', '🍗'), W('milk', '우유', '🥛'), W('juice', '주스', '🧃'), W('banana', '바나나', '🍌'), W('carrot', '당근', '🥕'), W('candy', '사탕', '🍬'), W('like', '좋아하다', '❤️')],
+      [S('Do you like pizza?', '너는 피자를 좋아하니?'), S('Yes, I do.', '응, 좋아해.'), S('No, I don\'t.', '아니, 안 좋아해.'), S('I like chicken.', '나는 치킨을 좋아해.'), S('I don\'t like carrots.', '나는 당근을 좋아하지 않아.')]),
+    U(306, 'What Color Is It?', '그것은 무슨 색이니?', '🎨',
+      [W('red', '빨간색', '🔴'), W('blue', '파란색', '🔵'), W('yellow', '노란색', '🟡'), W('green', '초록색', '🟢'), W('white', '흰색', '⚪'), W('black', '검은색', '⚫'), W('pink', '분홍색', '🩷'), W('color', '색깔', '🌈')],
+      [S('What color is it?', '그것은 무슨 색이니?'), S('It\'s red.', '빨간색이야.'), S('It\'s yellow.', '노란색이야.'), S('I like blue.', '나는 파란색을 좋아해.'), S('My bag is green.', '내 가방은 초록색이야.')]),
+    U(307, 'Can You Swim?', '너는 수영할 수 있니?', '🏊',
+      [W('swim', '수영하다', '🏊'), W('skate', '스케이트 타다', '⛸️'), W('ski', '스키 타다', '⛷️'), W('jump', '점프하다', '🦘'), W('run', '달리다', '🏃'), W('soccer', '축구', '⚽'), W('baseball', '야구', '⚾'), W('tennis', '테니스', '🎾')],
+      [S('Can you swim?', '너는 수영할 수 있니?'), S('Yes, I can.', '응, 할 수 있어.'), S('No, I can\'t.', '아니, 못 해.'), S('Let\'s play soccer.', '축구하자.'), S('Sounds good.', '좋아.')]),
+    U(308, 'How\'s the Weather?', '날씨가 어때?', '⛅',
+      [W('sunny', '화창한', '☀️'), W('rain', '비', '🌧️'), W('snow', '눈', '❄️'), W('wind', '바람', '🌬️'), W('cloud', '구름', '☁️'), W('hot', '더운', '🥵'), W('cold', '추운', '🥶'), W('warm', '따뜻한', '🌤️')],
+      [S('How\'s the weather?', '날씨가 어때?'), S('It\'s sunny.', '화창해.'), S('It\'s raining.', '비가 오고 있어.'), S('It\'s snowing.', '눈이 오고 있어.'), S('It\'s cold today.', '오늘은 추워.')]),
+    U(309, 'This Is My Family', '이분은 우리 가족이야', '👨‍👩‍👧',
+      [W('family', '가족', '👨‍👩‍👧'), W('father', '아버지', '👨'), W('mother', '어머니', '👩'), W('brother', '남자 형제', '👦'), W('sister', '여자 형제', '👧'), W('grandfather', '할아버지', '👴'), W('baby', '아기', '👶'), W('uncle', '삼촌', '🧔')],
+      [S('Who is he?', '그는 누구니?'), S('He is my father.', '그는 우리 아버지야.'), S('Who is she?', '그녀는 누구니?'), S('She is my sister.', '그녀는 우리 언니(누나)야.'), S('This is my family.', '이분들은 우리 가족이야.')]),
+    U(310, 'It\'s a Big Lion', '그것은 커다란 사자야', '🦁',
+      [W('lion', '사자', '🦁'), W('tiger', '호랑이', '🐯'), W('monkey', '원숭이', '🐒'), W('elephant', '코끼리', '🐘'), W('rabbit', '토끼', '🐰'), W('bird', '새', '🐦'), W('big', '큰', '🐋'), W('small', '작은', '🐭')],
+      [S('What\'s that?', '저것은 뭐니?'), S('It\'s a lion.', '그것은 사자야.'), S('It\'s big.', '그것은 커.'), S('It\'s small and cute.', '그것은 작고 귀여워.'), S('Look at the monkey.', '저 원숭이를 봐.')]),
+    U(311, 'How Old Are You?', '너는 몇 살이니?', '🎂',
+      [W('birthday', '생일', '🎂'), W('cake', '케이크', '🍰'), W('party', '파티', '🎉'), W('card', '카드', '💌'), W('toy', '장난감', '🧸'), W('happy', '행복한', '😄'), W('old', '나이가 ~인', '🔢'), W('thank', '고마워하다', '🙏')],
+      [S('How old are you?', '너는 몇 살이니?'), S('I\'m ten years old.', '나는 열 살이야.'), S('Happy birthday!', '생일 축하해!'), S('This is for you.', '이건 너를 위한 거야.'), S('Thank you very much.', '정말 고마워.')]),
+  ];
+
+  const G4 = [
+    U(401, 'Where Is My Bag?', '내 가방은 어디 있니?', '🎒',
+      [W('where', '어디에', '❓'), W('on', '~ 위에', '⬆️'), W('in', '~ 안에', '📦'), W('under', '~ 아래에', '⬇️'), W('box', '상자', '📦'), W('bed', '침대', '🛏️'), W('table', '탁자', '🍽️'), W('bag', '가방', '🎒')],
+      [S('Where is my bag?', '내 가방은 어디 있니?'), S('It\'s on the desk.', '책상 위에 있어.'), S('It\'s under the bed.', '침대 아래에 있어.'), S('It\'s in the box.', '상자 안에 있어.'), S('Where is the cat?', '고양이는 어디 있니?')]),
+    U(402, 'What Time Is It?', '몇 시니?', '⏰',
+      [W('time', '시간', '⏰'), W('clock', '시계', '🕰️'), W('morning', '아침', '🌅'), W('breakfast', '아침 식사', '🥞'), W('lunch', '점심 식사', '🍱'), W('dinner', '저녁 식사', '🍽️'), W('school', '학교', '🏫'), W('eleven', '열하나(11)', '🕚'), W('twelve', '열둘(12)', '🕛')],
+      [S('What time is it?', '몇 시니?'), S('It\'s seven o\'clock.', '7시야.'), S('It\'s time for lunch.', '점심 먹을 시간이야.'), S('It\'s time for bed.', '잘 시간이야.'), S('It\'s twelve thirty.', '12시 30분이야.')]),
+    U(403, 'What Are You Doing?', '너는 무엇을 하고 있니?', '🎨',
+      [W('read', '읽다', '📖'), W('sing', '노래하다', '🎤'), W('dance', '춤추다', '💃'), W('cook', '요리하다', '🧑‍🍳'), W('draw', '그리다', '✏️'), W('sleep', '자다', '😴'), W('watch', '보다', '📺'), W('write', '쓰다', '✍️')],
+      [S('What are you doing?', '너는 무엇을 하고 있니?'), S('I\'m reading a book.', '나는 책을 읽고 있어.'), S('I\'m cooking.', '나는 요리하고 있어.'), S('I\'m watching TV.', '나는 텔레비전을 보고 있어.'), S('She is singing.', '그녀는 노래하고 있어.')]),
+    U(404, 'Whose Cap Is This?', '이건 누구의 모자니?', '🧢',
+      [W('whose', '누구의', '❔'), W('cap', '모자', '🧢'), W('shoe', '신발', '👟'), W('sock', '양말', '🧦'), W('jacket', '재킷', '🧥'), W('umbrella', '우산', '☂️'), W('watch', '손목시계', '⌚'), W('mine', '나의 것', '🙋')],
+      [S('Whose cap is this?', '이건 누구의 모자니?'), S('It\'s mine.', '그건 내 거야.'), S('Is this your umbrella?', '이거 네 우산이니?'), S('It\'s Tom\'s.', '그건 톰의 것이야.'), S('These are my socks.', '이건 내 양말이야.')]),
+    U(405, 'How Much Is It?', '그것은 얼마니?', '💰',
+      [W('much', '많은', '💰'), W('hundred', '백(100)', '💯'), W('money', '돈', '💵'), W('buy', '사다', '🛒'), W('cheap', '싼', '🏷️'), W('shop', '가게', '🏪'), W('pencil', '연필', '✏️'), W('notebook', '공책', '📓')],
+      [S('How much is it?', '그것은 얼마니?'), S('It\'s five hundred won.', '500원이야.'), S('I want this pencil.', '나는 이 연필을 원해.'), S('Here you are.', '여기 있어.'), S('It\'s cheap.', '싸네요.')]),
+    U(406, 'What Day Is It?', '오늘은 무슨 요일이니?', '📅',
+      [W('Monday', '월요일'), W('Tuesday', '화요일'), W('Wednesday', '수요일'), W('Thursday', '목요일'), W('Friday', '금요일'), W('Saturday', '토요일'), W('Sunday', '일요일'), W('today', '오늘', '📅'), W('week', '주, 일주일', '🗓️')],
+      [S('What day is it today?', '오늘은 무슨 요일이니?'), S('It\'s Monday.', '월요일이야.'), S('I have music class today.', '나는 오늘 음악 수업이 있어.'), S('See you on Friday.', '금요일에 만나.'), S('I play soccer on Sunday.', '나는 일요일에 축구를 해.')]),
+    U(407, 'Let\'s Eat Together', '같이 먹자', '🍲',
+      [W('eat', '먹다', '😋'), W('drink', '마시다', '🥤'), W('water', '물', '💧'), W('bread', '빵', '🍞'), W('soup', '수프', '🍲'), W('salad', '샐러드', '🥗'), W('sandwich', '샌드위치', '🥪'), W('delicious', '맛있는', '😋')],
+      [S('Are you hungry?', '너 배고프니?'), S('Yes, I am.', '응, 배고파.'), S('Let\'s eat together.', '같이 먹자.'), S('Can I have some water?', '물 좀 마셔도 될까?'), S('It\'s delicious.', '맛있어.')]),
+    U(408, 'Can You Help Me?', '나를 도와줄 수 있니?', '🤝',
+      [W('help', '돕다', '🆘'), W('carry', '나르다', '📦'), W('clean', '청소하다', '🧹'), W('wash', '씻다', '🧼'), W('room', '방', '🚪'), W('dish', '접시', '🍽️'), W('sure', '물론', '👌'), W('sorry', '미안한', '🙇')],
+      [S('Can you help me?', '나를 도와줄 수 있니?'), S('Sure, I can.', '물론, 도와줄게.'), S('Sorry, I can\'t.', '미안, 못 도와줘.'), S('Clean your room.', '네 방을 청소하렴.'), S('Wash your hands.', '손을 씻으렴.')]),
+    U(409, 'What\'s Wrong?', '무슨 일이니?', '🤒',
+      [W('head', '머리', '🧠'), W('tooth', '이, 치아', '🦷'), W('hand', '손', '✋'), W('foot', '발', '🦶'), W('arm', '팔', '💪'), W('leg', '다리', '🦵'), W('sick', '아픈', '🤒'), W('doctor', '의사', '🧑‍⚕️')],
+      [S('What\'s wrong?', '무슨 일이니?'), S('I have a cold.', '나는 감기에 걸렸어.'), S('I have a headache.', '나는 머리가 아파.'), S('Are you okay?', '너 괜찮니?'), S('Take care.', '몸조심해.')]),
+    U(410, 'I Get Up at Seven', '나는 7시에 일어나', '🌅',
+      [W('wake', '깨다, 일어나다', '⏰'), W('get', '얻다, ~하게 되다', '🙌'), W('go', '가다', '🚶'), W('come', '오다', '🏃'), W('home', '집', '🏠'), W('homework', '숙제', '📚'), W('night', '밤', '🌙'), W('early', '일찍', '🐓')],
+      [S('What time do you get up?', '너는 몇 시에 일어나니?'), S('I get up at seven.', '나는 7시에 일어나.'), S('I go to school at eight.', '나는 8시에 학교에 가.'), S('I do my homework at night.', '나는 밤에 숙제를 해.'), S('I go to bed early.', '나는 일찍 자.')]),
+    U(411, 'Where Is the Library?', '도서관은 어디 있니?', '🏙️',
+      [W('library', '도서관', '📚'), W('park', '공원', '🌳'), W('hospital', '병원', '🏥'), W('bank', '은행', '🏦'), W('zoo', '동물원', '🦒'), W('restaurant', '식당', '🍽️'), W('store', '가게', '🏬'), W('near', '가까운', '📍')],
+      [S('Where is the library?', '도서관은 어디 있니?'), S('It\'s next to the park.', '공원 옆에 있어.'), S('Is it near here?', '여기서 가깝니?'), S('Let\'s go to the zoo.', '동물원에 가자.'), S('It\'s near the bank.', '은행 근처에 있어.')]),
+  ];
+
+  const G5 = [
+    U(501, 'Where Are You From?', '너는 어디에서 왔니?', '🌏',
+      [W('Korea', '한국', '🇰🇷'), W('China', '중국', '🇨🇳'), W('Japan', '일본', '🇯🇵'), W('Canada', '캐나다', '🇨🇦'), W('France', '프랑스', '🇫🇷'), W('country', '나라', '🗺️'), W('grade', '학년', '🏫'), W('fifth', '다섯 번째', '5️⃣')],
+      [S('Where are you from?', '너는 어디에서 왔니?'), S('I\'m from Korea.', '나는 한국에서 왔어.'), S('What grade are you in?', '너는 몇 학년이니?'), S('I\'m in the fifth grade.', '나는 5학년이야.'), S('Nice to meet you, too.', '나도 만나서 반가워.')]),
+    U(502, 'What Do You Do on Weekends?', '주말에 무엇을 하니?', '🚲',
+      [W('weekend', '주말', '🗓️'), W('visit', '방문하다', '🏡'), W('movie', '영화', '🎬'), W('bike', '자전거', '🚲'), W('hike', '하이킹하다', '🥾'), W('badminton', '배드민턴', '🏸'), W('grandmother', '할머니', '👵'), W('usually', '보통, 대개', '🔁')],
+      [S('What do you do on weekends?', '너는 주말에 무엇을 하니?'), S('I play badminton.', '나는 배드민턴을 쳐.'), S('I visit my grandmother.', '나는 할머니 댁에 가.'), S('I usually ride my bike.', '나는 보통 자전거를 타.'), S('I watch a movie with my family.', '나는 가족과 영화를 봐.')]),
+    U(503, 'You Should See a Doctor', '병원에 가 보렴', '🩺',
+      [W('cold', '감기', '🤧'), W('fever', '열', '🌡️'), W('headache', '두통', '🤕'), W('toothache', '치통', '🦷'), W('rest', '쉬다', '🛌'), W('medicine', '약', '💊'), W('should', '~해야 한다', '☝️'), W('hospital', '병원', '🏥')],
+      [S('What\'s wrong?', '무슨 일이니?'), S('I have a fever.', '나는 열이 나.'), S('You should see a doctor.', '병원에 가 보렴.'), S('You should get some rest.', '좀 쉬어야 해.'), S('Get well soon.', '빨리 낫기를 바라.')]),
+    U(504, 'Go Straight and Turn Left', '쭉 가서 왼쪽으로 돌아', '🧭',
+      [W('straight', '똑바로', '⬆️'), W('left', '왼쪽', '⬅️'), W('right', '오른쪽', '➡️'), W('turn', '돌다', '↩️'), W('block', '구역, 블록', '🏘️'), W('station', '역', '🚉'), W('next', '옆의, 다음의', '👉'), W('post office', '우체국', '🏤')],
+      [S('Where is the post office?', '우체국은 어디 있니?'), S('Go straight one block.', '한 블록 쭉 가.'), S('Turn left.', '왼쪽으로 돌아.'), S('It\'s on your right.', '오른쪽에 있어.'), S('It\'s next to the station.', '역 옆에 있어.')]),
+    U(505, 'What Did You Do Yesterday?', '어제 무엇을 했니?', '📸',
+      [W('yesterday', '어제', '📅'), W('visited', '방문했다', '🏡'), W('played', '놀았다', '⚽'), W('watched', '봤다', '📺'), W('went', '갔다', '🚶'), W('ate', '먹었다', '🍽️'), W('made', '만들었다', '🛠️'), W('beach', '해변', '🏖️')],
+      [S('What did you do yesterday?', '너는 어제 무엇을 했니?'), S('I visited my uncle.', '나는 삼촌 댁에 갔어.'), S('I watched a movie.', '나는 영화를 봤어.'), S('I went to the beach.', '나는 해변에 갔어.'), S('I made cookies.', '나는 쿠키를 만들었어.')]),
+    U(506, 'I Want to Be a Pilot', '나는 조종사가 되고 싶어', '✈️',
+      [W('pilot', '조종사', '🧑‍✈️'), W('doctor', '의사', '🧑‍⚕️'), W('cook', '요리사', '🧑‍🍳'), W('teacher', '선생님', '🧑‍🏫'), W('singer', '가수', '🎤'), W('scientist', '과학자', '🧑‍🔬'), W('police officer', '경찰관', '👮'), W('want', '원하다', '🙏')],
+      [S('What do you want to be?', '너는 무엇이 되고 싶니?'), S('I want to be a pilot.', '나는 조종사가 되고 싶어.'), S('I like cooking.', '나는 요리하는 것을 좋아해.'), S('I\'m good at singing.', '나는 노래를 잘해.'), S('That\'s a great dream.', '멋진 꿈이야.')]),
+    U(507, 'May I Come In?', '들어가도 될까요?', '🚪',
+      [W('may', '~해도 된다', '🙋'), W('use', '사용하다', '🖊️'), W('borrow', '빌리다', '🤲'), W('take', '가져가다, 찍다', '📷'), W('picture', '사진, 그림', '🖼️'), W('enter', '들어가다', '🚪'), W('of course', '물론', '👍'), W('sorry', '미안한', '🙇')],
+      [S('May I come in?', '들어가도 될까요?'), S('Sure. Come in.', '그럼요. 들어오세요.'), S('May I use your pen?', '네 펜을 써도 될까?'), S('Sorry, you can\'t.', '미안하지만, 안 돼.'), S('May I take a picture?', '사진을 찍어도 될까요?')]),
+    U(508, 'When Is Your Birthday?', '네 생일은 언제니?', '🎂',
+      [W('January', '1월'), W('March', '3월'), W('May', '5월'), W('July', '7월'), W('October', '10월'), W('December', '12월'), W('month', '달, 월', '🗓️'), W('birthday', '생일', '🎂')],
+      [S('When is your birthday?', '네 생일은 언제니?'), S('It\'s on May fifth.', '5월 5일이야.'), S('My birthday is in July.', '내 생일은 7월에 있어.'), S('Let\'s have a party.', '파티를 하자.'), S('What month is it?', '지금은 몇 월이니?')]),
+    U(509, 'What Would You Like?', '무엇을 드릴까요?', '🍔',
+      [W('hamburger', '햄버거', '🍔'), W('spaghetti', '스파게티', '🍝'), W('steak', '스테이크', '🥩'), W('ice cream', '아이스크림', '🍦'), W('cookie', '쿠키', '🍪'), W('order', '주문하다', '📝'), W('would', '~하고 싶다(정중)', '🙇'), W('else', '그 밖의', '➕')],
+      [S('What would you like?', '무엇을 드릴까요?'), S('I\'d like a hamburger.', '햄버거 주세요.'), S('Anything else?', '더 필요한 것 있으세요?'), S('Some juice, please.', '주스 주세요.'), S('How about you?', '너는 어때?')]),
+    U(510, 'Who Is Taller?', '누가 더 키가 크니?', '📏',
+      [W('tall', '키가 큰', '🦒'), W('short', '키가 작은', '🐁'), W('fast', '빠른', '🐆'), W('slow', '느린', '🐢'), W('strong', '힘센', '💪'), W('heavy', '무거운', '🏋️'), W('long', '긴', '🐍'), W('than', '~보다', '⚖️')],
+      [S('Who is taller?', '누가 더 키가 크니?'), S('Mina is taller than Jin.', '미나가 진보다 키가 더 커.'), S('A tiger is faster than a dog.', '호랑이는 개보다 더 빨라.'), S('An elephant is heavier than a horse.', '코끼리는 말보다 더 무거워.'), S('Which is longer?', '어느 것이 더 기니?')]),
+    U(511, 'What Will You Do This Summer?', '이번 여름에 무엇을 할 거니?', '🏕️',
+      [W('summer', '여름', '☀️'), W('vacation', '방학', '🏖️'), W('travel', '여행하다', '🧳'), W('camp', '야영하다', '⛺'), W('mountain', '산', '⛰️'), W('trip', '여행', '🗺️'), W('plan', '계획', '📝'), W('will', '~할 것이다', '🔜')],
+      [S('What will you do this summer?', '이번 여름에 무엇을 할 거니?'), S('I\'m going to visit my grandmother.', '나는 할머니 댁에 갈 거야.'), S('I will go camping.', '나는 캠핑을 갈 거야.'), S('What\'s your plan?', '너의 계획은 뭐니?'), S('Have a nice trip.', '즐거운 여행 되렴.')]),
+  ];
+
+  const G6 = [
+    U(601, 'How Often Do You Exercise?', '얼마나 자주 운동하니?', '🏃',
+      [W('exercise', '운동하다', '🏋️'), W('often', '자주', '🔁'), W('always', '항상', '♾️'), W('never', '절대 ~ 않다', '🚫'), W('every', '모든, ~마다', '📆'), W('once', '한 번', '1️⃣'), W('twice', '두 번', '2️⃣'), W('week', '주, 일주일', '🗓️')],
+      [S('How often do you exercise?', '너는 얼마나 자주 운동하니?'), S('I exercise twice a week.', '나는 일주일에 두 번 운동해.'), S('I always eat breakfast.', '나는 항상 아침을 먹어.'), S('I never eat fast food.', '나는 패스트푸드를 절대 안 먹어.'), S('I walk my dog every day.', '나는 매일 개를 산책시켜.')]),
+    U(602, 'Why Are You Happy?', '너는 왜 기쁘니?', '😊',
+      [W('why', '왜', '❓'), W('because', '왜냐하면', '💡'), W('happy', '행복한', '😄'), W('sad', '슬픈', '😢'), W('tired', '피곤한', '😩'), W('worried', '걱정하는', '😟'), W('glad', '기쁜', '😊'), W('angry', '화난', '😠')],
+      [S('Why are you happy?', '너는 왜 기쁘니?'), S('Because I won the game.', '왜냐하면 경기에서 이겼거든.'), S('Why are you sad?', '너는 왜 슬프니?'), S('I\'m tired because I ran a lot.', '많이 뛰어서 피곤해.'), S('Don\'t worry.', '걱정하지 마.')]),
+    U(603, 'What\'s Your Favorite Subject?', '가장 좋아하는 과목이 뭐니?', '📚',
+      [W('math', '수학', '➗'), W('science', '과학', '🔬'), W('art', '미술', '🎨'), W('music', '음악', '🎵'), W('English', '영어', '🔤'), W('history', '역사', '🏯'), W('subject', '과목', '📚'), W('favorite', '가장 좋아하는', '⭐')],
+      [S('What\'s your favorite subject?', '네가 가장 좋아하는 과목은 뭐니?'), S('My favorite subject is science.', '내가 가장 좋아하는 과목은 과학이야.'), S('I\'m good at math.', '나는 수학을 잘해.'), S('I like art because I like drawing.', '나는 그림 그리기를 좋아해서 미술이 좋아.'), S('What about you?', '너는 어때?')]),
+    U(604, 'Let\'s Save the Earth', '지구를 지키자', '🌍',
+      [W('earth', '지구', '🌍'), W('save', '아끼다, 구하다', '💚'), W('plastic', '플라스틱', '🥤'), W('paper', '종이', '📄'), W('bottle', '병', '🍾'), W('light', '전등, 빛', '💡'), W('turn off', '끄다', '🔌'), W('recycle', '재활용하다', '♻️')],
+      [S('We should save water.', '우리는 물을 아껴야 해.'), S('Turn off the light.', '전등을 끄렴.'), S('Don\'t use plastic bags.', '비닐봉지를 쓰지 마.'), S('Let\'s recycle bottles.', '병을 재활용하자.'), S('Let\'s save the earth.', '지구를 지키자.')]),
+    U(605, 'How Was Your Trip?', '여행은 어땠니?', '🧳',
+      [W('trip', '여행', '🗺️'), W('was', '~이었다', '⏪'), W('great', '아주 좋은', '🌟'), W('fun', '재미있는', '🎉'), W('sea', '바다', '🌊'), W('swam', '수영했다', '🏊'), W('saw', '보았다', '👀'), W('took', '찍었다, 탔다', '📷')],
+      [S('How was your trip?', '여행은 어땠니?'), S('It was great.', '아주 좋았어.'), S('I went to Jeju.', '나는 제주도에 갔어.'), S('I swam in the sea.', '나는 바다에서 수영했어.'), S('I took many pictures.', '나는 사진을 많이 찍었어.')]),
+    U(606, 'What Do You Think?', '너는 어떻게 생각하니?', '💭',
+      [W('think', '생각하다', '🤔'), W('idea', '생각, 아이디어', '💡'), W('agree', '동의하다', '🤝'), W('right', '옳은', '✅'), W('wrong', '틀린', '❌'), W('good', '좋은', '👍'), W('important', '중요한', '❗'), W('so', '그렇게', '➡️')],
+      [S('What do you think?', '너는 어떻게 생각하니?'), S('I think it\'s a good idea.', '좋은 생각인 것 같아.'), S('I agree with you.', '나는 네 말에 동의해.'), S('I don\'t think so.', '나는 그렇게 생각하지 않아.'), S('You\'re right.', '네 말이 맞아.')]),
+    U(607, 'Will You Join Us?', '우리와 함께할래?', '🎉',
+      [W('join', '함께하다', '🤝'), W('invite', '초대하다', '💌'), W('party', '파티', '🎉'), W('busy', '바쁜', '⏳'), W('free', '한가한', '🕊️'), W('love', '정말 좋아하다', '❤️'), W('come', '오다', '🏃'), W('tomorrow', '내일', '📅')],
+      [S('Will you join us?', '우리와 함께할래?'), S('Sure, I\'d love to.', '물론, 정말 좋아.'), S('Sorry, I can\'t. I\'m busy.', '미안, 못 가. 바빠.'), S('Can you come to my party?', '내 파티에 올 수 있니?'), S('Are you free tomorrow?', '내일 시간 있니?')]),
+    U(608, 'Who Made It?', '누가 그것을 만들었니?', '🖼️',
+      [W('made', '만들었다', '🛠️'), W('wrote', '썼다', '✍️'), W('painted', '그렸다', '🎨'), W('built', '지었다', '🏗️'), W('invented', '발명했다', '💡'), W('book', '책', '📕'), W('picture', '그림', '🖼️'), W('famous', '유명한', '🌟')],
+      [S('Who painted this picture?', '누가 이 그림을 그렸니?'), S('Gogh painted it.', '고흐가 그렸어.'), S('Who wrote this book?', '누가 이 책을 썼니?'), S('King Sejong made Hangeul.', '세종대왕이 한글을 만들었어.'), S('He is very famous.', '그는 아주 유명해.')]),
+    U(609, 'What Does She Look Like?', '그녀는 어떻게 생겼니?', '👀',
+      [W('hair', '머리카락', '💇'), W('long', '긴', '📏'), W('short', '짧은', '✂️'), W('eyes', '눈', '👀'), W('glasses', '안경', '👓'), W('wear', '입다, 쓰다', '👕'), W('tall', '키가 큰', '🦒'), W('look', '보다, ~해 보이다', '👁️')],
+      [S('What does she look like?', '그녀는 어떻게 생겼니?'), S('She has long hair.', '그녀는 머리가 길어.'), S('He has big eyes.', '그는 눈이 커.'), S('He is wearing glasses.', '그는 안경을 쓰고 있어.'), S('She is tall.', '그녀는 키가 커.')]),
+    U(610, 'You Should Wear a Helmet', '헬멧을 써야 해', '⛑️',
+      [W('helmet', '헬멧', '⛑️'), W('careful', '조심하는', '⚠️'), W('safe', '안전한', '🛡️'), W('danger', '위험', '🚨'), W('cross', '건너다', '🚸'), W('street', '거리', '🛣️'), W('run', '달리다', '🏃'), W('shouldn\'t', '~하면 안 된다', '🙅')],
+      [S('You should wear a helmet.', '너는 헬멧을 써야 해.'), S('Be careful.', '조심해.'), S('You shouldn\'t run here.', '여기서 뛰면 안 돼.'), S('Look both ways before you cross.', '건너기 전에 양쪽을 살펴.'), S('Safety first!', '안전이 먼저야!')]),
+    U(611, 'My Dream for the Future', '나의 미래 꿈', '🚀',
+      [W('future', '미래', '🔮'), W('dream', '꿈', '💭'), W('become', '~이 되다', '🌱'), W('job', '직업', '💼'), W('world', '세계', '🌐'), W('people', '사람들', '👨‍👩‍👧‍👦'), W('help', '돕다', '🤝'), W('scientist', '과학자', '🧑‍🔬')],
+      [S('What\'s your dream?', '너의 꿈은 뭐니?'), S('My dream is to become a scientist.', '내 꿈은 과학자가 되는 거야.'), S('I want to help people.', '나는 사람들을 돕고 싶어.'), S('I will travel around the world.', '나는 세계 여행을 할 거야.'), S('Follow your dream.', '꿈을 따라가렴.')]),
+  ];
+
+  const CJ4 = (D && D.UNITS) || [];
+  const tag = (units, course) => units.map((u, i) => ({ ...u, no: i + 1, course }));
+  const COURSES = [
+    { key: 'g3', label: '3학년', sub: '교육과정 권장 어휘', grade: 3, src: 'curriculum', units: tag(G3, 'g3') },
+    { key: 'g4', label: '4학년', sub: '교육과정 권장 어휘', grade: 4, src: 'curriculum', units: tag(G4, 'g4') },
+    { key: 'g5', label: '5학년', sub: '교육과정 권장 어휘', grade: 5, src: 'curriculum', units: tag(G5, 'g5') },
+    { key: 'g6', label: '6학년', sub: '교육과정 권장 어휘', grade: 6, src: 'curriculum', units: tag(G6, 'g6') },
+    { key: 'cj4', label: '천재(이) 4학년', sub: '교과서 학습지 + 응용 문장', grade: 4, src: 'textbook', units: tag(CJ4, 'cj4') },
+  ];
+  const ALL_UNITS = COURSES.flatMap(c => c.units);
+
+  root.AQ_COURSES = { COURSES, ALL_UNITS };
+  if (typeof module !== 'undefined') module.exports = root.AQ_COURSES;
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
 <script>/* 애플왕의 진화 모험 — 게임 규칙(순수 함수). 브라우저와 node 테스트에서 함께 사용합니다.
  * 서버(Cloudflare Workers) 단계에서는 이 파일의 보상·진화·퇴화 계산을 서버로 옮겨 검증합니다.
  */
@@ -1573,7 +1767,7 @@ select.field { padding: 6px 8px; appearance: auto; }
   function bossOpen(s, boss) { return !!(s.units[boss.afterUnit] && s.units[boss.afterUnit].done); }
 
   function unitStatus(s, unit, now) {
-    if (!s.rules.openUnits.includes(unit.id)) return 'locked';
+    if (!s.rules.openUnits.includes(unit.no || unit.id)) return 'locked';
     const u = s.units[unit.id];
     if (!u) return 'open';
     if (u.done) {
@@ -1752,7 +1946,16 @@ select.field { padding: 6px 8px; appearance: auto; }
 <script>/* 애플왕의 진화 모험 — 화면과 상호작용 */
 (function () {
   'use strict';
-  const { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH } = AQ_DATA;
+  const { STAGES, DECOR, BOSSES: BASE_BOSSES, DEFAULT_RULES, SURVEY, CREATOR, ADMIN_HASH } = AQ_DATA;
+  const { COURSES, ALL_UNITS } = AQ_COURSES;
+  let UNITS = COURSES[COURSES.length - 1].units, BOSSES = BASE_BOSSES, COURSE = COURSES[COURSES.length - 1];
+  function setCourse(key) { // 교재 바꾸기: 단원·보스전 범위를 그 교재 것으로
+    COURSE = COURSES.find(c => c.key === key) || COURSES[COURSES.length - 1];
+    UNITS = COURSE.units;
+    BOSSES = BASE_BOSSES.map(b => ({ ...b, afterUnit: UNITS[b.afterUnit - 1].id, range: b.range.map(i => UNITS[i - 1].id) }));
+  }
+  const unitNo = id => { const u = ALL_UNITS.find(x => x.id === id); return u ? u.no : id; };
+  const decorDone = d => COURSES.some(c => { const u = c.units[d.unit - 1]; return u && S.units[u.id] && S.units[u.id].done; });
   /* SHA-256 (비밀번호 확인용, 외부 라이브러리 없이) */
   function sha256(str) {
     const K = [0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2];
@@ -1788,12 +1991,14 @@ select.field { padding: 6px 8px; appearance: auto; }
     s.settings = Object.assign(L.newState(DEFAULT_RULES).settings, o.settings || {});
     s.mastered = s.mastered || {}; s.streak = s.streak || 0; s.sentOK = s.sentOK || 0;
     s.cardAt = s.cardAt || {}; s.pin = s.pin || '1234';
+    if (!s.course && o.units && Object.keys(o.units).some(k => +k < 100)) s.course = 'cj4'; // 기존 기록은 천재(이) 4학년
     return s;
   }
   function load() { try { const t = localStorage.getItem(KEY); if (t) return migrate(JSON.parse(t)); } catch (e) {} return migrate({}); }
   let saveT, cloudDirty = false; function save() { cloudDirty = true; clearTimeout(saveT); saveT = setTimeout(() => { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }, 120); }
   let S = load();
   if (!S.createdAt) { S.createdAt = now(); S.cardAt[0] = now(); }
+  setCourse(S.course);
 
   /* ---------- 소리 (WebAudio로 직접 합성: 파일 없음) ---------- */
   const AU = {
@@ -1870,8 +2075,8 @@ select.field { padding: 6px 8px; appearance: auto; }
   { const li = document.getElementById('logoImg'); if (li) li.src = AQ_LOGO; }
   { const bg = document.getElementById('bgimg'); if (bg) bg.style.backgroundImage = `url(${AQ_TPL})`; }
 
-  const unitById = id => UNITS.find(u => u.id === id);
-  const isOpen = id => S.rules.openUnits.includes(id);
+  const unitById = id => ALL_UNITS.find(u => u.id === id);
+  const isOpen = id => S.rules.openUnits.includes(unitNo(id));
   function currentUnit() {
     const open = UNITS.filter(u => isOpen(u.id));
     return open.find(u => !(S.units[u.id] && S.units[u.id].done)) || open[open.length - 1] || UNITS[0];
@@ -1972,7 +2177,7 @@ select.field { padding: 6px 8px; appearance: auto; }
   function startReview() {
     let ids = L.doneIds(S);
     const wrongUnits = [...new Set(Object.values(S.wrong).map(w => w.unit))];
-    ids = [...new Set(ids.concat(wrongUnits))].filter(isOpen);
+    ids = [...new Set(ids.concat(wrongUnits))].filter(id => isOpen(id) && UNITS.some(u => u.id === id));
     if (!ids.length) ids = [currentUnit().id];
     Q = { mode: 'review', units: ids, list: L.buildMixed(UNITS, ids, S.rules.reviewLen, now() & 0xffff, 'review', S.wrong), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
     closeSheet(); go('play');
@@ -1980,7 +2185,7 @@ select.field { padding: 6px 8px; appearance: auto; }
   }
   function startBoss(id) {
     const b = BOSSES.find(x => x.id === id);
-    if (!L.bossOpen(S, b)) { toast(`${b.afterUnit}단원을 완료하면 열려요.`); return; }
+    if (!L.bossOpen(S, b)) { toast(`${unitNo(b.afterUnit)}단원을 완료하면 열려요.`); return; }
     Q = { mode: 'boss', boss: id, list: L.buildMixed(UNITS, b.range, S.rules.bossLen, now() & 0xffff, 'boss'), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
     closeSheet(); go('boss');
   }
@@ -1990,7 +2195,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     let tag, dots = '', label;
     if (Q.mode === 'set') {
       const u = S.units[Q.unit]; const off = Q.setIdx * 5;
-      tag = `<span class="lesson">Lesson ${Q.unit}</span>`;
+      tag = `<span class="lesson">Lesson ${unitNo(Q.unit)}</span>`;
       for (let k = 0; k < 10; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : '';
@@ -2032,7 +2237,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     const nextSet = rec && rec.sets[0] && !rec.sets[1] ? 1 : 0;
     const openBoss = BOSSES.find(b => L.bossOpen(S, b) && !S.bosses[b.id]);
     const decayed = S.stage < S.maxStage;
-    return `<div class="qtop"><span class="lesson">Lesson ${u.id}</span><div class="dots">${[0, 1].map(k => `<i class="${rec && rec.sets[k] ? 'ok' : ''}"></i>`).join('')}<b>세트 ${rec ? rec.sets.filter(Boolean).length : 0} / 2</b></div></div>
+    return `<div class="qtop"><span class="lesson">Lesson ${u.no}</span><div class="dots">${[0, 1].map(k => `<i class="${rec && rec.sets[k] ? 'ok' : ''}"></i>`).join('')}<b>세트 ${rec ? rec.sets.filter(Boolean).length : 0} / 2</b></div></div>
       <div class="ready-card"><h3 class="en">${esc(u.title)}</h3><p>${u.ko} · 단어 ${u.words.length}개 · 문장 ${u.sentences.length}개</p>
       ${decayed ? `<button class="btn blue" data-act="review" style="width:100%;margin-bottom:8px">🔁 복습 퀴즈 5문제로 원래 모습 되찾기</button>` : ''}
       ${openBoss ? `<button class="btn" data-act="bossinfo" data-v="${openBoss.id}" style="width:100%;margin-bottom:8px;background:linear-gradient(180deg,#d9c8ff,#8a5cff 60%,#5a2ad0);color:#fff">🌳 ${openBoss.title} 보스전 열림!</button>` : ''}
@@ -2046,14 +2251,14 @@ select.field { padding: 6px 8px; appearance: auto; }
     const evo = L.canEvolve(S);
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
-      title = R.passed ? (R.newlyDone ? `${Q.unit}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
+      title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
       sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요. (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += `<br>🍎 성장 열매 +1${R.decor ? ` · 🎁 ${R.decor} 해금` : ''}`;
       if (R.boss) sub += `<br>🌳 ${R.boss} 보스전이 열렸어요!`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
       if (!R.passed) btns += `<button class="btn" data-act="set" data-u="${Q.unit}" data-s="${Q.setIdx}">다시 도전</button>`;
       else if (other !== null) btns += `<button class="btn" data-act="set" data-u="${Q.unit}" data-s="${other}">다음 세트 ▶</button>`;
-      else { const nu = currentUnit(); if (nu.id !== Q.unit) btns += `<button class="btn" data-act="set" data-u="${nu.id}" data-s="0">Lesson ${nu.id} ▶</button>`; }
+      else { const nu = currentUnit(); if (nu.id !== Q.unit) btns += `<button class="btn" data-act="set" data-u="${nu.id}" data-s="0">Lesson ${nu.no} ▶</button>`; }
     } else if (Q.mode === 'review') {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
       sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}`;
@@ -2135,7 +2340,7 @@ select.field { padding: 6px 8px; appearance: auto; }
       Object.assign(R, r);
       L.markStudy(S, t, 'basic'); touchDay();
       if (r.newlyDone) {
-        const d = DECOR.find(x => x.unit === Q.unit); R.decor = d && d.name;
+        const d = DECOR.find(x => x.unit === unitNo(Q.unit)); R.decor = d && d.name;
         const b = BOSSES.find(x => x.afterUnit === Q.unit); R.boss = b && b.title;
         AU.fanfare();
       } else if (r.passed) AU.sparkle();
@@ -2373,7 +2578,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     let tag, dots = '', label;
     if (Q.mode === 'set') {
       const u = S.units[Q.unit], off = Q.setIdx * 5;
-      tag = `Lesson ${Q.unit}`;
+      tag = `Lesson ${unitNo(Q.unit)}`;
       for (let k = 0; k < 10; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
@@ -2449,13 +2654,13 @@ select.field { padding: 6px 8px; appearance: auto; }
     if (L.canEvolve(S)) acts.push(['✨ 진화하기!', 'evolve', '']);
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
-      title = R.passed ? (R.newlyDone ? `${Q.unit}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
+      title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
       sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요 (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += ` · 💎 +1${R.decor ? ` · 🎁 ${R.decor}` : ''}`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
       if (!R.passed) acts.push(['다시 도전', 'set', `data-u="${Q.unit}" data-s="${Q.setIdx}"`]);
       else if (other !== null) acts.push(['다음 세트 ▶', 'set', `data-u="${Q.unit}" data-s="${other}"`]);
-      else { const nu = currentUnit(); if (nu.id !== Q.unit) acts.push([`Lesson ${nu.id} ▶`, 'set', `data-u="${nu.id}" data-s="0"`]); }
+      else { const nu = currentUnit(); if (nu.id !== Q.unit) acts.push([`Lesson ${nu.no} ▶`, 'set', `data-u="${nu.id}" data-s="0"`]); }
       if (R.boss) acts.push(['🌳 보스전', 'bossinfo', `data-v="${BOSSES.find(b => b.afterUnit === Q.unit).id}"`]);
     } else {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
@@ -2474,20 +2679,21 @@ select.field { padding: 6px 8px; appearance: auto; }
     const LBL = { open: '학습 가능', studying: '공부 중', done: '완료', review: '복습 필요', locked: '아직 안 열림' };
     const rec = S.units[u.id]; const pct = rec ? rec.sets.filter(Boolean).length * 50 : 0;
     return `<button class="unit ${st === 'locked' ? 'locked' : ''}" data-act="unit" data-v="${u.id}">
-      <span class="num">${u.icon}<b>${u.id}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
+      <span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
       <span class="st ${st}">${LBL[st]}</span></button>`;
   }
   function bossRowHTML(b) {
     const open = L.bossOpen(S, b), done = !!S.bosses[b.id];
     return `<button class="bossnode ${open ? '' : 'locked'}" data-act="bossinfo" data-v="${b.id}"><span class="num">${done ? '🌳' : '🥀'}</span>
-      <span><h3>${b.id === 3 ? '최종' : b.id + '차'} 보스전 · ${b.title}</h3><p>${b.range.length > 3 ? '전체 단원' : b.range[0] + '~' + b.range[b.range.length - 1] + '단원'} 복습 · ${b.reward}</p></span>
+      <span><h3>${b.id === 3 ? '최종' : b.id + '차'} 보스전 · ${b.title}</h3><p>${b.range.length > 3 ? '전체 단원' : unitNo(b.range[0]) + '~' + unitNo(b.range[b.range.length - 1]) + '단원'} 복습 · ${b.reward}</p></span>
       <span class="st ${done ? 'done' : open ? 'studying' : 'locked'}">${done ? '성공' : open ? '도전 가능' : '잠김'}</span></button>`;
   }
   function renderUnits() {
-    let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>4학년 영어 1학기 · 2학기 핵심 단어와 문장</p></div></div>`;
-    for (const sem of [1, 2]) {
-      html += `<div class="sem">${sem}학기</div><div class="units">`;
-      for (const u of UNITS.filter(x => x.sem === sem)) {
+    let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>📚 ${COURSE.label} · <button class="linkish" data-act="course">교재 바꾸기</button></p></div></div>`;
+    const groups = COURSE.key === 'cj4' ? [[1, '1학기'], [2, '2학기']] : [[0, `${COURSE.label} · ${COURSE.sub}`]];
+    for (const [sem, gl] of groups) {
+      html += `<div class="sem">${gl}</div><div class="units">`;
+      for (const u of UNITS.filter(x => !sem || x.sem === sem)) {
         html += unitRowHTML(u);
         const b = BOSSES.find(x => x.afterUnit === u.id); if (b) html += bossRowHTML(b);
       }
@@ -2499,7 +2705,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     const u = unitById(id);
     if (!isOpen(id)) { toast('선생님이 아직 열지 않은 단원이에요.'); return; }
     const rec = S.units[id];
-    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${id}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
+    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${u.no}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
       <div class="grid2"><button class="btn ghost" data-act="go" data-v="study" data-u="${id}">🎧 공부방<small>단어·문장 카드</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·듣기·빈칸</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>문장 듣기·순서·짝맞추기</small></button>
@@ -2509,7 +2715,7 @@ select.field { padding: 6px 8px; appearance: auto; }
   function bossSheet(id) {
     const b = BOSSES.find(x => x.id === id); const open = L.bossOpen(S, b);
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🌳 ${b.title}</h3><p class="sub">${b.goal}</p>
-      <p class="sub">복습 범위: ${b.range.length > 3 ? '1~11단원 전체' : b.range.join(', ') + '단원'} · ${S.rules.bossLen}문제 · ${S.rules.bossPass}문제 이상 맞히면 성공<br>보상: <b>${b.reward}</b>${S.bosses[id] ? ' (이미 받음)' : ''}</p>
+      <p class="sub">복습 범위: ${b.range.length > 3 ? '1~11단원 전체' : b.range.map(unitNo).join(', ') + '단원'} · ${S.rules.bossLen}문제 · ${S.rules.bossPass}문제 이상 맞히면 성공<br>보상: <b>${b.reward}</b>${S.bosses[id] ? ' (이미 받음)' : ''}</p>
       ${open ? `<button class="btn" data-act="boss" data-v="${id}" style="width:100%">도전하기!</button>` : `<button class="btn" disabled style="width:100%">${b.afterUnit}단원을 완료하면 열려요</button>`}`);
   }
 
@@ -2520,7 +2726,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     html += `<div class="units">` + BOSSES.map(bossRowHTML).join('') + `</div><div class="sem">단원별 퀴즈</div><div class="units">`;
     for (const u of UNITS) {
       const rec = S.units[u.id], lock = !isOpen(u.id);
-      html += `<div class="unit ${lock ? 'locked' : ''}" style="grid-template-columns:50px 1fr"><span class="num">${u.icon}<b>${u.id}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3>
+      html += `<div class="unit ${lock ? 'locked' : ''}" style="grid-template-columns:50px 1fr"><span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3>
         <div class="row-btns" style="margin-top:6px"><button class="btn" style="min-height:38px;font-size:14px" data-act="set" data-u="${u.id}" data-s="0" ${lock ? 'disabled' : ''}>세트 1 ${rec && rec.sets[0] ? '✅' : ''}</button><button class="btn" style="min-height:38px;font-size:14px" data-act="set" data-u="${u.id}" data-s="1" ${lock ? 'disabled' : ''}>세트 2 ${rec && rec.sets[1] ? '✅' : ''}</button></div></span></div>`;
     }
     main.innerHTML = html + '</div>';
@@ -2529,31 +2735,31 @@ select.field { padding: 6px 8px; appearance: auto; }
   /* 공부방 */
   const SD = { unit: null, tab: 'w', i: 0, flip: false };
   function studyItems() {
-    if (SD.tab === 'x') return Object.keys(S.wrong).map(en => { for (const u of UNITS) { const w = u.words.find(x => x.en === en); if (w) return { ...w, unit: u.id }; } return null; }).filter(Boolean);
+    if (SD.tab === 'x') return Object.keys(S.wrong).map(en => { for (const u of ALL_UNITS) { const w = u.words.find(x => x.en === en); if (w) return { ...w, unit: u.id }; } return null; }).filter(Boolean);
     const u = unitById(SD.unit);
     return SD.tab === 'w' ? u.words.map(w => ({ ...w, unit: u.id })) : u.sentences.map(s => ({ ...s, unit: u.id, sent: true }));
   }
   function renderStudy() {
     if (viewArg) { SD.unit = viewArg; SD.i = 0; SD.flip = false; viewArg = null; }
-    if (!SD.unit || !isOpen(SD.unit)) SD.unit = currentUnit().id;
+    if (!SD.unit || !UNITS.some(x => x.id === SD.unit) || !isOpen(SD.unit)) SD.unit = currentUnit().id;
     const items = studyItems(); if (SD.i >= items.length) SD.i = 0;
     const it = items[SD.i];
     const u = unitById(SD.unit), rec = L.unitRec(S, SD.unit);
     const known = it && rec.known[it.en];
     const voiceNote = !TTS.ok ? '이 브라우저는 발음 듣기를 지원하지 않아요. 크롬이나 사파리 최신 버전을 사용해 보세요.' : !TTS.voice ? '영어 음성을 찾는 중이에요. 소리가 나지 않으면 기기 설정에서 영어 음성을 추가해 주세요.' : `발음: ${esc(TTS.voice.name)} (기기·브라우저마다 목소리가 달라요)`;
     main.innerHTML = `<div class="screen-title"><div><h2>영어 공부방</h2><p>카드를 누르면 뒤집혀요</p></div></div>
-      <div class="unit-chips">${UNITS.map(x => `<button class="${x.id === SD.unit && SD.tab !== 'x' ? 'on' : ''}" data-act="sunit" data-v="${x.id}" ${isOpen(x.id) ? '' : 'disabled'}>${x.id}</button>`).join('')}</div>
+      <div class="unit-chips">${UNITS.map(x => `<button class="${x.id === SD.unit && SD.tab !== 'x' ? 'on' : ''}" data-act="sunit" data-v="${x.id}" ${isOpen(x.id) ? '' : 'disabled'}>${x.no}</button>`).join('')}</div>
       <div class="tabs"><button class="${SD.tab === 'w' ? 'on' : ''}" data-act="stab" data-v="w">단어</button><button class="${SD.tab === 's' ? 'on' : ''}" data-act="stab" data-v="s">문장</button><button class="${SD.tab === 'x' ? 'on' : ''}" data-act="stab" data-v="x">오답 노트 ${Object.keys(S.wrong).length || ''}</button></div>
       ${!it ? `<div class="glass" style="text-align:center;padding:28px;color:#fff">틀린 단어가 없어요! 🎉<br><span style="font-size:13px;color:#c9d6f0">퀴즈에서 틀리거나 "더 공부할래요"를 누른 단어가 여기에 모여요.</span></div>` : `
       <div class="flash-wrap"><div class="flash ${SD.flip ? 'flip' : ''}" id="flash" data-act="flip" role="button" tabindex="0" aria-label="카드 뒤집기">
-        <div class="face"><div>${known ? '<span class="tag k">잘 외웠어요</span>' : ''}${it.p ? '<span class="tag" style="left:14px;right:auto;background:#e2efff;color:#1d4fa0">응용 문장</span>' : it.sent ? '<span class="tag" style="left:14px;right:auto;background:#fff2c2;color:#8a5a00">교과서 문장</span>' : ''}<span class="pic">${it.sent ? unitById(it.unit).icon : (it.e || '🍎')}</span><span class="word ${it.sent ? 's' : ''} en">${esc(it.en)}</span><span class="hint">${SD.tab === 'x' ? 'Lesson ' + it.unit + ' · ' : ''}눌러서 뜻 보기</span></div></div>
+        <div class="face"><div>${known ? '<span class="tag k">잘 외웠어요</span>' : ''}${it.p ? '<span class="tag" style="left:14px;right:auto;background:#e2efff;color:#1d4fa0">응용 문장</span>' : it.sent ? `<span class="tag" style="left:14px;right:auto;background:#fff2c2;color:#8a5a00">${(unitById(it.unit) || {}).course === 'cj4' ? '교과서 문장' : '핵심 문장'}</span>` : ''}<span class="pic">${it.sent ? unitById(it.unit).icon : (it.e || '🍎')}</span><span class="word ${it.sent ? 's' : ''} en">${esc(it.en)}</span><span class="hint">${SD.tab === 'x' ? 'Lesson ' + unitNo(it.unit) + ' · ' : ''}눌러서 뜻 보기</span></div></div>
         <div class="face back"><div><span class="mean">${esc(it.ko)}</span><span class="word s en" style="font-size:22px;color:#4a5277">${esc(it.en)}</span><span class="hint">다시 누르면 앞면</span></div></div>
       </div></div>
       <div class="flash-nav"><button class="arrow" data-act="sprev" aria-label="이전">◀</button><span class="count">${SD.i + 1} / ${items.length}</span><button class="arrow" data-act="snext" aria-label="다음">▶</button></div>
       <div class="audio-row"><button class="btn" data-act="say1">🔊<small>듣기</small></button><button class="btn blue" data-act="say2">🐢<small>천천히</small></button><button class="btn ghost" data-act="say3">🔁<small>3번 반복</small></button></div>
       <div class="row-btns"><button class="btn green" data-act="known">😊 잘 외웠어요</button><button class="btn ghost" data-act="more">📖 더 공부할래요</button></div>`}
       <p class="voice-note">${voiceNote}</p>
-      <div class="row-btns"><button class="btn" data-act="set" data-u="${u.id}" data-s="0">Lesson ${u.id} 퀴즈 도전 ▶</button></div>`;
+      <div class="row-btns"><button class="btn" data-act="set" data-u="${u.id}" data-s="0">Lesson ${u.no} 퀴즈 도전 ▶</button></div>`;
   }
 
   /* 도감 */
@@ -2601,7 +2807,8 @@ select.field { padding: 6px 8px; appearance: auto; }
       ${wrong.length ? `<div class="wlist">${wrong.map(([en, w]) => `<span><b>${esc(en)}</b>${w.n}회</span>`).join('')}</div><div class="row-btns"><button class="btn blue" data-act="review">틀린 단어 복습하기</button></div>` : `<p style="color:#c9d6f0;font-size:13.5px;margin:0">아직 없어요. 멋져요!</p>`}
       <div class="section-h">설정</div>
       <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
-      <button class="link" data-act="rename">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
+      <button class="link" data-act="course">📚 교재: <b>${COURSE.label}</b> · 바꾸기</button>
+      <button class="link" data-act="rename" style="margin-top:8px">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       ${SESS ? `<p class="voice-note">🏫 ${esc(SESS.school_name)} ${SESS.grade}학년 ${SESS.cls}반 ${SESS.num}번 · 기록은 학급 서버에 자동 저장돼요.</p>` : ''}
       <button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
@@ -2618,7 +2825,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     return d.e;
   }
   function renderForest() {
-    const unlocked = DECOR.filter(d => S.units[d.unit] && S.units[d.unit].done);
+    const unlocked = DECOR.filter(decorDone);
     const placed = DECOR.filter(d => S.forest[d.key] && unlocked.includes(d));
     main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="home" aria-label="뒤로">←</button><div><h2>${esc(S.name || '나')}의 사과숲</h2><p>장식을 눌러 놓고, 끌어서 옮겨요</p></div></div>
       <div class="forest" id="forest"><div class="hill"></div><div class="bgtree" style="left:6%"></div><div class="bgtree" style="right:8%;top:22%;width:18%"></div>
@@ -2703,7 +2910,7 @@ select.field { padding: 6px 8px; appearance: auto; }
       <div class="teacher">
       ${API ? adminTeachersHTML() : ''}
       ${surveyHTML()}
-      <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.id) ? 'on' : ''}" data-act="uopen" data-v="${u.id}">${u.id}</button>`).join('')}</div></div>
+      <div class="section-h">학습 가능 단원</div><div class="glass"><div class="ugrid">${UNITS.map(u => `<button class="${r.openUnits.includes(u.no) ? 'on' : ''}" data-act="uopen" data-v="${u.no}">${u.no}</button>`).join('')}</div></div>
       <div class="section-h">경험치·진화 규칙</div><div class="glass">
         ${num('expBasic', '기본 퀴즈 정답 경험치')}${num('expReview', '복습·보스 정답 경험치')}
         ${num('evo1.exp', '애플왕 진화: 누적 경험치')}${num('evo1.units', '애플왕 진화: 완료 단원 수', 1, 11)}
@@ -2713,9 +2920,9 @@ select.field { padding: 6px 8px; appearance: auto; }
         ${num('decayEnergyDays', '에너지 감소 시작 (일)')}${num('decayStageDays', '1단계 하락 (일)')}${num('decayBaseDays', '풋애플까지 하락 (일)')}</div>
       <div class="section-h">미리보기</div>
       <div class="row-btns" style="margin-top:0">${[0, 1, 2].map(i => `<button class="btn ghost" data-act="tzoom" data-v="${i}">${STAGES[i].name}</button>`).join('')}</div>
-      <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.id}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
+      <div class="glass" style="margin-top:10px"><ol class="qprev">${UNITS.map(u => `<li><b>${u.no}. ${esc(u.title)}</b><br>${u.words.map(w => esc(w.en) + '(' + esc(w.ko) + ')').join(', ')}<br><i>${u.sentences.map(s => esc(s.en)).join(' / ')}</i></li>`).join('')}</ol></div>
       <div class="section-h">학습 기록</div>
-      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.id}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
+      <div class="glass" style="font-size:13.5px;line-height:1.6;color:#d6e0f5">${UNITS.map(u => { const x = S.units[u.id]; return `${u.no}단원: ${x ? (x.done ? '완료' : '진행 중') + ` · 정답률 ${x.n ? Math.round(x.ok / x.n * 100) : 0}%` : '시작 전'}`; }).join('<br>')}</div>
       <div class="row-btns"><button class="btn ghost" data-act="csv">📋 기록 CSV 복사</button></div>
       <div class="row-btns"><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="resetask">이 기기 학습 기록 초기화</button></div>
       <div class="row-btns"><button class="btn ghost" data-act="adminout">🔒 관리실 잠그기</button></div></div>`;
@@ -2794,7 +3001,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     uopen: d => { const id = +d.v, a = S.rules.openUnits; const k = a.indexOf(id); if (k >= 0) a.splice(k, 1); else a.push(id); a.sort((x, y) => x - y); save(); renderTeacher(); },
     decor: d => {
       const dd = DECOR.find(x => x.key === d.v);
-      if (!(S.units[dd.unit] && S.units[dd.unit].done)) { toast(`${dd.unit}단원을 완료하면 ${dd.name}을(를) 얻어요!`); return; }
+      if (!decorDone(dd)) { toast(`${dd.unit}단원을 완료하면 ${dd.name}을(를) 얻어요!`); return; }
       if (S.forest[dd.key]) delete S.forest[dd.key]; else { S.forest[dd.key] = { x: 20 + Math.random() * 60, y: 60 + Math.random() * 30 }; AU.sparkle(); }
       save(); renderForest();
     },
@@ -2825,7 +3032,7 @@ select.field { padding: 6px 8px; appearance: auto; }
     tlogout: () => { TS = null; lsSet(TSESS_KEY, null); TLIST = null; renderTeach(); },
     treload: () => loadTeach(),
     tcopyf: () => copyText(sheetFormula(), '수식을 복사했어요! 구글 시트 A1 칸에 붙여 넣으세요.'),
-    tcsv: () => { if (!TLIST) return; copyText(TLIST.map(x => [x.num, x.nickname, x.level || 1, x.stage || '풋애플', x.unitsDone || 0, (x.accuracy || 0) + '%', fmtDate(x.lastStudy)].join('\t')).join('\n'), '복사했어요! 엑셀이나 시트에 붙여 넣으세요.'); },
+    tcsv: () => { if (!TLIST) return; copyText(TLIST.map(x => [x.num, x.nickname, x.course || '', x.level || 1, x.stage || '풋애플', x.unitsDone || 0, (x.accuracy || 0) + '%', fmtDate(x.lastStudy)].join('\t')).join('\n'), '복사했어요! 엑셀이나 시트에 붙여 넣으세요.'); },
     tpin: d => confirmSheet(`${d.n}번 학생의 비밀번호를 초기화할까요?`, '학생이 다음에 들어올 때 새로 입력하는 4자리가 새 비밀번호가 돼요.', '초기화', async () => { const r = await api('/api/teacher/reset-pin', { id: +d.v }, { token: TS.token }); toast(r.ok ? '초기화했어요' : r.error); loadTeach(); }),
     tdel: d => confirmSheet(`${d.n}번 학생 기록을 지울까요?`, '이 학생의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '지우기', async () => { const r = await api('/api/teacher/delete-student', { id: +d.v }, { token: TS.token }); toast(r.ok ? '지웠어요' : r.error); loadTeach(); }),
     tdelall: () => confirmSheet('우리 반 기록을 모두 지울까요?', '학년이 끝났을 때 쓰는 기능이에요. 우리 반 학생들의 캐릭터와 학습 기록이 모두 지워지고 되돌릴 수 없어요.', '모두 지우기', async () => { const r = await api('/api/teacher/delete-class', {}, { token: TS.token }); toast(r.ok ? '모두 지웠어요' : r.error); loadTeach(); }),
@@ -2840,12 +3047,13 @@ select.field { padding: 6px 8px; appearance: auto; }
     switchkid: () => { cloudFlush(); SESS = null; lsSet(SESS_KEY, null); const intro = S.introSeen; S = migrate({}); S.introSeen = intro; S.createdAt = now(); S.cardAt[0] = now(); save(); toast('다른 친구로 시작해요'); const t = document.querySelector('.title'); if (t) { t.remove(); boot(); } },
     rename: () => nameSheet(),
     csv: () => {
-      const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.id, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
+      const rows = [['이름', '단원', '상태', '정답', '문항', '정답률']].concat(UNITS.map(u => { const x = S.units[u.id]; return [S.name, u.no, x ? (x.done ? '완료' : '진행') : '시작 전', x ? x.ok : 0, x ? x.n : 0, x && x.n ? Math.round(x.ok / x.n * 100) + '%' : '']; }));
       const text = rows.map(r => r.join(',')).join('\n');
       if (navigator.clipboard) navigator.clipboard.writeText(text).then(() => toast('복사했어요! 엑셀에 붙여넣기 하세요.')).catch(() => showText(text)); else showText(text);
     },
     resetask: () => openSheet(`<h3>정말 초기화할까요?</h3><p class="sub">이 기기의 경험치, 단원 기록, 카드, 사과숲이 모두 지워져요. 되돌릴 수 없어요.</p><div class="row-btns"><button class="btn ghost" data-act="closeSheet">취소</button><button class="btn" style="background:linear-gradient(180deg,#ffd0c0,#ef6a4a);color:#fff" data-act="reset">초기화</button></div>`),
     exit: () => { AU.tap(); openExit(); },
+    course: () => { AU.tap(); closeSheet(); coursePicker(() => go('home'), false); },
     reset: () => { const pin = S.pin, rules = S.rules, sv = S.surveys; S = migrate({}); S.pin = pin; S.rules = rules; S.surveys = sv; S.createdAt = now(); S.cardAt[0] = now(); S.introSeen = true; Q = null; save(); closeSheet(); toast('초기화했어요'); nameSheet(); },
   };
   function showText(t) { openSheet(`<button class="close" data-act="closeSheet">✕</button><h3>아래 내용을 길게 눌러 복사하세요</h3><textarea class="field" id="csv-out" style="height:200px;font-size:13px" readonly>${esc(t)}</textarea>`); }
@@ -2908,8 +3116,8 @@ select.field { padding: 6px 8px; appearance: auto; }
     $('#cfm').addEventListener('click', () => { closeSheet(); fn(); });
   }
   function summary() {
-    const done = L.doneIds(S);
-    return { level: L.level(S.exp), exp: S.exp, stage: STAGES[S.stage].name, unitsDone: done.length, doneUnits: done,
+    const done = L.doneIds(S).map(id => { const u = unitById(id); return u ? `${COURSES.find(c => c.key === u.course).label.replace('학년', '')}-${u.no}` : id; });
+    return { course: COURSE.label, level: L.level(S.exp), exp: S.exp, stage: STAGES[S.stage].name, unitsDone: done.length, doneUnits: done,
       accuracy: S.stats.answered ? Math.round(S.stats.correct / S.stats.answered * 100) : 0, minutes: Math.round(S.stats.ms / 60000), streak: S.streak,
       bosses: BOSSES.filter(b => S.bosses[b.id]).map(b => b.id + '차'), wrongTop: Object.entries(S.wrong).sort((a, b) => b[1].n - a[1].n).slice(0, 5).map(x => x[0]), lastStudy: S.lastStudy };
   }
@@ -2932,7 +3140,7 @@ select.field { padding: 6px 8px; appearance: auto; }
   function adoptState(st) {
     const intro = S.introSeen, settings = S.settings;
     S = migrate(st || {}); S.introSeen = intro || S.introSeen; if (!st) { S.createdAt = now(); S.cardAt[0] = now(); S.settings = settings; }
-    S.account = acct(SESS); S.name = SESS.nickname; save();
+    S.account = acct(SESS); S.name = SESS.nickname; setCourse(S.course); Q = null; save();
   }
   async function resumeCloud(after) {
     go('home'); toast('기록을 불러오는 중…', 1200);
@@ -3068,9 +3276,9 @@ select.field { padding: 6px 8px; appearance: auto; }
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
       ${TERR ? `<p class="sv-note">${esc(TERR)}</p>` : ''}
       <div class="section-h">우리 반 학생</div>
-      <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
-      ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
-        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="9" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
+      <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>교재</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
+      ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.course || '-')}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
+        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="10" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
       </tbody></table></div>
       <div class="row-btns"><button class="btn ghost" data-act="treload">🔄 새로고침</button><button class="btn ghost" data-act="tcsv">📋 표 복사</button></div>
       <div class="section-h">📊 구글 시트로 보기</div>
@@ -3123,6 +3331,8 @@ select.field { padding: 6px 8px; appearance: auto; }
 
   /* ---------- 시작 ---------- */
   function afterGate() {
+    if (!S.course) { go('home'); coursePicker(afterGate, true); return; }
+    setCourse(S.course);
     const t = now();
     const away = S.lastSeen ? L.inactiveDays(S.lastSeen, t, false) : 0;
     const dec = L.applyDecay(S, t);
@@ -3134,6 +3344,33 @@ select.field { padding: 6px 8px; appearance: auto; }
     } else if (away >= 3) setTimeout(() => { setMood('greet', 1800); say('보고 싶었어! 다시 와 줘서 고마워!'); }, 600);
     else setTimeout(() => { setMood('happy'); say(`${S.name || '친구'}, 안녕! 오늘도 같이 공부하자!`); }, 600);
   }
+  /* ---------- 교재 고르기 ---------- */
+  function coursePicker(after, first) {
+    const ov = document.createElement('div'); ov.className = 'courseov';
+    const rec = SESS ? 'g' + SESS.grade : '';
+    ov.innerHTML = `<div class="coursebox">
+      <img class="login-logo" src="${AQ_LOGO}" alt="">
+      <h3>${first ? '어떤 교재로 모험할까요?' : '교재 바꾸기'}</h3>
+      <p class="sub">${first ? '내 학년이나 우리 반 교과서를 골라요. 나중에 나의 성장에서 바꿀 수 있어요.' : '교재를 바꿔도 캐릭터·경험치·카드는 그대로예요. 단원 진도는 교재마다 따로 기록돼요.'}</p>
+      <div class="course-grid">${COURSES.map(c => `<button class="course-btn ${c.key === 'cj4' ? 'tb' : ''} ${S.course === c.key ? 'cur' : ''} ${rec === c.key ? 'rec' : ''}" data-c="${c.key}">
+        <b>${c.label}</b><small>${c.sub}</small>${S.course === c.key ? '<i>지금 교재</i>' : rec === c.key ? '<i>내 학년</i>' : ''}</button>`).join('')}</div>
+      ${first ? '' : '<button class="btn ghost" data-c="">닫기</button>'}
+    </div>`;
+    layer.append(ov);
+    ov.addEventListener('click', e => {
+      const b = e.target.closest('[data-c]'); if (!b) return;
+      AU.tap();
+      if (b.dataset.c) {
+        const changed = S.course !== b.dataset.c;
+        S.course = b.dataset.c; setCourse(S.course); if (changed) { Q = null; SD.unit = null; }
+        save(); cloudFlush();
+        toast(`📚 ${COURSE.label}으로 공부해요!`, 1800);
+      }
+      if (!b.dataset.c && first) return;
+      ov.remove(); after && after();
+    });
+  }
+
   /* ---------- 나가기 · 만족도 조사 ---------- */
   const HEART_LABEL = ['', '아쉬웠어요', '조금 아쉬워요', '괜찮았어요', '재미있었어요', '최고예요!'];
   function copyrightHTML() {
