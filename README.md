@@ -4,7 +4,7 @@
 **풋애플 → 애플왕 → 애플대왕**을 키우는 모바일 영어 학습 게임입니다.
 
 ## 바로 하기
-👉 **https://rkdrkals0227.github.io/apple-quest-2026/**
+👉 **https://cheetamin.github.io/apple-quest-2026/**
 
 계정·설치 없이 휴대폰이나 컴퓨터 브라우저에서 바로 할 수 있어요 (세로 9:16 화면).
 
