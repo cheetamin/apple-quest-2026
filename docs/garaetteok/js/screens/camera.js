@@ -79,7 +79,11 @@ export function show(app, root) {
     },
     recal: () => { motion.recalibrate(); stableSince = null; toast('다시 보정해요. 두 학생이 좌우로 떨어져 서 주세요.'); },
     lr: () => { lrCheck = { t: performance.now(), seen: { blue: null, white: null } }; audio.speak('두 학생 모두 왼팔을 들어 주세요.'); msg.innerHTML = '🙋 <b>두 학생 모두 자기 왼팔(청가래떡 팔)을 들어 주세요.</b>'; },
-    start: () => { if (startBtn.disabled) return; audio.unlock(); app.startCurrent(); },
+    start: () => {
+      if (startBtn.disabled) return; audio.unlock();
+      const g = app.game, fresh = g && g.cur.r === 0 && g.cur.m === 0 && !g.results.some((x) => x.matches.some(Boolean));
+      if (fresh && app.settings.story !== false && !g.storyShown) app.go('story', { then: 'start' }); else app.startCurrent();
+    },
   };
   $$('[data-a]', el).forEach((b) => onTap(b, () => act[b.dataset.a]()));
   $('#mir', el).addEventListener('change', (e) => { s.mirror = e.target.checked; app.saveSettings(); motion.recalibrate(); });

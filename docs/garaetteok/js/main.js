@@ -14,6 +14,7 @@ import * as resultS from './screens/result.js';
 import * as relayS from './screens/relay.js';
 import * as awardsS from './screens/awards.js';
 import * as recordsS from './screens/records.js';
+import * as storyS from './screens/story.js';
 import { openTeacherMenu } from './screens/teacher.js';
 import { motion } from './core/motion.js';
 
@@ -38,6 +39,7 @@ registerScreen('relayIntro', { show: relayS.showIntro });
 registerScreen('relay', relayS);
 registerScreen('awards', awardsS);
 registerScreen('records', recordsS);
+registerScreen('story', storyS);
 
 // 1920×1080 무대를 화면에 맞게 확대/축소 (16:9 유지)
 const stage = document.getElementById('stage');

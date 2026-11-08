@@ -533,3 +533,57 @@ body, button, input, select, textarea { font-family: var(--font); }
 .round-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
 .rchip { font-family: var(--font-read); font-weight: 700; font-size: 16px; padding: 4px 8px; border: 3px solid var(--line); background: #fff; }
 .rchip.physical { background: #dce8ff; } .rchip.brain { background: #ffeccc; } .rchip.mixed { background: #f0dcff; } .rchip.relay { background: #ffd9d2; }
+
+/* ── 농업인의 날 이야기 (게임 시작 전) ── */
+.story-screen { display: flex; flex-direction: column; gap: 18px; padding: 28px 60px 30px; height: 100%; box-sizing: border-box; }
+.story-top { display: flex; align-items: center; gap: 24px; padding-right: 220px; }
+.story-badge { background: var(--line); color: #ffd23f; font-family: var(--font-title); font-size: 30px; padding: 8px 22px; border: 4px solid #000; }
+.st-dots { flex: 1; display: flex; gap: 10px; justify-content: center; }
+.st-dots i { width: 22px; height: 22px; background: #fff; border: 4px solid var(--line); }
+.st-dots i.done { background: #b9a27a; }
+.st-dots i.on { background: #ffd23f; }
+.story-art { flex: 1; min-height: 0; display: flex; align-items: center; justify-content: center; }
+.story-box { display: flex; align-items: flex-end; gap: 22px; background: #fffaf0; border: 6px solid var(--line); box-shadow: 8px 8px 0 rgba(0,0,0,.35); padding: 14px 30px 14px 14px; min-height: 250px; }
+.story-char { flex: none; image-rendering: pixelated; }
+.story-talk { flex: 1; align-self: stretch; display: flex; flex-direction: column; gap: 10px; padding-top: 10px; }
+.story-name { align-self: flex-start; background: #3fa34d; color: #fff; font-family: var(--font-title); font-size: 30px; padding: 4px 20px; border: 4px solid var(--line); }
+.story-text { margin: 0; font-family: var(--font-read); font-weight: 800; font-size: calc(40px * var(--fs, 1)); line-height: 1.5; color: #2a1a0a; word-break: keep-all; }
+.story-text mark { background: #ffd23f; color: inherit; padding: 0 6px; }
+.story-nav .btn { min-width: 200px; }
+
+.st-cal { width: 340px; background: #fff; border: 8px solid var(--line); box-shadow: 10px 10px 0 rgba(0,0,0,.3); text-align: center; }
+.st-cal-top { background: #e2483d; color: #fff; font-family: var(--font-title); font-size: 48px; padding: 8px; border-bottom: 8px solid var(--line); }
+.st-cal-day { font-family: var(--font-num); font-size: 150px; line-height: 1.2; color: var(--line); }
+.st-cal-q { font-family: var(--font-read); font-weight: 900; font-size: 34px; padding-bottom: 14px; color: #c0392b; }
+
+.st-farm { position: relative; width: 900px; height: 380px; background: #bfe6ff; border: 8px solid var(--line); overflow: hidden; }
+.st-sun { position: absolute; right: 60px; top: 30px; width: 90px; height: 90px; background: #ffd23f; border: 6px solid #e0a000; }
+.st-field { position: absolute; left: 0; right: 0; bottom: 0; height: 120px; background: repeating-linear-gradient(90deg, #7bb34a 0 40px, #6aa03c 40px 80px); border-top: 8px solid #4f7f2a; }
+.st-crops { position: absolute; left: 0; right: 0; bottom: 70px; display: flex; justify-content: space-around; font-size: 110px; }
+.st-crops span { animation: st-bob 1.2s steps(2) infinite; }
+.st-crops span:nth-child(2n) { animation-delay: .6s; }
+.st-thanks { position: absolute; left: 0; right: 0; text-align: center; top: 36px; font-family: var(--font-read); font-weight: 900; font-size: 50px; color: #fff; text-shadow: 4px 4px 0 var(--line); }
+
+.st-hanja { text-align: center; background: #fff; border: 8px solid var(--line); box-shadow: 10px 10px 0 rgba(0,0,0,.3); padding: 20px 60px; }
+.st-eq { display: flex; align-items: center; justify-content: center; gap: 30px; }
+.st-eq .hj { font-family: 'Noto Serif KR', 'Batang', serif; font-weight: 900; font-size: 170px; line-height: 1; color: var(--line); }
+.st-eq .hj.c { color: #a0522d; background: #ffe9a8; padding: 0 16px; border: 6px solid var(--line); }
+.st-eq .op { font-family: var(--font-num); font-size: 60px; color: #888; }
+.st-eq .hj.a { animation: st-in .6s steps(4) both; }
+.st-eq .hj.b { animation: st-in .6s steps(4) .6s both; }
+.st-eq .hj.c { animation: st-pop .7s steps(5) 1.3s both; }
+.st-sub { font-family: var(--font-read); font-weight: 900; font-size: 36px; margin-top: 10px; color: #4a3020; }
+.st-sub b { color: #a0522d; }
+.st-eq2 { display: flex; justify-content: center; align-items: center; gap: 24px; margin-top: 12px; font-family: var(--font-read); font-weight: 900; font-size: 48px; }
+.st-eq2 b { color: #c0392b; }
+.st-eq2 .op { color: #888; }
+.st-tteok { text-align: center; }
+.st-tteok canvas { animation: st-in .6s steps(4) both; }
+.st-go { display: flex; align-items: center; gap: 40px; }
+.st-vs { font-family: var(--font-num); font-size: 70px; color: #c0392b; text-shadow: 4px 4px 0 #000; }
+
+@keyframes st-bob { 50% { transform: translateY(-14px); } }
+@keyframes st-in { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: none; } }
+@keyframes st-pop { 0% { opacity: 0; transform: scale(.3); } 70% { transform: scale(1.15); } 100% { opacity: 1; transform: none; } }
+.story-art.still *, body.reduce-motion .story-art * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .story-art * { animation: none !important; } }

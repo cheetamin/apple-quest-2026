@@ -12,7 +12,7 @@ export const DEFAULTS = {
   count: { blue: 12, white: 12 }, rosterText: { blue: '', white: '' }, autoOrder: true, order: { blue: null, white: null },
   roundSec: 60, relaySec: 15, mode: 'auto', squad: 1,
   classRosterText: '', classCount: 24, teamLists: { blue: [], white: [] },
-  bgm: true, sfx: true, tts: true, sing: true, sens: 1.15, mirror: true, swapLR: false, showScore: true,
+  bgm: true, sfx: true, tts: true, sing: true, story: true, sens: 1.15, mirror: true, swapLR: false, showScore: true,
   altInput: 'none', seated: false, slow: false, bigText: false, highContrast: false,
   model: 'lite', mathInput: 'pad', quizInput: 'touch', engTrial: true,
   vol: { master: 0.8, bgm: 0.5, sfx: 0.8 },

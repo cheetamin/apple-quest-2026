@@ -17,10 +17,11 @@ export function show(app, root) {
       </div>
     </div>
     <div class="main-menu card">
-      ${saved ? `<button class="btn big blue-btn" data-a="resume">▶ 이어하기 <small>${esc(saved.teamNames.blue)} vs ${esc(saved.teamNames.white)} · ${Math.min(12, saved.cur.r + 1)}라운드</small></button>` : ''}
+      ${saved ? `<button class="btn big blue-btn" data-a="resume">▶ 이어하기 <small>${esc(saved.teamNames.blue)} vs ${esc(saved.teamNames.white)} · ${saved.cur.r + 1}라운드</small></button>` : ''}
       <button class="btn big" data-a="start">🎮 시작하기</button>
       <button class="btn" data-a="settings">⚙️ 교사용 설정</button>
       <button class="btn" data-a="how">📘 게임 방법</button>
+      <button class="btn" data-a="story">🌾 농업인의 날 이야기</button>
       <button class="btn" data-a="records">🏆 기록 보기</button>
       <button class="btn" data-a="volume">🔊 음량 설정</button>
       <p class="hint">전자칠판 카메라 1대로 두 학생을 동시에 인식해요 · 카메라 영상은 이 기기 안에서만 처리되고 저장·전송되지 않아요.</p>
@@ -40,6 +41,7 @@ export function show(app, root) {
     },
     settings: () => app.go('settings', { startAfter: true }),
     how: () => howTo(),
+    story: () => app.go('story', { then: 'main' }),
     records: () => app.go('records'),
     volume: () => volumePanel(app),
   };
@@ -53,7 +55,8 @@ export function howTo() {
     <ol class="how-steps">
       <li><b>교사용 설정</b>에서 학년·학기·팀·학생 수·시간을 정해요.</li>
       <li><b>카메라 연결</b>: 두 학생이 카메라 앞에 나란히 서요. <b>화면 왼쪽 = 청팀, 오른쪽 = 백팀</b>이에요. 두 팔을 벌려도 닿지 않을 만큼 떨어져 서요.</li>
-      <li>12라운드 동안 <b>신체 게임(모션 인식)</b>과 <b>두뇌 게임(팀별 터치)</b>을 번갈아 해요. 각 라운드는 팀별 100점 만점이에요.</li>
+      <li>경기 전에 가래떡이 <b>11월 11일 농업인의 날</b> 이야기를 들려줘요.</li>
+      <li>반 인원의 절반만큼(예: 24명 → 12라운드) <b>신체 게임(모션 인식)</b>과 <b>두뇌 게임(팀별 터치)</b>을 번갈아 해요. 각 라운드는 팀별 100점 만점이에요.</li>
       <li>마지막 <b>가래떡 이어달리기</b>는 팀원 모두가 차례로 제자리 달리기를 해요. 앞선 점수가 높은 팀은 조금 앞에서 출발해요(최대 트랙의 10%).</li>
       <li>결승선을 먼저 통과한 팀이 우승! 모두에게 칭찬이 기다리고 있어요.</li>
     </ol>
