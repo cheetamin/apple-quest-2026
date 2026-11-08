@@ -13,7 +13,49 @@ export const MOVES = {
   bothUp: { name: '양팔 위로!', icon: '🙌', test: (s) => s.bothUp || (s.leftUp && s.rightUp), pose: 'm-bothUp' },
 };
 const ROUTINE = ['leftUp', 'rightUp', 'wide', 'sway', 'bothUp', 'rightUp', 'leftUp', 'bothUp', 'wide', 'sway', 'leftUp', 'bothUp', 'rightUp', 'wide', 'sway', 'bothUp'];
-import { SONG_LINES, lyricAt, isSyl } from '../data/dancesong.js';
+import { SONG_LINES, lyricAt, isSyl, lineAtTime } from '../data/dancesong.js';
+import { store } from '../core/store.js';
+
+export function danceTiming() {
+  const t = store.get('dance_lyrics', null) || CONFIG.danceLyrics;
+  return Array.isArray(t) && t.length ? t : null;
+}
+
+/** 실제 음원용 노래방 자막: 저장된 타이밍으로 현재 줄(크게)과 다음 줄 표시 */
+function drawTimedKaraoke(ctx, cx, y, timing, t) {
+  const k = lineAtTime(timing, t);
+  const cur = k >= 0 ? timing[k].text : '♪ 노래가 곧 시작돼요';
+  const next = timing[k + 1] ? timing[k + 1].text : '';
+  const prog = k >= 0 && timing[k + 1] ? Math.min(1, (t - timing[k].t) / Math.max(0.5, timing[k + 1].t - timing[k].t)) : 0;
+  ctx.save();
+  ctx.font = '900 44px "Noto Sans KR","Malgun Gothic",sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'left';
+  const tw = ctx.measureText(cur).width, w = tw + 60;
+  ctx.fillStyle = '#2a1a0e'; ctx.fillRect(cx - w / 2 - 5, y - 37, w + 10, 74);
+  ctx.fillStyle = '#fffbea'; ctx.fillRect(cx - w / 2, y - 32, w, 64);
+  ctx.fillStyle = '#9a8a78'; ctx.fillText(cur, cx - tw / 2, y + 2);
+  ctx.save(); ctx.beginPath(); ctx.rect(cx - tw / 2, y - 32, tw * prog, 64); ctx.clip();
+  ctx.fillStyle = '#e0337a'; ctx.fillText(cur, cx - tw / 2, y + 2); ctx.restore();
+  if (next) {
+    ctx.font = '700 22px "Noto Sans KR","Malgun Gothic",sans-serif'; ctx.textAlign = 'center';
+    const nw = ctx.measureText('다음: ' + next).width + 24;
+    ctx.fillStyle = 'rgba(42,26,14,0.8)'; ctx.fillRect(cx - nw / 2, y + 42, nw, 32);
+    ctx.fillStyle = '#fff'; ctx.fillText('다음: ' + next, cx, y + 59);
+  }
+  ctx.restore();
+}
+
+/** 타이밍이 없을 때: 후렴 가사를 한눈에 보여 주는 상자 */
+function drawChorusBox(ctx, cx, y) {
+  ctx.save();
+  const lines = SONG_LINES.map((l) => l.text);
+  ctx.font = '800 26px "Noto Sans KR","Malgun Gothic",sans-serif'; ctx.textBaseline = 'middle'; ctx.textAlign = 'center';
+  const w = 760, h = 118;
+  ctx.fillStyle = '#2a1a0e'; ctx.fillRect(cx - w / 2 - 5, y - h / 2 - 5, w + 10, h + 10);
+  ctx.fillStyle = '#fffbea'; ctx.fillRect(cx - w / 2, y - h / 2, w, h);
+  ctx.fillStyle = '#e0337a';
+  for (let i = 0; i < 3; i++) { ctx.fillText(lines[i * 2], cx - w / 4, y - 36 + i * 36); ctx.fillText(lines[i * 2 + 1], cx + w / 4, y - 36 + i * 36); }
+  ctx.restore();
+}
 export const LYRICS = SONG_LINES.map((l) => l.text);
 
 /** 노래방 자막: 부른 글자는 분홍, 지금 글자는 크게 */
@@ -80,7 +122,7 @@ export function createDance(env) {
       curBeat = ab != null ? ab : ((t - t0) / 1000) * bpm / 60;
       // 가사 읽어주기: 각 줄이 시작되기 조금 전에(음성 지연 보정) 한 줄씩 부름
       const sungLine = Math.floor((curBeat + 0.5) / 8);
-      if (env.sing && sungLine !== lastSung && curBeat > -0.6) { lastSung = sungLine; env.audio.speak(SONG_LINES[sungLine % SONG_LINES.length].text, 'ko-KR', 1.3, { duck: false, force: true }); }
+      if (env.sing && !env.audio.usingFile('dance') && sungLine !== lastSung && curBeat > -0.6) { lastSung = sungLine; env.audio.speak(SONG_LINES[sungLine % SONG_LINES.length].text, 'ko-KR', 1.3, { duck: false, force: true }); }
       if (curBeat < 0) return;
       const idx = Math.floor(curBeat / BEATS);
       if (idx !== lastIdx) { if (lastIdx >= 0) closeMove(lastIdx); lastIdx = idx; env.audio.sfx('tteok'); }
@@ -116,7 +158,11 @@ export function createDance(env) {
         ctx.beginPath(); ctx.arc(cx - 60 + k * 40, rect.y + 410, k === Math.floor(inMove) ? 15 : 10, 0, Math.PI * 2); ctx.fill();
       }
       // 가사
-      drawKaraoke(ctx, cx, rect.y + rect.h - 90, curBeat);
+      if (env.audio.usingFile('dance')) {
+        const timing = danceTiming();
+        if (timing) drawTimedKaraoke(ctx, cx, rect.y + rect.h - 90, timing, env.audio.fileTime() || 0);
+        else drawChorusBox(ctx, cx, rect.y + rect.h - 80);
+      } else drawKaraoke(ctx, cx, rect.y + rect.h - 90, curBeat);
       for (const team of TEAMS) {
         const s = S[team];
         const avg = s.scores.length ? Math.round(100 * s.scores.reduce((a, c) => a + c, 0) / s.scores.length) : 0;

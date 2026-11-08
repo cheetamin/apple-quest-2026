@@ -70,7 +70,8 @@ class AudioEngine {
   constructor() {
     this.ctx = null; this.enabled = { bgm: true, sfx: true, tts: true };
     this.vol = { master: 0.8, bgm: 0.5, sfx: 0.8 }; this.muted = false;
-    this.song = null; this.timer = null; this.fileEl = null;
+    this.song = null; this.timer = null; this.fileEl = null; this.failedFiles = new Set(); this.danceBeats = null;
+    if (CONFIG.danceBeats && typeof fetch === 'function') fetch(CONFIG.danceBeats).then((r) => (r.ok ? r.json() : null)).then((j) => { if (j && j.beats) this.danceBeats = j.beats; }).catch(() => {});
   }
   unlock() {
     if (!this.ctx) {
@@ -156,8 +157,9 @@ class AudioEngine {
     this.stopSong();
     const file = CONFIG.audioFiles[name];
     this.songStart = this.ctx.currentTime + 0.1;
-    if (file) {
+    if (file && !this.failedFiles.has(file)) {
       this.fileEl = new Audio(file); this.fileEl.loop = name !== 'victory';
+      this.fileEl.addEventListener('error', () => { this.failedFiles.add(file); if (this.song && this.song.name === name) { this.stopSong(); this.playSong(name); } });
       this.fileEl.play().catch(() => {});
       this.song = { name, def: SONGS[name] || { bpm: 120 }, file: true };
       this.applyVolume();
@@ -211,8 +213,21 @@ class AudioEngine {
     this.song = null;
   }
   /** 현재 곡의 박자(0부터). 댄스 동기화용. 오디오 꺼짐이면 null */
+  /** 음원 파일로 재생 중인지 */
+  usingFile(name) { return !!(this.song && this.song.file && this.song.name === name && this.fileEl); }
+  /** 음원 파일의 현재 재생 위치(초) */
+  fileTime() { return this.fileEl ? this.fileEl.currentTime : null; }
   beat() {
     if (!this.ctx || !this.song) return null;
+    // 댄스 음원: 미리 분석한 실제 박자 시각으로 박자 번호 계산(곡의 미세한 빠르기 변화까지 반영)
+    if (this.song.file && this.song.name === 'dance' && this.danceBeats && this.fileEl) {
+      const B = this.danceBeats, t = this.fileEl.currentTime;
+      if (t < B[0]) return (t - B[0]) / (B[1] - B[0]);
+      let lo = 0, hi = B.length - 1;
+      if (t >= B[hi]) return hi + (t - B[hi]) / (B[hi] - B[hi - 1]);
+      while (hi - lo > 1) { const mid = (lo + hi) >> 1; if (B[mid] <= t) lo = mid; else hi = mid; }
+      return lo + (t - B[lo]) / (B[lo + 1] - B[lo]);
+    }
     const bpm = this.song.def.bpm;
     const t = this.song.file && this.fileEl ? this.fileEl.currentTime : this.ctx.currentTime - this.songStart;
     return (t * bpm) / 60;

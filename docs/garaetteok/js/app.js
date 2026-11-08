@@ -10,7 +10,7 @@ import { $, h, pixelize } from './ui.js';
 export const DEFAULTS = {
   grade: 4, sem: 2, teamMode: 'class', teamNames: { blue: '청가래떡팀', white: '백가래떡팀' },
   count: { blue: 12, white: 12 }, rosterText: { blue: '', white: '' }, autoOrder: true, order: { blue: null, white: null },
-  roundSec: 60, relaySec: 15, mode: 'all', squad: 2,
+  roundSec: 60, relaySec: 20, mode: 'all', squad: 2,
   classRosterText: '', classCount: 24, teamLists: { blue: [], white: [] },
   bgm: true, sfx: true, tts: true, sing: true, sens: 1.15, mirror: true, swapLR: false, showScore: true,
   altInput: 'none', seated: false, slow: false, bigText: false, highContrast: false,
@@ -25,6 +25,7 @@ class App {
   constructor() {
     this.settings = { ...DEFAULTS, ...store.get('settings', {}) };
     for (const k of ['teamNames', 'count', 'rosterText', 'order', 'vol', 'teamLists']) this.settings[k] = { ...DEFAULTS[k], ...(this.settings[k] || {}) };
+    if (!this.settings._relay20) { this.settings.relaySec = 20; this.settings._relay20 = true; }
     this.game = null;
     this.cleanup = null;
     this.paused = false;

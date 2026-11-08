@@ -518,3 +518,14 @@ body, button, input, select, textarea { font-family: var(--font); }
 .lu-head span { font-family: var(--font); }
 .intro-card .relay-info { grid-template-columns: 1fr 1.3fr; gap: 20px; }
 .intro-card .relay-info .rules { font-size: 19px; line-height: 1.45; margin: 0; }
+
+/* 가사 타이밍 도구 */
+.ls-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.ls-now { background: #2a1a0e; color: #fff; padding: 16px 20px; margin: 10px 0; display: flex; flex-direction: column; gap: 6px; }
+.ls-now b { font-family: var(--font-read); font-size: 36px; color: #ffd23f; }
+.ls-now small { font-family: var(--font-read); font-size: 18px; opacity: .85; }
+.ls-time { font-family: var(--font-num); font-size: 20px; background: #000; color: #6ee06e; padding: 8px 12px; }
+.ls-text { height: 120px !important; font-size: 17px !important; }
+.ls-list { max-height: 360px; overflow: auto; font-family: var(--font-read); font-size: 19px; border: 4px solid var(--line); background: #fffbea; margin: 8px 0 0; padding: 6px 6px 6px 44px; }
+.ls-list li { padding: 3px 0; } .ls-list li span { display: inline-block; width: 86px; font-family: var(--font-num); font-size: 13px; color: #7a5a35; }
+.ls-list li.now { background: #ffe68a; font-weight: 900; } .ls-list li.skip { opacity: .45; text-decoration: line-through; }

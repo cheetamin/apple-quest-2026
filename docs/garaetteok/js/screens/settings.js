@@ -3,6 +3,7 @@ import { h, $, $$, onTap, esc, toast, modal } from '../ui.js';
 import { buildPlan, relayLegs, estimateMinutes, parseNames, countAppearances, shuffled } from '../core/roster.js';
 import { ROUNDS } from '../rounds/defs.js';
 import { bankEditor } from './bankeditor.js';
+import { lyricSync } from './lyricsync.js';
 
 export function show(app, root, params) {
   const s = app.settings;
@@ -16,7 +17,7 @@ export function show(app, root, params) {
         ${seg('grade', [1, 2, 3, 4, 5, 6].map((g) => [g, g + '학년']), s.grade)}
         ${seg('sem', [[1, '1학기'], [2, '2학기'], [0, '전체 복습']], s.sem)}
         <p class="hint">학년에 따라 퀴즈 난이도와 신체 게임 속도가 자동 조절돼요. 3~6학년 교과서는 출판사별로 단원 순서가 달라 학기 구분은 참고용이에요.</p>
-        <button class="btn small" data-a="bank">📚 문제 관리(추가·수정·삭제)</button>
+        <div class="row gap"><button class="btn small" data-a="bank">📚 문제 관리</button><button class="btn small" data-a="lyrics">🎤 댄스 가사 타이밍 맞추기</button></div>
         <h3>⏱ 시간</h3>
         <div class="row"><span class="lbl">일반 라운드</span>${seg('roundSec', [[45, '45초'], [60, '60초'], [90, '90초']], s.roundSec)}</div>
         <div class="row"><span class="lbl">릴레이(1인)</span>${seg('relaySec', [[10, '10초'], [15, '15초'], [20, '20초']], s.relaySec)}</div>
@@ -36,7 +37,7 @@ export function show(app, root, params) {
         <div class="tog-grid">
           ${tog('bgm', '배경음악')}${tog('sfx', '효과음')}${tog('tts', '문제 읽어주기')}${tog('showScore', '점수 표시')}
           ${tog('mirror', '카메라 거울 모드')}${tog('seated', '앉아서 참여 모드')}${tog('slow', '느린 속도 모드')}${tog('bigText', '글자 크게')}
-          ${tog('highContrast', '고대비 화면')}${tog('engTrial', '1~2학년 영어 맛보기')}${tog('sing', '댄스 가사 음성으로 부르기')}
+          ${tog('highContrast', '고대비 화면')}${tog('engTrial', '1~2학년 영어 맛보기')}${tog('sing', '댄스 가사 기계 음성(음원 없을 때만)')}
         </div>
         <div class="row"><span class="lbl">모션 민감도</span><input type="range" min="0.7" max="1.4" step="0.05" data-range="sens" value="${s.sens}"><b id="sens-v">${s.sens}</b></div>
         <div class="row"><span class="lbl">신체 활동 대체 입력</span>${seg('altInput', [['none', '사용 안 함'], ['blue', '청팀'], ['white', '백팀'], ['both', '양 팀']], s.altInput)}</div>
@@ -150,6 +151,7 @@ export function show(app, root, params) {
   const act = {
     back: () => app.go('main'),
     bank: () => bankEditor(app),
+    lyrics: () => lyricSync(),
     order: () => orderEditor(app, () => { $('[data-tog="autoOrder"]', el).checked = false; refreshPlan(); }),
     sheet: () => lineupSheet(app, planNow()),
     go: () => {
