@@ -13,13 +13,37 @@ export const MOVES = {
   bothUp: { name: '양팔 위로!', icon: '🙌', test: (s) => s.bothUp || (s.leftUp && s.rightUp), pose: 'm-bothUp' },
 };
 const ROUTINE = ['leftUp', 'rightUp', 'wide', 'sway', 'bothUp', 'rightUp', 'leftUp', 'bothUp', 'wide', 'sway', 'leftUp', 'bothUp', 'rightUp', 'wide', 'sway', 'bothUp'];
-export const LYRICS = ['쭉쭉 늘려 가래떡!', '톡톡 잘라 가래떡!', '왼쪽 오른쪽 흔들흔들', '오늘은 우리가 떡 챔피언!', '손을 번쩍, 어깨 들썩!', '리듬 따라 떡떡떡!'];
+import { SONG_LINES, lyricAt, isSyl } from '../data/dancesong.js';
+export const LYRICS = SONG_LINES.map((l) => l.text);
+
+/** 노래방 자막: 부른 글자는 분홍, 지금 글자는 크게 */
+function drawKaraoke(ctx, cx, y, beat) {
+  const { line, syl } = lyricAt(Math.max(0, beat));
+  const text = SONG_LINES[line].text;
+  ctx.save();
+  ctx.font = '900 44px "Noto Sans KR","Malgun Gothic",sans-serif'; ctx.textBaseline = 'middle';
+  const w = ctx.measureText(text).width + 60;
+  ctx.fillStyle = '#2a1a0e'; ctx.fillRect(cx - w / 2 - 5, y - 37, w + 10, 74);
+  ctx.fillStyle = '#fffbea'; ctx.fillRect(cx - w / 2, y - 32, w, 64);
+  let x = cx - w / 2 + 30, k = 0;
+  for (const ch of text) {
+    const cw = ctx.measureText(ch).width;
+    let col = '#9a8a78';
+    if (isSyl(ch)) { col = k < syl ? '#e0337a' : k === syl ? '#ff1f6b' : '#9a8a78'; if (k === syl) { ctx.fillStyle = 'rgba(255,31,107,0.15)'; ctx.fillRect(x - 3, y - 28, cw + 6, 56); } k++; }
+    ctx.fillStyle = col; ctx.textAlign = 'left'; ctx.fillText(ch, x, y + 2); x += cw;
+  }
+  ctx.font = '700 20px "Galmuri11","Do Hyeon",sans-serif'; ctx.fillStyle = '#fff'; ctx.textAlign = 'center';
+  const nx = SONG_LINES[(line + 1) % SONG_LINES.length].text;
+  ctx.fillStyle = 'rgba(42,26,14,0.8)'; const nw = ctx.measureText('다음: ' + nx).width + 24; ctx.fillRect(cx - nw / 2, y + 42, nw, 30);
+  ctx.fillStyle = '#fff'; ctx.fillText('다음: ' + nx, cx, y + 58);
+  ctx.restore();
+}
 
 export function createDance(env) {
   const b = band(env.grade);
   const BEATS = 4;               // 동작 하나 = 4박(1마디)
   const bpm = CONFIG.danceBpm;
-  let t0 = null, lastIdx = -1;
+  let t0 = null, lastIdx = -1, lastSung = -1;
   const S = {};
   for (const t of TEAMS) S[t] = { scores: [], frames: 0, hit: 0, first: null, activeFrames: 0, total: 0, streak: 0 };
   const pop = new Popups();
@@ -47,13 +71,16 @@ export function createDance(env) {
     instruction: () => {
       const idx = Math.max(0, lastIdx);
       const m = MOVES[ROUTINE[idx % ROUTINE.length]], n = MOVES[ROUTINE[(idx + 1) % ROUTINE.length]];
-      return `지금: ${m.icon} ${m.name}  →  다음: ${n.icon} ${n.name}   ♪ ${LYRICS[Math.floor(curBeat / 8) % LYRICS.length]}`;
+      return `지금: ${m.icon} ${m.name}  →  다음: ${n.icon} ${n.name}  · 노래를 따라 부르며 춤춰요!`;
     },
     counts: () => ({ blue: S.blue.scores.filter((x) => x >= 0.45).length, white: S.white.scores.filter((x) => x >= 0.45).length }),
     update(dt, t, inputs) {
       const ab = env.audio.beat();
       if (t0 == null) t0 = t;
       curBeat = ab != null ? ab : ((t - t0) / 1000) * bpm / 60;
+      // 가사 읽어주기: 각 줄이 시작되기 조금 전에(음성 지연 보정) 한 줄씩 부름
+      const sungLine = Math.floor((curBeat + 0.5) / 8);
+      if (env.sing && sungLine !== lastSung && curBeat > -0.6) { lastSung = sungLine; env.audio.speak(SONG_LINES[sungLine % SONG_LINES.length].text, 'ko-KR', 1.3, { duck: false, force: true }); }
       if (curBeat < 0) return;
       const idx = Math.floor(curBeat / BEATS);
       if (idx !== lastIdx) { if (lastIdx >= 0) closeMove(lastIdx); lastIdx = idx; env.audio.sfx('tteok'); }
@@ -89,7 +116,7 @@ export function createDance(env) {
         ctx.beginPath(); ctx.arc(cx - 60 + k * 40, rect.y + 410, k === Math.floor(inMove) ? 15 : 10, 0, Math.PI * 2); ctx.fill();
       }
       // 가사
-      label(ctx, `♪ ${LYRICS[Math.floor(curBeat / 8) % LYRICS.length]}`, cx, rect.y + rect.h - 40, { size: 36, bg: 'rgba(255,255,255,0.85)', color: '#6a1b9a' });
+      drawKaraoke(ctx, cx, rect.y + rect.h - 90, curBeat);
       for (const team of TEAMS) {
         const s = S[team];
         const avg = s.scores.length ? Math.round(100 * s.scores.reduce((a, c) => a + c, 0) / s.scores.length) : 0;

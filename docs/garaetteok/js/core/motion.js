@@ -163,7 +163,7 @@ export class MotionHub {
     const make = (delegate) => vision.PoseLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: model, delegate },
       runningMode: 'VIDEO', numPoses: 2,
-      minPoseDetectionConfidence: 0.5, minPosePresenceConfidence: 0.5, minTrackingConfidence: 0.5,
+      minPoseDetectionConfidence: 0.4, minPosePresenceConfidence: 0.4, minTrackingConfidence: 0.4,
     });
     try { this.landmarker = await make('GPU'); this.delegate = 'GPU'; }
     catch { this.landmarker = await make('CPU'); this.delegate = 'CPU'; this.warnings.push(CAMERA_ERRORS.GPU); }
@@ -207,7 +207,14 @@ export class MotionHub {
       this.state.overlap = r.overlap; this.state.count = r.count; this.state.calibrated = r.calibrated;
       for (const team of ['blue', 'white']) {
         const s = this.state[team];
-        s.pts = r[team].pts; s.quality = r[team].quality; s.status = r[team].status; s.uncertain = r[team].uncertain;
+        // 관절 떨림 보정(지수 평활): 같은 팀으로 연속 인식될 때만 이전 값과 섞음
+        let pts = r[team].pts;
+        if (pts && s.rawPrev && s.status === 'ok' && r[team].status === 'ok') {
+          const A = 0.55;
+          pts = pts.map((p, i) => { const q = s.rawPrev[i]; return q ? { x: q.x + (p.x - q.x) * A, y: q.y + (p.y - q.y) * A, v: Math.max(p.v, q.v * 0.9) } : p; });
+        }
+        s.rawPrev = pts;
+        s.pts = pts; s.quality = r[team].quality; s.status = r[team].status; s.uncertain = r[team].uncertain;
         s.sig = s.pts ? bodySignals(s.pts, this.settings.sens) : null;
       }
     }
@@ -243,8 +250,19 @@ export class MotionHub {
     }
     if (dim) { ctx.fillStyle = `rgba(255,255,255,${dim})`; ctx.fillRect(vx, vy, vw, vh); }
     if (centerLine) {
-      ctx.setLineDash([18, 14]); ctx.lineWidth = 4; ctx.strokeStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.moveTo(vx + vw / 2, vy + 8); ctx.lineTo(vx + vw / 2, vy + vh - 8); ctx.stroke(); ctx.setLineDash([]);
+      // 청·백 구역 경계: 양쪽 색 틴트 + 굵은 실선 + 구역 이름
+      const mx = Math.round(vx + vw / 2);
+      ctx.fillStyle = 'rgba(59,120,231,0.13)'; ctx.fillRect(vx, vy, vw / 2, vh);
+      ctx.fillStyle = 'rgba(233,169,31,0.15)'; ctx.fillRect(mx, vy, vw / 2, vh);
+      ctx.fillStyle = '#2a1a0e'; ctx.fillRect(mx - 7, vy, 14, vh);
+      for (let y = vy; y < vy + vh; y += 28) { ctx.fillStyle = '#3b78e7'; ctx.fillRect(mx - 4, y, 4, 14); ctx.fillStyle = '#e9a91f'; ctx.fillRect(mx, y, 4, 14); ctx.fillStyle = '#fff'; ctx.fillRect(mx - 4, y + 14, 8, 14); }
+      if (vh > 300) {
+        ctx.font = '22px "Galmuri11","Do Hyeon",sans-serif'; ctx.textBaseline = 'middle';
+        const tag = (text, x, bg, fg, align) => { const w = ctx.measureText(text).width + 24; const lx = align === 'r' ? x - w : x; ctx.fillStyle = '#2a1a0e'; ctx.fillRect(lx - 3, vy + vh - 47, w + 6, 40); ctx.fillStyle = bg; ctx.fillRect(lx, vy + vh - 44, w, 34); ctx.fillStyle = fg; ctx.textAlign = 'center'; ctx.fillText(text, lx + w / 2, vy + vh - 27); };
+        tag('청팀 구역', vx + 12, '#3b78e7', '#fff', 'l');
+        tag('백팀 구역', vx + vw - 12, '#e9a91f', '#2a1a0e', 'r');
+        ctx.textBaseline = 'alphabetic';
+      }
     }
     const map = (p) => ({ x: vx + (p.x / this.aspect) * vw, y: vy + p.y * vh });
     for (const team of ['blue', 'white']) {

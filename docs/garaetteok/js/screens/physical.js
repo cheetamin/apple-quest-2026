@@ -30,7 +30,7 @@ export function show(app, root, { r, m }) {
   const g = app.game, s = g.settings;
   const env = {
     grade: s.grade, sem: s.sem, duration: s.roundSec, slow: s.slow, sens: s.sens, seated: s.seated,
-    mirror: app.settings.mirror, audio, seed: g.seed + r * 31 + m * 7,
+    mirror: app.settings.mirror, audio, seed: g.seed + r * 31 + m * 7, sing: s.sing !== false,
   };
   if (def.id === 'ox') {
     const recent = store.get('recent', []);

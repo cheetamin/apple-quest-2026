@@ -38,6 +38,7 @@ export function synthPose(p) {
       case 'over': e = { x: sx(0.08 * H), y: S.y - ua * 0.9 }; w = { x: sx(0.0), y: S.y - ua - fa * 0.9 }; break;
       case 'wide': e = { x: sx(ua), y: S.y }; w = { x: sx(ua + fa), y: S.y }; break;
       case 'cross': e = { x: sx(0.03 * H), y: S.y + ua * 0.8 }; w = { x: sx(-(shW * 0.95)), y: S.y + ua * 0.45 }; break;
+      case 'xmid': e = { x: sx(0.06 * H), y: S.y + ua * 0.75 }; w = { x: sx(-(shW * 0.5)), y: S.y + ua * 0.5 }; break;
       case 'chest': e = { x: sx(0.04 * H), y: S.y + ua * 0.9 }; w = { x: sx(-0.03 * H), y: S.y + ua * 0.5 }; break;
       case 'side': e = { x: sx(0.08 * H), y: S.y + ua * 0.9 }; w = { x: sx(0.2 * H), y: S.y + ua * 1.5 }; break;
       default: e = { x: sx(0.02 * H), y: S.y + ua }; w = { x: sx(0.03 * H), y: S.y + ua + fa };

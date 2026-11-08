@@ -8,6 +8,7 @@ import { drawCharacter } from '../core/character.js';
 import { band, label } from '../rounds/common.js';
 import { bindKeys } from './physical.js';
 import { swapPlayers } from './intro.js';
+import { gameOrderEditor } from './teacher.js';
 
 const REF_SPEED = 1; // 표준 속도(칸/초)
 const LEG_CAP = 1.25; // 한 구간에서 낼 수 있는 최대 거리(균등 몫의 배수) — 과격한 질주 방지, 꾸준한 참여 중시
@@ -43,13 +44,21 @@ export function showIntro(app, root) {
           <li>결승선을 <b>먼저 통과한 팀이 우승</b>! 통과한 뒤에도 남은 친구들은 끝까지 함께 달려요.</li>
         </ul>
       </div>
+      <div class="lineup-wrap">
+        <h3>🥢 바통 순서 — 이 순서대로 두 줄로 서서 기다려요 <small>(왼쪽 줄 = 청팀, 오른쪽 줄 = 백팀)</small></h3>
+        <div class="lineup ${P.L > 14 ? 'two-col' : ''}">
+          <div class="lu-row lu-head"><b>#</b><span class="b">${esc(g.teamNames.blue)}</span><span class="w">${esc(g.teamNames.white)}</span></div>
+          ${g.legs.map((l, i) => `<div class="lu-row"><b>${i + 1}</b><span class="b">${esc(g.names.blue[l.blue])}</span><span class="w">${esc(g.names.white[l.white])}</span></div>`).join('')}
+        </div>
+      </div>
       <p class="hint">⚠️ 제자리에서만 달려요. 교대할 때는 걸어서 자리를 바꿔요. ${s.seated ? '앉아서 참여 모드: 팔 흔들기로 달려요.' : ''}</p>
-      <div class="row center gap"><button class="btn big" data-a="go">결승전 시작 ▶</button></div>
+      <div class="row center gap"><button class="btn ghost" data-a="order">🔢 바통 순서 바꾸기</button><button class="btn big" data-a="go">결승전 시작 ▶</button></div>
     </div>
   </div>`);
   root.appendChild(el);
   audio.playSong('relay');
   onTap($('[data-a="go"]', el), () => app.go('relay'));
+  onTap($('[data-a="order"]', el), () => gameOrderEditor(app, () => app.go('relayIntro')));
   return () => audio.stopSong();
 }
 
@@ -92,7 +101,7 @@ export function show(app, root) {
   const updateNames = () => {
     $('#legname', el).textContent = `${st.leg + 1}번째 주자 / 전체 ${P.L}구간`;
     for (const t of ['blue', 'white']) {
-      const nx = st.leg + 1 < P.L ? ` · 다음: ${esc(runnerName(t, st.leg + 1))}` : ' · 마지막 주자!';
+      const nx = st.leg + 1 < P.L ? ` · 다음: ${esc(runnerName(t, st.leg + 1))}${st.leg + 2 < P.L ? ` → ${esc(runnerName(t, st.leg + 2))}` : ''}` : ' · 마지막 주자!';
       $(`[data-runner="${t}"]`, el).innerHTML = `🏃 <b>${esc(runnerName(t, st.leg))}</b><small>${nx}</small>`;
     }
   };

@@ -90,10 +90,10 @@ function standings(app) {
   modal(`<h2>📊 현재 결과</h2><div class="scroll"><table class="tbl small"><thead><tr><th>라운드</th><th>${esc(g.teamNames.blue)}</th><th>${esc(g.teamNames.white)}</th></tr></thead><tbody>${rows}<tr><td><b>합계</b></td><td><b>${t.blue}</b></td><td><b>${t.white}</b></td></tr></tbody></table></div>`, { cls: 'wide' });
 }
 
-function gameOrderEditor(app) {
+export function gameOrderEditor(app, onClose) {
   const g = app.game;
   const col = (t) => `<div class="order-col ${t}"><h3>${esc(g.teamNames[t])}</h3><p class="hint">릴레이 주자 순서</p><ol>${g.legs.map((l, k) => `<li><span>${esc(g.names[t][l[t]])}</span><button data-mv="${t}:${k}:-1">▲</button><button data-mv="${t}:${k}:1">▼</button></li>`).join('')}</ol></div>`;
-  const md = modal(`<h2>🔢 출전 순서 변경</h2><p class="hint">일반 라운드 출전 학생은 각 라운드 안내 화면의 [출전 학생 바꾸기]로 바꿀 수 있어요.</p><div class="order-wrap"></div>`, { cls: 'wide' });
+  const md = modal(`<h2>🔢 출전 순서 변경</h2><p class="hint">일반 라운드 출전 학생은 각 라운드 안내 화면의 [출전 학생 바꾸기]로 바꿀 수 있어요.</p><div class="order-wrap"></div>`, { cls: 'wide', onClose });
   const wrap = $('.order-wrap', md.el);
   const draw = () => {
     wrap.innerHTML = col('blue') + col('white');

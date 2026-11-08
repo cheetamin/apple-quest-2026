@@ -66,3 +66,22 @@ export function decideWinner(blueTotal, whiteTotal) {
   if (whiteTotal > blueTotal) return 'white';
   return 'tie';
 }
+
+/**
+ * 교과 퀴즈 스피드 레이스 (팀마다 같은 10문제를 서로 다른 순서로 각자 풀기 → 옆 팀 답을 봐도 소용없음)
+ * - 정답 1개 = 7점 (10문제 70점)
+ * - 속도 보너스 최대 30점: 10문제를 모두 풀고 정확도 70% 이상일 때만. 빨리 끝낼수록 많이.
+ *   급하게 풀다 3개 넘게 틀리면 속도 보너스 '실패'
+ */
+export const QUIZ_RACE = { COUNT: 10, PER_CORRECT: 70, BONUS: 30, BONUS_MIN_ACC: 0.7 };
+export function quizRaceScore({ total, correct, finished, timeUsed, limit }) {
+  if (!total) return 0;
+  const acc = correct / total;
+  const base = QUIZ_RACE.PER_CORRECT * acc;
+  let bonus = 0;
+  if (finished && acc >= QUIZ_RACE.BONUS_MIN_ACC) bonus = QUIZ_RACE.BONUS * clamp((limit - timeUsed) / (limit * 0.7), 0, 1) * acc;
+  return clamp100(base + bonus);
+}
+export function quizLimit(grade, slow = false) {
+  return Math.round((grade <= 2 ? 150 : grade <= 4 ? 120 : 100) * (slow ? 1.3 : 1));
+}

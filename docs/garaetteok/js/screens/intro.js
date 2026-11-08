@@ -3,6 +3,7 @@ import { h, $, $$, onTap, esc, mountChars, modal } from '../ui.js';
 import { audio } from '../core/audio.js';
 import { ROUNDS } from '../rounds/defs.js';
 import { SUBJECTS } from '../data/bank.js';
+import { quizLimit } from '../core/scoring.js';
 
 export function subjectLabel(subject, grade, settings) {
   const S = SUBJECTS[subject];
@@ -33,7 +34,7 @@ export function show(app, root, { r, m }) {
         <dl>
           <dt>게임 방법</dt><dd>${esc(def.how)}</dd>
           <dt>점수 얻는 법</dt><dd>${esc(def.score)} <small>(팀별 100점 만점)</small></dd>
-          <dt>제한 시간</dt><dd>${s.roundSec}초</dd>
+          <dt>제한 시간</dt><dd>${def.kind === 'brain' && def.id !== 'math' ? `${quizLimit(s.grade, s.slow)}초 (10문제)` : `${s.roundSec}초`}</dd>
           <dt>안전 수칙</dt><dd>⚠️ ${esc(def.safety)}</dd>
         </dl>
       </div>

@@ -463,3 +463,58 @@ body, button, input, select, textarea { font-family: var(--font); }
 .row.tight { margin: 0; flex-wrap: nowrap; } .row.tight .txt { flex: 1; min-width: 0; }
 .cnt { font-family: var(--font-num); font-size: 18px; white-space: nowrap; }
 .row.dim { opacity: .5; }
+
+/* ── 읽기 쉬운 글꼴: 문제·선택지·해설·안내문은 도트 글꼴 대신 선명한 고딕 ── */
+:root { --font-read: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif; }
+.choice, .choice .ctext, .q-text, .q-explain, .race-fb, .race-done, .m-fb, .hint, .intro-body dd, .cam-msg, .instr, .tbl td, .praise, .relay-info .rules, textarea, .name-chips .chip-btn, .lineup td {
+  font-family: var(--font-read) !important;
+}
+.choice .ctext { font-weight: 700; letter-spacing: 0; color: #1a1108; }
+.q-text { font-weight: 800; color: #1a1108; }
+.choice .num { font-family: var(--font-read) !important; font-weight: 900; font-size: 34px; }
+
+/* ── 퀴즈 스피드 레이스 ── */
+.race-area { position: absolute; top: 112px; left: 16px; right: 16px; bottom: 16px; display: grid; grid-template-columns: minmax(0, 1fr) 54px minmax(0, 1fr); gap: 0; }
+.race-divider { background: repeating-linear-gradient(to bottom, #2a1a0e 0 22px, #fff 22px 30px); border-left: 6px solid #2a1a0e; border-right: 6px solid #2a1a0e; display: flex; align-items: center; justify-content: center; margin: 0 10px; }
+.race-divider span { background: var(--red); color: #fff; font-family: var(--font-num); font-size: 16px; padding: 10px 6px; border: 3px solid #2a1a0e; writing-mode: vertical-lr; }
+.race-panel { position: relative; display: flex; flex-direction: column; gap: 10px; padding: 14px 18px; border: 6px solid var(--line); box-shadow: 8px 8px 0 rgba(20, 12, 4, .45); }
+.race-panel.blue { background: #d6e5ff; box-shadow: inset 0 12px 0 var(--blue), 8px 8px 0 rgba(20, 12, 4, .45); }
+.race-panel.white { background: #fff1c2; box-shadow: inset 0 12px 0 var(--gold), 8px 8px 0 rgba(20, 12, 4, .45); }
+.race-head { display: flex; align-items: center; gap: 12px; margin-top: 6px; }
+.race-head b { font-size: 32px; }
+.blue .race-head b { color: var(--blue-d); } .white .race-head b { color: var(--gold-d); }
+.race-head .who { font-family: var(--font-read); font-weight: 700; font-size: 20px; }
+.race-head .prog { margin-left: auto; font-family: var(--font-num); font-size: 22px; background: #2a1a0e; color: #ffd23f; padding: 8px 12px; }
+.dots { display: flex; gap: 6px; }
+.dots i { flex: 1; height: 18px; border: 3px solid var(--line); background: #fff; }
+.dots i.now { background: #ffd23f; } .dots i.o { background: var(--green); } .dots i.x { background: var(--red); }
+.race-q { padding: 14px 20px; min-height: 230px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; position: relative; }
+.race-q .q-emoji { font-size: 80px; line-height: 1.1; }
+.race-q .q-text { font-size: calc(40px * var(--fs)); line-height: 1.35; }
+.race-q .listen { position: absolute; right: 12px; top: 12px; }
+.race .choices { gap: 10px; }
+.race .choice { font-size: calc(30px * var(--fs)); min-height: 74px; }
+.race-foot { display: flex; align-items: center; gap: 12px; margin-top: auto; min-height: 76px; }
+.race-foot .ans-st { font-family: var(--font-read); font-weight: 700; font-size: 20px; flex: 1; }
+.race-foot .btn.confirm { position: static; font-size: 32px; }
+.race-fb { position: absolute; left: 18px; right: 18px; top: 40%; text-align: center; font-size: 56px; font-weight: 900; padding: 18px; border: 6px solid var(--line); box-shadow: 8px 8px 0 rgba(20, 12, 4, .5); z-index: 5; }
+.race-fb.good { background: #c9f2c0; color: #1e6b2c; } .race-fb.bad { background: #ffd5cc; color: #a02a18; }
+.race-fb small { display: block; font-size: 24px; font-weight: 700; color: #3a2414; margin-top: 8px; line-height: 1.4; }
+.race-done { position: absolute; inset: 70px 18px 18px; background: rgba(255, 250, 230, .96); border: 6px solid var(--line); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; z-index: 6; text-align: center; }
+.race-done b { font-size: 60px; font-family: var(--font); }
+.race-done span { font-size: 28px; font-weight: 800; }
+.race-done .good { color: #1e7b34; } .race-done .bad { color: #b03a22; }
+.race-cam { position: absolute; left: 50%; bottom: 20px; transform: translateX(-50%); width: 360px; height: 203px; z-index: 7; }
+
+/* 릴레이 바통 순서표 */
+.relay-screen-intro .intro-card { padding: 22px 40px; }
+.lineup-wrap h3 { font-family: var(--font); font-size: 28px; margin: 10px 0 8px; }
+.lineup-wrap h3 small { font-size: 18px; color: #7a5a35; }
+.lineup { border: 5px solid var(--line); background: #fffbea; max-height: 330px; overflow: auto; }
+.lineup.two-col { column-count: 2; column-gap: 0; column-rule: 4px solid var(--line); }
+.lu-row { display: grid; grid-template-columns: 60px 1fr 1fr; break-inside: avoid; border-bottom: 2px solid #ecd9b8; font-family: var(--font-read); font-weight: 800; font-size: 22px; }
+.lu-row b { font-family: var(--font-num); font-size: 16px; display: flex; align-items: center; justify-content: center; background: #2a1a0e; color: #ffd23f; }
+.lu-row span { padding: 6px 12px; } .lu-row .b { background: #e3edff; color: var(--blue-d); } .lu-row .w { background: #fff4cf; color: var(--gold-d); }
+.lu-head span { font-family: var(--font); }
+.intro-card .relay-info { grid-template-columns: 1fr 1.3fr; gap: 20px; }
+.intro-card .relay-info .rules { font-size: 19px; line-height: 1.45; margin: 0; }

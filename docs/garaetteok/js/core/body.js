@@ -6,7 +6,8 @@ export const LM = {
 };
 const LR_PAIRS = [[1, 4], [2, 5], [3, 6], [7, 8], [9, 10], [11, 12], [13, 14], [15, 16], [17, 18], [19, 20], [21, 22], [23, 24], [25, 26], [27, 28], [29, 30], [31, 32]];
 
-const VIS = 0.5;
+const VIS = 0.4;
+const VIS_LOOSE = 0.25; // 팔을 교차하면 손목이 가려져 신뢰도가 떨어지므로 X 판정에는 낮은 기준 사용
 
 /**
  * 정규화 랜드마크(0~1) → 화면 좌표계 점 배열.
@@ -30,6 +31,11 @@ export function toPoints(pose, aspect = 16 / 9, mirror = true, swapLR = false) {
 const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2, v: Math.min(a.v, b.v) });
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const ok = (p) => p && p.v >= VIS;
+const okLoose = (p) => p && p.v >= VIS_LOOSE;
+function segCross(a, b, c, d) {
+  const o = (p, q, r) => Math.sign((q.x - p.x) * (r.y - p.y) - (q.y - p.y) * (r.x - p.x));
+  return o(a, b, c) !== o(a, b, d) && o(c, d, a) !== o(c, d, b);
+}
 
 /** 사람 한 명의 핵심 특징(중심, 크기, 체형 서명) — 추적기에서 사용 */
 export function personGeometry(pts) {
@@ -92,13 +98,21 @@ export function bodySignals(pts, sens = 1) {
   const bothUp = overHead(lw) && overHead(rw);
   const wideArm = (w, s) => ok(w) && Math.abs(w.y - s.y) < 0.45 * torso / k && Math.abs(w.x - shC.x) > 1.25 * shW * k;
   const wide = wideArm(lw, ls) && wideArm(rw, rs);
-  // 교차: 해부학적 좌우축(오른어깨→왼어깨) 기준이라 거울 모드와 무관
+  // X(팔 교차): 해부학적 좌우축(오른어깨→왼어깨) 기준이라 거울 모드와 무관.
+  // 아래 셋 중 하나면 X — ① 손목이 서로 반대편으로 넘어감 ② 아래팔(팔꿈치→손목) 두 선분이 교차
+  // ③ 두 손목이 가슴 가운데에 모이고 팔꿈치는 바깥에 있음(팔짱형 X)
   const dir = Math.sign(ls.x - rs.x) || 1;
   const hipY = hipC ? hipC.y : shC.y + torso;
-  const crossed = ok(lw) && ok(rw) &&
-    (lw.x - rw.x) * dir < -0.05 * shW &&
-    lw.y > headY - 0.2 * torso && rw.y > headY - 0.2 * torso &&
-    lw.y < hipY + 0.1 * torso && rw.y < hipY + 0.1 * torso;
+  let crossed = false;
+  if (okLoose(lw) && okLoose(rw)) {
+    const inBand = lw.y > headY - 0.15 * torso && rw.y > headY - 0.15 * torso && lw.y < hipY + 0.2 * torso && rw.y < hipY + 0.2 * torso;
+    const passed = (lw.x - rw.x) * dir < -0.02 * shW;
+    const elbows = okLoose(le) && okLoose(re);
+    const forearms = elbows && segCross(le, lw, re, rw);
+    const nearMid = elbows && Math.abs(lw.x - shC.x) < 0.42 * shW * k * 1.2 && Math.abs(rw.x - shC.x) < 0.42 * shW * k * 1.2 &&
+      Math.abs(lw.y - rw.y) < 0.45 * torso && (le.x - shC.x) * dir > 0.3 * shW && (re.x - shC.x) * dir < -0.3 * shW;
+    crossed = inBand && (passed || forearms || nearMid);
+  }
 
   const wy = [lw, rw].filter(ok).map((p) => p.y);
   const handHeight = wy.length ? (shC.y - wy.reduce((a, b) => a + b, 0) / wy.length) / torso : null;

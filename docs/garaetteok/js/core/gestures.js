@@ -100,3 +100,26 @@ export function oxPose(sig) {
   if (sig.bothUp) return 'O';
   return null;
 }
+
+/**
+ * 날갯짓: 두 팔을 어깨 위로 올렸다가(handHeight > up) 허리 쪽으로 내리면(handHeight < down) 1회.
+ * 팔을 옆으로 크게 펄럭이는 동작도 손목 높이만 보므로 인식된다. 너무 빠른 반복은 무시.
+ */
+export class FlapDetector {
+  constructor({ upTh = 0.15, downTh = -0.35, minGap = 230, maxCycle = 1800 } = {}) {
+    Object.assign(this, { upTh, downTh, minGap, maxCycle });
+    this.reset();
+  }
+  reset() { this.armed = false; this.armedAt = 0; this.last = -1e9; this.count = 0; }
+  update(h, t, sens = 1) {
+    if (h == null) return false;
+    if (h > this.upTh / sens) { this.armed = true; this.armedAt = t; return false; }
+    if (this.armed && h < this.downTh / sens) {
+      this.armed = false;
+      if (t - this.armedAt > this.maxCycle || t - this.last < this.minGap) return false;
+      this.last = t; this.count++;
+      return true;
+    }
+    return false;
+  }
+}

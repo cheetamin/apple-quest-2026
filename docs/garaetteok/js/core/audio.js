@@ -1,6 +1,7 @@
 // Web Audio 합성 음악·효과음 (모든 음원 자체 제작, 외부 음원 사용 없음)
 // 브라우저 자동재생 제한 때문에 사용자가 버튼을 누른 뒤 unlock() 으로 활성화한다.
 import { CONFIG } from '../config.js';
+import { SONG_LINES, sylCount } from '../data/dancesong.js';
 
 const NOTE = { C: 0, 'C#': 1, D: 2, 'D#': 3, E: 4, F: 5, 'F#': 6, G: 7, 'G#': 8, A: 9, 'A#': 10, B: 11 };
 const hz = (n) => {
@@ -33,15 +34,8 @@ const SONGS = {
     bass: seq(`C3 . C3 . C3 . C3 . A2 . A2 . A2 . A2 .  F2 . F2 . G2 . G2 . C3 . C3 . G2 . G2 .`),
     drums: 'k.hck.h.k.hck.hc', wave: 'square', melGain: 0.05,
   },
-  // 〈떡떡! 가래떡 댄스〉 — 4/4박자 오리지널 곡
-  dance: {
-    bpm: CONFIG.danceBpm, bars: 4,
-    mel: seq(`C5 . C5 . G5 . . . E5 . E5 . C5 . . .  D5 . D5 . A5 . . . G5 . E5 . D5 . . .
-              E5 . G5 . A5 . G5 . E5 . G5 . A5 . C6 .  A5 . G5 . E5 . D5 . C5 . . . C5 . . .`),
-    bass: seq(`C3 . . C3 . . C3 . A2 . . A2 . . A2 .  F2 . . F2 . . F2 . G2 . . G2 . . G2 .
-               C3 . . C3 . . C3 . A2 . . A2 . . A2 .  F2 . . F2 . G2 . . C3 . . C3 . . . .`),
-    drums: 'kwhwskhhk.hwskhw', wave: 'square', melGain: 0.06,
-  },
+  // 〈떡떡! 가래떡 댄스〉 — 가사 멜로디(보컬 신스)는 아래 buildDanceSong()에서 채움
+  dance: null,
   relay: {
     bpm: 144, bars: 2,
     mel: seq(`C5 E5 G5 E5 C5 E5 G5 C6 A5 G5 E5 G5 A5 . . .  D5 F5 A5 F5 D5 F5 A5 D6 C6 A5 G5 E5 D5 . . .`),
@@ -55,6 +49,22 @@ const SONGS = {
     drums: 'k...s...k.k.s.hh', wave: 'triangle',
   },
 };
+
+// 노래: 6줄 × 2마디 = 12마디. 16분음표 단위 192칸. 글자마다 8분음표 하나(2칸)
+function buildDanceSong() {
+  const steps = SONG_LINES.length * 32;
+  const vox = Array(steps).fill(null), voxLen = Array(steps).fill(0);
+  SONG_LINES.forEach((ln, li) => {
+    const n = sylCount(ln.text);
+    for (let k = 0; k < n; k++) { vox[li * 32 + k * 2] = ln.notes[k] || ln.notes[ln.notes.length - 1]; voxLen[li * 32 + k * 2] = k === n - 1 ? 5 : 1.7; }
+  });
+  const bassBar = ['C3', null, null, 'C3', null, null, 'G2', null, 'A2', null, null, 'A2', null, null, 'E2', null, 'F2', null, null, 'F2', null, null, 'C3', null, 'G2', null, null, 'G2', null, 'D3', null, null];
+  const bass = Array.from({ length: steps }, (_, i) => bassBar[i % 32]);
+  // 노래 사이사이 짧은 반주 장식
+  const mel = Array.from({ length: steps }, (_, i) => (i % 32 >= 24 && i % 2 === 0 ? ['C6', 'A5', 'G5', 'E5'][(i % 8) / 2] : null));
+  return { bpm: CONFIG.danceBpm, bars: SONG_LINES.length * 2, mel, bass, vox, voxLen, drums: 'kwhwskhhk.hwskhw', wave: 'square', melGain: 0.035 };
+}
+SONGS.dance = buildDanceSong();
 
 class AudioEngine {
   constructor() {
@@ -171,12 +181,29 @@ class AudioEngine {
     const m = def.mel[k % def.mel.length], b = def.bass[k % def.bass.length];
     if (m) this.tone(m, t, sd * 1.8, def.wave, def.melGain || 0.09, this.bgmGain);
     if (b) this.tone(b, t, sd * 3, 'triangle', 0.16, this.bgmGain);
+    if (def.vox && def.vox[k]) this.voice(def.vox[k], t, sd * def.voxLen[k]);
     const d = def.drums[k % 16];
     if (d === 'k') this.tone(130, t, 0.12, 'sine', 0.4, this.bgmGain, 45);
     if (d === 's' || d === 'c') this.noise(t, 0.09, d === 'c' ? 1500 : 1800, 0.8, 0.18, this.bgmGain);
     if (d === 'h' || d === 's' || d === 'k') this.noise(t, 0.025, 8000, 1, 0.05, this.bgmGain, 'highpass');
     if (d === 'w') { this.tone(900, t, 0.04, 'square', 0.06, this.bgmGain); this.noise(t, 0.02, 3200, 6, 0.12, this.bgmGain); }
   }
+  /** 노래하는 듯한 음색: 살짝 어긋난 사각파 2개 + 비브라토 + 모음 같은 필터 */
+  voice(note, t, dur) {
+    const f = hz(note);
+    const g = this.ctx.createGain();
+    const flt = this.ctx.createBiquadFilter(); flt.type = 'bandpass'; flt.frequency.value = 1100; flt.Q.value = 1.2;
+    const lfo = this.ctx.createOscillator(), lg = this.ctx.createGain(); lfo.frequency.value = 5.5; lg.gain.value = f * 0.012;
+    lfo.connect(lg);
+    for (const det of [-6, 6]) {
+      const o = this.ctx.createOscillator(); o.type = 'square'; o.frequency.value = f; o.detune.value = det;
+      lg.connect(o.frequency); o.connect(flt); o.start(t); o.stop(t + dur + 0.1);
+    }
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.11, t + 0.02);
+    g.gain.setValueAtTime(0.11, t + dur * 0.7); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    flt.connect(g); g.connect(this.bgmGain); lfo.start(t); lfo.stop(t + dur + 0.1);
+  }
+
   stopSong() {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
@@ -191,15 +218,15 @@ class AudioEngine {
     return (t * bpm) / 60;
   }
 
-  speak(text, lang = 'ko-KR', rate = 1) {
-    if (!this.enabled.tts || this.muted || !('speechSynthesis' in window)) return;
+  speak(text, lang = 'ko-KR', rate = 1, { duck = true, force = false } = {}) {
+    if ((!this.enabled.tts && !force) || this.muted || !('speechSynthesis' in window)) return;
     try {
       speechSynthesis.cancel();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = lang; u.rate = rate;
       const v = speechSynthesis.getVoices().find((x) => x.lang && x.lang.replace('_', '-').startsWith(lang.slice(0, 2)));
       if (v) u.voice = v;
-      if (this.bgmGain) {
+      if (this.bgmGain && duck) {
         this.bgmGain.gain.value = this.enabled.bgm ? this.vol.bgm * 0.3 : 0;
         u.onend = () => this.applyVolume();
       }

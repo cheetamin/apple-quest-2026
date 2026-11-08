@@ -36,7 +36,7 @@ export function show(app, root, params) {
         <div class="tog-grid">
           ${tog('bgm', '배경음악')}${tog('sfx', '효과음')}${tog('tts', '문제 읽어주기')}${tog('showScore', '점수 표시')}
           ${tog('mirror', '카메라 거울 모드')}${tog('seated', '앉아서 참여 모드')}${tog('slow', '느린 속도 모드')}${tog('bigText', '글자 크게')}
-          ${tog('highContrast', '고대비 화면')}${tog('engTrial', '1~2학년 영어 맛보기')}
+          ${tog('highContrast', '고대비 화면')}${tog('engTrial', '1~2학년 영어 맛보기')}${tog('sing', '댄스 가사 음성으로 부르기')}
         </div>
         <div class="row"><span class="lbl">모션 민감도</span><input type="range" min="0.7" max="1.4" step="0.05" data-range="sens" value="${s.sens}"><b id="sens-v">${s.sens}</b></div>
         <div class="row"><span class="lbl">신체 활동 대체 입력</span>${seg('altInput', [['none', '사용 안 함'], ['blue', '청팀'], ['white', '백팀'], ['both', '양 팀']], s.altInput)}</div>
