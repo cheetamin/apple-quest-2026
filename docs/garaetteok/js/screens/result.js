@@ -4,7 +4,7 @@ import { audio } from '../core/audio.js';
 import { ROUNDS, ROUND_PRAISE } from '../rounds/defs.js';
 
 export function show(app, root, { r, m }) {
-  const def = ROUNDS[r];
+  const def = app.roundDef(r);
   const g = app.game;
   const res = g.results[r].matches[m] || { blue: 0, white: 0 };
   const nMatches = g.plan.rounds[r].length;
@@ -12,11 +12,11 @@ export function show(app, root, { r, m }) {
   const tot = app.totals();
   const win = res.blue > res.white ? 'blue' : res.white > res.blue ? 'white' : 'tie';
   const praise = ROUND_PRAISE[(r + m) % ROUND_PRAISE.length];
-  const isLast = r === 10 && m === nMatches - 1;
+  const isLast = r === app.G - 1 && m === nMatches - 1;
   const fracNote = (t) => (res.activeFrac && res.activeFrac[t] < 0.95 && res.activeFrac[t] > 0 ? `<small class="note">인식된 시간 ${Math.round(res.activeFrac[t] * 100)}% 기준으로 공정하게 채점했어요</small>` : '');
   const el = h(`<div class="screen result-screen">
     <div class="card result-card">
-      <div class="intro-head"><span class="round-badge">ROUND ${def.no} / 12 결과</span>${nMatches > 1 ? `<span class="chip">경기 ${m + 1}/${nMatches}</span>` : ''}</div>
+      <div class="intro-head"><span class="round-badge">ROUND ${def.no} / ${def.total} 결과</span>${nMatches > 1 ? `<span class="chip">경기 ${m + 1}/${nMatches}</span>` : ''}</div>
       <h1 class="ph"><span class="ico">${def.icon}</span><span data-pixel="72">${esc(def.name)}</span></h1>
       <div class="res-row">
         ${['blue', 'white'].map((t) => `<div class="res-team ${t} ${win === t ? 'win' : ''}">

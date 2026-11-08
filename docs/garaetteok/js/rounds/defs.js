@@ -57,3 +57,29 @@ export const PRAISE = [
   '오늘의 진정한 주인공은 모두 여러분이에요!', '우리 쌀의 소중함도 함께 배웠어요!',
 ];
 export const ROUND_PRAISE = ['멋진 승부였어요!', '집중력이 대단해요!', '서로 응원하는 모습이 최고예요!', '한 뼘 더 성장했어요!', '정말 열심히 했어요!', '다음 라운드도 힘내요!'];
+
+// ── 학생 수에 맞춘 라운드 구성 ──
+// 일반 라운드 수 = 큰 팀 인원(반 전체의 절반, 홀수면 올림). 한 라운드에 팀마다 1명씩 → 모두 한 번씩 출전.
+const BASE_IDS = ROUNDS.slice(0, 11).map((r) => r.id);
+// 11개보다 적을 때: 신체·두뇌가 번갈아 나오도록 고른 순서
+const SHORT_ORDER = ['chop', 'kor', 'flags', 'math', 'dance', 'sci', 'ox', 'soc', 'dodge', 'eng', 'fly'];
+// 11개보다 많을 때 덧붙이는 순서(교과 퀴즈와 신체 게임을 번갈아 '2탄'으로)
+const EXTRA_ORDER = ['kor', 'chop', 'sci', 'flags', 'soc', 'dance', 'eng', 'dodge', 'math', 'fly', 'ox'];
+
+export function makeSequence(n) {
+  n = Math.max(1, Math.round(n));
+  if (n === 11) return BASE_IDS.slice();
+  if (n < 11) return SHORT_ORDER.slice(0, n);
+  const seq = BASE_IDS.slice();
+  for (let k = 0; seq.length < n; k++) seq.push(EXTRA_ORDER[k % EXTRA_ORDER.length]);
+  return seq;
+}
+
+/** r번째 일반 라운드 정보 (번호·이름은 순서에 맞게, 같은 게임 반복이면 "2탄") */
+export function roundInfo(seq, r) {
+  const total = seq.length + 1;
+  if (r >= seq.length) return { ...ROUNDS[11], no: total, total };
+  const base = ROUNDS.find((x) => x.id === seq[r]);
+  const count = seq.slice(0, r + 1).filter((x) => x === seq[r]).length;
+  return { ...base, no: r + 1, total, name: count > 1 ? `${base.name} ${count}탄` : base.name };
+}

@@ -22,7 +22,7 @@ function numDistractors(ans, rng) {
 }
 
 export function show(app, root, { r, m }) {
-  const def = ROUNDS[r];
+  const def = app.roundDef(r);
   const g = app.game, s = g.settings;
   const useMotion = s.mathInput === 'motion' && motion.mode !== 'none';
   const b = band(s.grade);
@@ -31,7 +31,7 @@ export function show(app, root, { r, m }) {
   const allowDot = s.grade >= 4;
   const el = h(`<div class="screen math-screen">
     <header class="topbar">
-      <div class="tb-title"><span class="round-badge">ROUND ${def.no} / 12</span><span class="subj">🧮 수학</span></div>
+      <div class="tb-title"><span class="round-badge">ROUND ${def.no} / ${def.total}</span><span class="subj">🧮 수학</span></div>
       <div class="tb-name">${esc(def.name)}</div>
       <div class="tb-right">${s.showScore ? `<span class="tot blue">${esc(g.teamNames.blue)} <b>${app.totals().blue}</b></span><span class="tot white">${esc(g.teamNames.white)} <b>${app.totals().white}</b></span>` : ''}<span class="timer" id="timer">${fmtTime(s.roundSec)}</span></div>
     </header>

@@ -40,16 +40,16 @@ export function openTeacherMenu(app) {
     restart: async () => {
       if (!(await confirmBox('현재 라운드를 처음부터 다시 할까요? 이번 경기 점수는 다시 기록돼요.'))) return;
       done();
-      if (g.cur.r >= 11) app.go('relayIntro'); else app.go('intro', g.cur);
+      if (g.cur.r >= app.G) app.go('relayIntro'); else app.go('intro', g.cur);
     },
     skip: async () => {
-      if (!(await confirmBox(g.cur.r >= 11 ? '결승 이어달리기를 건너뛰고 1~11라운드 점수로 우승팀을 정할까요?' : '이 라운드를 건너뛸까요? 두 팀 모두 0점으로 기록돼요.'))) return;
+      if (!(await confirmBox(g.cur.r >= app.G ? `결승 이어달리기를 건너뛰고 1~${app.G}라운드 점수로 우승팀을 정할까요?` : '이 라운드를 건너뛸까요? 두 팀 모두 0점으로 기록돼요.'))) return;
       done();
-      if (g.cur.r >= 11) { const t = app.totals(); app.finishGame({ winner: t.blue > t.white ? 'blue' : t.white > t.blue ? 'white' : 'tie', trackLength: 0, start: { blue: 0, white: 0 }, dist: { blue: 0, white: 0 }, finishedAt: { blue: null, white: null }, byFinishLine: false, skipped: true, legs: 0 }); }
+      if (g.cur.r >= app.G) { const t = app.totals(); app.finishGame({ winner: t.blue > t.white ? 'blue' : t.white > t.blue ? 'white' : 'tie', trackLength: 0, start: { blue: 0, white: 0 }, dist: { blue: 0, white: 0 }, finishedAt: { blue: null, white: null }, byFinishLine: false, skipped: true, legs: 0 }); }
       else app.skipCurrent();
     },
     swap: () => {
-      if (g.cur.r >= 11) { toast('이어달리기 중에는 교대 화면의 [주자 바꾸기]를 사용해요.'); return; }
+      if (g.cur.r >= app.G) { toast('이어달리기 중에는 교대 화면의 [주자 바꾸기]를 사용해요.'); return; }
       swapPlayers(app, g.cur.r, g.cur.m, () => { if (app.current.name === 'intro') app.go('intro', g.cur); else toast('출전 학생을 바꿨어요.'); });
     },
     scores: () => scoreEditor(app),
@@ -68,7 +68,7 @@ export function openTeacherMenu(app) {
 
 function scoreEditor(app) {
   const g = app.game;
-  const rows = ROUNDS.slice(0, 11).map((d, r) => g.results[r].matches.map((mm, m) => `<tr><td>${d.no}. ${esc(d.name)}${g.results[r].matches.length > 1 ? ` (${m + 1})` : ''}</td>
+  const rows = g.results.map((_, r) => app.roundDef(r)).map((d, r) => g.results[r].matches.map((mm, m) => `<tr><td>${d.no}. ${esc(d.name)}${g.results[r].matches.length > 1 ? ` (${m + 1})` : ''}</td>
     ${['blue', 'white'].map((t) => `<td><input type="number" min="0" max="100" class="txt num" data-r="${r}" data-m="${m}" data-t="${t}" value="${mm ? mm[t] : ''}" placeholder="-"></td>`).join('')}</tr>`).join('')).join('');
   const md = modal(`<h2>✏️ 점수 수동 수정 <small>(팀별 0~100점)</small></h2><div class="scroll"><table class="tbl small"><thead><tr><th>라운드</th><th>${esc(g.teamNames.blue)}</th><th>${esc(g.teamNames.white)}</th></tr></thead><tbody>${rows}</tbody></table></div><div class="row center"><button class="btn" data-ok>저장</button></div>`, { cls: 'wide' });
   onTap($('[data-ok]', md.el), () => {
@@ -86,7 +86,7 @@ function scoreEditor(app) {
 
 function standings(app) {
   const g = app.game, t = app.totals();
-  const rows = ROUNDS.slice(0, 11).map((d, r) => { const s = app.roundScore(r); const played = g.results[r].matches.some(Boolean); return `<tr><td>${d.icon} ${esc(d.name)}</td><td>${played ? s.blue : '-'}</td><td>${played ? s.white : '-'}</td></tr>`; }).join('');
+  const rows = g.results.map((_, r) => app.roundDef(r)).map((d, r) => { const s = app.roundScore(r); const played = g.results[r].matches.some(Boolean); return `<tr><td>${d.icon} ${esc(d.name)}</td><td>${played ? s.blue : '-'}</td><td>${played ? s.white : '-'}</td></tr>`; }).join('');
   modal(`<h2>📊 현재 결과</h2><div class="scroll"><table class="tbl small"><thead><tr><th>라운드</th><th>${esc(g.teamNames.blue)}</th><th>${esc(g.teamNames.white)}</th></tr></thead><tbody>${rows}<tr><td><b>합계</b></td><td><b>${t.blue}</b></td><td><b>${t.white}</b></td></tr></tbody></table></div>`, { cls: 'wide' });
 }
 

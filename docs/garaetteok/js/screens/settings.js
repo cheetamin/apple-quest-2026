@@ -1,7 +1,7 @@
 // 교사용 설정 화면
 import { h, $, $$, onTap, esc, toast, modal } from '../ui.js';
 import { buildPlan, relayLegs, estimateMinutes, parseNames, countAppearances, shuffled } from '../core/roster.js';
-import { ROUNDS } from '../rounds/defs.js';
+import { ROUNDS, makeSequence, roundInfo } from '../rounds/defs.js';
 import { bankEditor } from './bankeditor.js';
 import { lyricSync } from './lyricsync.js';
 
@@ -27,8 +27,8 @@ export function show(app, root, params) {
         ${seg('teamMode', [['class', '우리 반을 청·백으로 나누기'], ['two', '두 학급 대항전']], s.teamMode)}
         <div id="team-area"></div>
         <h3>🏃 참여 방식</h3>
-        ${seg('mode', [['all', '전원 참여(추천)'], ['basic', '대표 선수만']], s.mode)}
-        <div class="row" id="squad-row"><span class="lbl">두뇌 라운드 한 경기 인원</span>${seg('squad', [[1, '1명씩'], [2, '2명씩'], [3, '3명씩']], s.squad)}</div>
+        ${seg('mode', [['auto', '학생 수에 맞춰 라운드(1인 1경기, 추천)'], ['basic', '12라운드 고정(대표 선수)']], s.mode)}
+        <div class="round-chips" id="round-chips"></div>
         <p class="hint" id="plan-info"></p>
         <div class="row gap">${tog('autoOrder', '출전 순서 무작위')}<button class="btn small" data-a="order">출전 순서 정하기</button><button class="btn small" data-a="sheet">📋 출전표 보기</button></div>
       </section>
@@ -55,15 +55,20 @@ export function show(app, root, params) {
   const validOrder = (t) => (s.order[t] && s.order[t].length === s.count[t] ? s.order[t] : null);
   const refreshPlan = () => {
     const plan = planNow();
+    const R = plan.rounds.length;
+    const seq = makeSequence(R);
     const legs = Math.max(s.count.blue, s.count.white);
-    const matches = plan.rounds.reduce((a, r) => a + r.length, 0);
     const min = estimateMinutes({ plan, roundSeconds: s.roundSec, legs, legSeconds: s.relaySec });
-    const ab = countAppearances(plan, 'blue', s.count.blue), aw = countAppearances(plan, 'white', s.count.white);
-    const minA = Math.min(...ab, ...aw), maxA = Math.max(...ab, ...aw);
-    const who = s.mode === 'all' ? `모든 학생이 1~11라운드에 <b>${minA === maxA ? minA + '번' : `${minA}~${maxA}번`}</b> 출전해요.` : `라운드마다 팀별 대표 1명이 나가요(출전하지 않는 학생이 생길 수 있어요).`;
-    const extra = s.count.blue !== s.count.white ? ` 인원이 적은 팀은 ${Math.abs(s.count.blue - s.count.white)}명이 한 번 더 달려 두 팀 모두 ${legs}구간을 달려요.` : '';
-    $('#plan-info', el).innerHTML = `청 <b>${s.count.blue}명</b> · 백 <b>${s.count.white}명</b> → 1~11라운드 <b>${matches}경기</b> + 결승 릴레이 <b>${legs}구간</b>(전원) · 예상 약 <b>${min}분</b><br>${who}${extra}${min > 60 ? '<br>⚠ 시간이 길면 라운드 시간을 45초로 줄이거나 두뇌 라운드 인원을 늘려 보세요.' : ''}`;
-    $('#squad-row', el).style.display = s.mode === 'all' ? '' : 'none';
+    const total = s.count.blue + s.count.white;
+    const diff = Math.abs(s.count.blue - s.count.white);
+    const small = s.count.blue < s.count.white ? s.teamNames.blue : s.teamNames.white;
+    let who;
+    if (s.mode === 'auto') {
+      who = `라운드마다 팀별 1명씩 나와 <b>모든 학생이 한 번씩</b> 출전해요.`;
+      if (diff) who += ` 인원이 적은 <b>${esc(small)}</b>은 ${diff}명이 한 번 더 출전해요${total % 2 ? ' (홀수 인원)' : ''}.`;
+    } else who = '라운드마다 팀별 대표 1명이 나가요(출전하지 않는 학생이 생길 수 있어요).';
+    $('#plan-info', el).innerHTML = `반 <b>${total}명</b> (청 ${s.count.blue} · 백 ${s.count.white}) → 일반 <b>${R}라운드</b> + 결승 이어달리기 = <b>총 ${R + 1}라운드</b> · 예상 약 <b>${min}분</b><br>${who} 마지막 이어달리기는 전원이 달려요.${min > 60 ? '<br>⚠ 시간이 길면 라운드 시간을 45초로 줄여 보세요.' : ''}`;
+    $('#round-chips', el).innerHTML = seq.map((id, i) => { const d = roundInfo(seq, i); return `<span class="rchip ${d.kind}">${i + 1}. ${d.icon} ${esc(d.name)}</span>`; }).join('') + `<span class="rchip relay">${R + 1}. 🏃 이어달리기 결승</span>`;
   };
 
   // ── 학생 명단 ──
@@ -133,7 +138,7 @@ export function show(app, root, params) {
 
   $$('.seg', el).forEach((sg) => $$('button', sg).forEach((b) => onTap(b, () => {
     const key = sg.dataset.key; let v = b.dataset.v;
-    if (['grade', 'sem', 'roundSec', 'relaySec', 'squad'].includes(key)) v = +v;
+    if (['grade', 'sem', 'roundSec', 'relaySec'].includes(key)) v = +v;
     s[key] = v;
     if (key === 'teamMode') {
       if (v === 'two' && s.teamNames.blue === '청가래떡팀') { s.teamNames = { blue: '1반 청가래떡', white: '2반 백가래떡' }; }
@@ -195,8 +200,9 @@ export function lineupSheet(app, plan) {
   };
   const col = (t) => {
     const per = names[t].map(() => []);
-    plan.rounds.forEach((r, ri) => r.forEach((m) => m[t].forEach((i) => per[i].push(ROUNDS[ri].no))));
-    return `<div class="order-col ${t}"><h3>${esc(s.teamNames[t])} (${names[t].length}명)</h3><table class="tbl small"><tbody>${names[t].map((n, i) => `<tr><td>${esc(n)}</td><td>${per[i].length ? per[i].map((no) => `${no}R`).join(' · ') : '<span class="err">출전 없음</span>'} · 릴레이</td></tr>`).join('')}</tbody></table></div>`;
+    const seq = makeSequence(plan.rounds.length);
+    plan.rounds.forEach((r, ri) => r.forEach((m) => m[t].forEach((i) => per[i].push(`${ri + 1}R ${roundInfo(seq, ri).name}`))));
+    return `<div class="order-col ${t}"><h3>${esc(s.teamNames[t])} (${names[t].length}명)</h3><table class="tbl small"><tbody>${names[t].map((n, i) => `<tr><td>${esc(n)}</td><td>${per[i].length ? per[i].join(' · ') : '<span class="err">출전 없음</span>'} · 이어달리기</td></tr>`).join('')}</tbody></table></div>`;
   };
-  modal(`<h2>📋 출전표</h2><p class="hint">R = 라운드 번호. 모든 학생은 마지막 이어달리기에 나가요.${s.autoOrder ? ' "출전 순서 무작위"가 켜져 있으면 게임을 시작할 때 순서가 다시 섞여요.' : ''}</p><div class="order-wrap">${col('blue')}${col('white')}</div>`, { cls: 'wide' });
+  modal(`<h2>📋 출전표</h2><p class="hint">모든 학생은 마지막 이어달리기에도 나가요.${s.autoOrder ? ' "출전 순서 무작위"가 켜져 있으면 게임을 시작할 때 순서가 다시 섞여요.' : ''}</p><div class="order-wrap">${col('blue')}${col('white')}</div>`, { cls: 'wide' });
 }

@@ -16,7 +16,7 @@ const LEG_CAP = 1.25; // 한 구간에서 낼 수 있는 최대 거리(균등 �
 export function relayParams(app) {
   const g = app.game, s = g.settings, tot = app.totals();
   const L = g.legs.length;
-  const setup = relaySetup({ blueTotal: tot.blue, whiteTotal: tot.white, legs: L, legSeconds: s.relaySec, refSpeed: REF_SPEED });
+  const setup = relaySetup({ blueTotal: tot.blue, whiteTotal: tot.white, legs: L, legSeconds: s.relaySec, refSpeed: REF_SPEED, maxTotal: app.G * 100 });
   const share = setup.trackLength / L;
   return { ...setup, L, share, cap: share * LEG_CAP, r0: [0, 1.8, 2.1, 2.3][band(s.grade)] * (s.slow ? 0.8 : 1), tot };
 }
@@ -27,18 +27,18 @@ export function showIntro(app, root) {
   const lead = P.diff > 0 ? 'blue' : P.diff < 0 ? 'white' : null;
   const el = h(`<div class="screen intro-screen">
     <div class="intro-card card">
-      <div class="intro-head"><span class="round-badge">ROUND 12 / 12 · 결승</span><span class="kind relay">팀원 전원 참여</span></div>
+      <div class="intro-head"><span class="round-badge">ROUND ${app.G + 1} / ${app.G + 1} · 결승</span><span class="kind relay">팀원 전원 참여</span></div>
       <h1 class="ph"><span class="ico">🏃</span><span data-pixel="84">가래떡 이어달리기 결승전</span></h1>
       <div class="relay-info">
         <table class="tbl">
           <tr><th></th><th class="blue">${esc(g.teamNames.blue)}</th><th class="white">${esc(g.teamNames.white)}</th></tr>
-          <tr><td>1~11라운드 누적</td><td><b>${P.tot.blue}</b>점</td><td><b>${P.tot.white}</b>점</td></tr>
+          <tr><td>1~${app.G}라운드 누적</td><td><b>${P.tot.blue}</b>점</td><td><b>${P.tot.white}</b>점</td></tr>
           <tr><td>출발 위치 보너스</td><td>${P.start.blue ? `+${P.start.blue}칸` : '0칸'}</td><td>${P.start.white ? `+${P.start.white}칸` : '0칸'}</td></tr>
           <tr><td>달리는 학생 / 구간</td><td>${g.names.blue.length}명 / ${P.L}구간</td><td>${g.names.white.length}명 / ${P.L}구간</td></tr>
         </table>
         <ul class="rules">
           <li>트랙 길이 <b>${P.trackLength}칸</b> = ${P.L}구간 × ${s.relaySec}초 × 표준 속도 × ${RELAY.TRACK_FACTOR}</li>
-          <li>출발 보너스 = 점수 차 ${Math.abs(P.diff)}점 × 0.03% × 트랙 길이 (최대 트랙의 ${RELAY.BONUS_CAP * 100}%) → ${lead ? `${esc(g.teamNames[lead])} +${P.start[lead]}칸` : '동점이라 보너스 없음'}</li>
+          <li>출발 보너스 = 점수 차 ${Math.abs(P.diff)}점 ÷ 일반 라운드 만점 ${app.G * 100}점 × 33% × 트랙 길이 (최대 트랙의 ${RELAY.BONUS_CAP * 100}%) → ${lead ? `${esc(g.teamNames[lead])} +${P.start[lead]}칸` : '동점이라 보너스 없음'}</li>
           <li>두 팀 모두 같은 <b>${P.L}구간</b>을 달려요. 인원이 적은 팀은 몇 명이 한 번 더 달려요.</li>
           <li>팔다리를 흔드는 빠르기만큼 앞으로 가요. 한 구간 최대 거리가 정해져 있어서 무리하게 빨리 뛸 필요가 없어요.</li>
           <li>결승선을 <b>먼저 통과한 팀이 우승</b>! 통과한 뒤에도 남은 친구들은 끝까지 함께 달려요.</li>
@@ -75,7 +75,7 @@ export function show(app, root) {
   };
   const el = h(`<div class="screen relay-screen">
     <header class="topbar">
-      <div class="tb-title"><span class="round-badge">ROUND 12 / 12</span><span class="subj">🏃 결승 이어달리기</span></div>
+      <div class="tb-title"><span class="round-badge">ROUND ${app.G + 1} / ${app.G + 1}</span><span class="subj">🏃 결승 이어달리기</span></div>
       <div class="tb-name" id="legname"></div>
       <div class="tb-right"><span class="timer" id="timer">${fmtTime(s.relaySec)}</span></div>
     </header>
@@ -127,7 +127,7 @@ export function show(app, root) {
     for (const t of ['blue', 'white']) { st.T[t].legDist = 0; st.T[t].step.reset(); }
   };
   onTap($('[data-a="force"]', el), startLeg);
-  onTap($('[data-a="swap"]', el), () => swapPlayers(app, 12, st.leg, updateNames));
+  onTap($('[data-a="swap"]', el), () => swapPlayers(app, app.G, st.leg, updateNames));
 
   const endLeg = () => {
     for (const t of ['blue', 'white']) st.T[t].legsDone++;

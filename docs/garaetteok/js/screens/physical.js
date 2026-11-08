@@ -26,7 +26,7 @@ export function bindKeys() {
 }
 
 export function show(app, root, { r, m }) {
-  const def = ROUNDS[r];
+  const def = app.roundDef(r);
   const g = app.game, s = g.settings;
   const env = {
     grade: s.grade, sem: s.sem, duration: s.roundSec, slow: s.slow, sens: s.sens, seated: s.seated,
@@ -43,7 +43,7 @@ export function show(app, root, { r, m }) {
   const parts = app.participants(r, m);
   const el = h(`<div class="screen play-screen">
     <header class="topbar">
-      <div class="tb-title"><span class="mini-logo">가래떡 모션 게임</span><span class="round-badge">ROUND ${def.no} / 12</span></div>
+      <div class="tb-title"><span class="mini-logo">가래떡 모션 게임</span><span class="round-badge">ROUND ${def.no} / ${def.total}</span></div>
       <div class="tb-name">${def.icon} ${esc(def.name)}</div>
       <div class="tb-right"><span class="chip">🎓 ${s.grade}학년</span><span class="timer" id="timer">${fmtTime(s.roundSec)}</span></div>
     </header>

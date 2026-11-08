@@ -44,10 +44,11 @@ export function averageMatches(list) {
  */
 export const RELAY = { BONUS_PER_POINT: 0.0003, BONUS_CAP: 0.10, TRACK_FACTOR: 0.92 };
 
-export function relaySetup({ blueTotal, whiteTotal, legs, legSeconds, refSpeed = 1 }) {
+export function relaySetup({ blueTotal, whiteTotal, legs, legSeconds, refSpeed = 1, maxTotal = 1100 }) {
   const trackLength = Math.round(legs * legSeconds * refSpeed * RELAY.TRACK_FACTOR * 10) / 10;
   const diff = blueTotal - whiteTotal;
-  const frac = Math.min(RELAY.BONUS_CAP, Math.abs(diff) * RELAY.BONUS_PER_POINT);
+  // 점수 차를 일반 라운드 만점(라운드 수×100) 대비 비율로 환산 → 라운드 수가 달라도 같은 기준
+  const frac = Math.min(RELAY.BONUS_CAP, (Math.abs(diff) / maxTotal) * 1100 * RELAY.BONUS_PER_POINT);
   const bonus = Math.round(trackLength * frac * 10) / 10;
   return {
     trackLength,

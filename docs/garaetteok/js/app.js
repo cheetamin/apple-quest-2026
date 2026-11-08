@@ -4,13 +4,13 @@ import { audio } from './core/audio.js';
 import { motion } from './core/motion.js';
 import { buildPlan, relayLegs, parseNames, shuffled } from './core/roster.js';
 import { averageMatches } from './core/scoring.js';
-import { ROUNDS } from './rounds/defs.js';
+import { ROUNDS, makeSequence, roundInfo } from './rounds/defs.js';
 import { $, h, pixelize } from './ui.js';
 
 export const DEFAULTS = {
   grade: 4, sem: 2, teamMode: 'class', teamNames: { blue: '청가래떡팀', white: '백가래떡팀' },
   count: { blue: 12, white: 12 }, rosterText: { blue: '', white: '' }, autoOrder: true, order: { blue: null, white: null },
-  roundSec: 60, relaySec: 20, mode: 'all', squad: 2,
+  roundSec: 60, relaySec: 15, mode: 'auto', squad: 1,
   classRosterText: '', classCount: 24, teamLists: { blue: [], white: [] },
   bgm: true, sfx: true, tts: true, sing: true, sens: 1.15, mirror: true, swapLR: false, showScore: true,
   altInput: 'none', seated: false, slow: false, bigText: false, highContrast: false,
@@ -25,7 +25,8 @@ class App {
   constructor() {
     this.settings = { ...DEFAULTS, ...store.get('settings', {}) };
     for (const k of ['teamNames', 'count', 'rosterText', 'order', 'vol', 'teamLists']) this.settings[k] = { ...DEFAULTS[k], ...(this.settings[k] || {}) };
-    if (!this.settings._relay20) { this.settings.relaySec = 20; this.settings._relay20 = true; }
+    if (!this.settings._relay15) { this.settings.relaySec = 15; this.settings._relay15 = true; }
+    if (this.settings.mode === 'all') this.settings.mode = 'auto';
     this.game = null;
     this.cleanup = null;
     this.paused = false;
@@ -80,7 +81,8 @@ class App {
       id: Date.now(), startedAt: new Date().toISOString(),
       settings: JSON.parse(JSON.stringify(s)), teamNames: { ...s.teamNames }, names, order, plan,
       legs: relayLegs({ blueCount: s.count.blue, whiteCount: s.count.white, orderBlue: order.blue, orderWhite: order.white }),
-      results: ROUNDS.slice(0, 11).map((r, i) => ({ matches: plan.rounds[i].map(() => null) })),
+      seq: makeSequence(plan.rounds.length),
+      results: plan.rounds.map((rr) => ({ matches: rr.map(() => null) })),
       cur: { r: 0, m: 0 }, relay: null, finished: false, seed: Math.floor(Math.random() * 1e6),
     };
     this.saveGame();
@@ -89,9 +91,13 @@ class App {
   loadSavedGame() { const g = store.get('game', null); return g && !g.finished ? g : null; }
   resume(g) { this.game = g; }
 
+  /** 일반 라운드 수 (마지막 결승 이어달리기 제외) */
+  get G() { return this.game ? (this.game.seq ? this.game.seq.length : 11) : 0; }
+  roundDef(r) { return roundInfo(this.game.seq || makeSequence(11), r); }
+
   participants(r, m) {
     const g = this.game;
-    if (r >= 11) { const leg = g.legs[m] || g.legs[0]; return { blue: [leg.blue], white: [leg.white] }; }
+    if (r >= this.G) { const leg = g.legs[m] || g.legs[0]; return { blue: [leg.blue], white: [leg.white] }; }
     return g.plan.rounds[r][m];
   }
   names(team, idxs) { return idxs.map((i) => this.game.names[team][i]).join(', '); }
@@ -104,7 +110,7 @@ class App {
   }
   totals() {
     const out = { blue: 0, white: 0 };
-    for (let r = 0; r < 11; r++) { const s = this.roundScore(r); out.blue += s.blue; out.white += s.white; }
+    for (let r = 0; r < this.G; r++) { const s = this.roundScore(r); out.blue += s.blue; out.white += s.white; }
     return out;
   }
   recordMatch(r, m, scores, detail = null, extra = {}) {
@@ -115,28 +121,28 @@ class App {
   next() {
     const g = this.game;
     let { r, m } = g.cur;
-    if (r < 11) {
+    if (r < this.G) {
       m++;
       if (m >= g.plan.rounds[r].length) { r++; m = 0; }
     }
     g.cur = { r, m };
     this.saveGame();
-    if (r >= 11) this.go('relayIntro');
+    if (r >= this.G) this.go('relayIntro');
     else this.go('intro', { r, m });
   }
   startCurrent() {
     const { r, m } = this.game.cur;
-    if (r >= 11) this.go('relayIntro'); else this.go('intro', { r, m });
+    if (r >= this.G) this.go('relayIntro'); else this.go('intro', { r, m });
   }
   playRound(r, m) {
-    const def = ROUNDS[r];
+    const def = this.roundDef(r);
     if (def.kind === 'physical' || def.kind === 'mixed') this.go('physical', { r, m });
     else if (def.id === 'math') this.go('math', { r, m });
     else this.go('quiz', { r, m });
   }
   skipCurrent() {
     const { r, m } = this.game.cur;
-    if (r < 11) { this.recordMatch(r, m, { blue: 0, white: 0 }, null, { skipped: true }); this.next(); }
+    if (r < this.G) { this.recordMatch(r, m, { blue: 0, white: 0 }, null, { skipped: true }); this.next(); }
   }
   finishGame(relayResult) {
     this.game.relay = relayResult;

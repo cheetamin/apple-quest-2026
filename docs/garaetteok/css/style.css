@@ -529,3 +529,7 @@ body, button, input, select, textarea { font-family: var(--font); }
 .ls-list { max-height: 360px; overflow: auto; font-family: var(--font-read); font-size: 19px; border: 4px solid var(--line); background: #fffbea; margin: 8px 0 0; padding: 6px 6px 6px 44px; }
 .ls-list li { padding: 3px 0; } .ls-list li span { display: inline-block; width: 86px; font-family: var(--font-num); font-size: 13px; color: #7a5a35; }
 .ls-list li.now { background: #ffe68a; font-weight: 900; } .ls-list li.skip { opacity: .45; text-decoration: line-through; }
+
+.round-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.rchip { font-family: var(--font-read); font-weight: 700; font-size: 16px; padding: 4px 8px; border: 3px solid var(--line); background: #fff; }
+.rchip.physical { background: #dce8ff; } .rchip.brain { background: #ffeccc; } .rchip.mixed { background: #f0dcff; } .rchip.relay { background: #ffd9d2; }

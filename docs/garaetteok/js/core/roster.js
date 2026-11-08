@@ -27,6 +27,12 @@ export function shuffled(arr, rnd = Math.random) {
 export function buildPlan({ blueCount, whiteCount, mode = 'basic', orderBlue, orderWhite, squad = 3 }) {
   orderBlue = orderBlue || [...Array(blueCount).keys()];
   orderWhite = orderWhite || [...Array(whiteCount).keys()];
+  if (mode === 'auto') {
+    // 학생 수 맞춤: 라운드 수 = 큰 팀 인원, 라운드마다 팀별 1명. 인원이 적은 팀은 앞 순서 학생부터 한 번 더.
+    const R = Math.max(blueCount, whiteCount);
+    const rounds = Array.from({ length: R }, (_, i) => [{ blue: [orderBlue[i % blueCount]], white: [orderWhite[i % whiteCount]] }]);
+    return { rounds, brainSquad: 1 };
+  }
   const brainSquad = mode === 'all' ? Math.max(1, Math.min(3, squad)) : 1;
   const slotsOf = (r) => (ROUND_KIND[r] === 'brain' ? brainSquad : 1);
   const matches = Array(11).fill(1);

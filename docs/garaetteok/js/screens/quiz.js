@@ -15,7 +15,7 @@ import { subjectLabel } from './intro.js';
 const NUM = ['①', '②', '③', '④'];
 
 export function show(app, root, { r, m }) {
-  const def = ROUNDS[r];
+  const def = app.roundDef(r);
   const g = app.game, s = g.settings;
   let subject = def.subject;
   if (subject === 'eng' && s.grade <= 2 && !s.engTrial) subject = 'kor';
@@ -39,7 +39,7 @@ export function show(app, root, { r, m }) {
 
   const el = h(`<div class="screen quiz-screen race">
     <header class="topbar">
-      <div class="tb-title"><span class="round-badge">ROUND ${def.no} / 12</span><span class="subj">${def.icon} ${esc(subjectLabel(subject, s.grade, s))}</span></div>
+      <div class="tb-title"><span class="round-badge">ROUND ${def.no} / ${def.total}</span><span class="subj">${def.icon} ${esc(subjectLabel(subject, s.grade, s))}</span></div>
       <div class="tb-name">${esc(def.name)} · 10문제 스피드 레이스</div>
       <div class="tb-right"><span class="timer" id="timer">${fmtTime(limit)}</span></div>
     </header>

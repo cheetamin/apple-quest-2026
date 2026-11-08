@@ -13,7 +13,7 @@ export function subjectLabel(subject, grade, settings) {
 }
 
 export function show(app, root, { r, m }) {
-  const def = ROUNDS[r];
+  const def = app.roundDef(r);
   const g = app.game, s = g.settings;
   const parts = app.participants(r, m);
   const nMatches = g.plan.rounds[r].length;
@@ -24,7 +24,7 @@ export function show(app, root, { r, m }) {
   const el = h(`<div class="screen intro-screen">
     <div class="intro-card card">
       <div class="intro-head">
-        <span class="round-badge">ROUND ${def.no} / 12</span>
+        <span class="round-badge">ROUND ${def.no} / ${def.total}</span>
         <span class="kind ${def.kind}">${kindName}${esc(subj)}</span>
         ${nMatches > 1 ? `<span class="chip">경기 ${m + 1} / ${nMatches}</span>` : ''}
       </div>
@@ -63,7 +63,7 @@ export function show(app, root, { r, m }) {
 /** 학생 교대: 현재 경기의 출전 학생을 다른 학생으로 바꾼다 (참여 횟수 표시, 미출전 학생 우선 표시) */
 export function swapPlayers(app, r, m, done) {
   const g = app.game;
-  const parts = r < 11 ? g.plan.rounds[r][m] : { blue: [g.legs[m].blue], white: [g.legs[m].white] };
+  const parts = r < app.G ? g.plan.rounds[r][m] : { blue: [g.legs[m].blue], white: [g.legs[m].white] };
   const apps = { blue: Array(g.names.blue.length).fill(0), white: Array(g.names.white.length).fill(0) };
   g.plan.rounds.forEach((rr, ri) => rr.forEach((mm, mi) => {
     if (ri < r || (ri === r && mi < m) || g.results[ri].matches[mi]) for (const t of ['blue', 'white']) mm[t].forEach((i) => apps[t][i]++);
@@ -76,7 +76,7 @@ export function swapPlayers(app, r, m, done) {
   onTap($('[data-ok]', md.el), () => {
     $$('select', md.el).forEach((sel) => {
       const t = sel.dataset.t, slot = +sel.dataset.slot, v = +sel.value;
-      if (r < 11) g.plan.rounds[r][m][t][slot] = v; else g.legs[m][t] = v;
+      if (r < app.G) g.plan.rounds[r][m][t][slot] = v; else g.legs[m][t] = v;
     });
     app.saveGame(); md.close(); if (done) done();
   });
