@@ -38,18 +38,37 @@ test('같은 문제는 하루에 한 번만 경험치, 다음 날 다시 가능'
   assert.strictEqual(s.exp, 17);
 });
 
-test('진화 조건: 경험치·단원·보스전이 모두 필요', () => {
+test('진화 조건: 경험치·단원·보스전·공부한 날이 모두 필요', () => {
   const s = L.newState(D.DEFAULT_RULES);
-  s.exp = 120;
-  for (const id of [1, 2, 3]) { L.completeSet(s, id, 0, 5, 5, T0); L.completeSet(s, id, 1, 4, 5, T0); }
-  assert.strictEqual(L.unitsDone(s), 3);
-  assert.strictEqual(L.canEvolve(s), false, '보스전 전에는 진화 불가');
-  assert.strictEqual(L.completeBoss(s, 1, 6), false);
+  for (const id of [1, 2, 3, 4, 5]) { L.completeSet(s, id, 0, 5, 5, T0); L.completeSet(s, id, 1, 4, 5, T0); }
+  assert.strictEqual(L.unitsDone(s), 5);
   assert.strictEqual(L.completeBoss(s, 1, 8), true);
-  assert.strictEqual(L.evolve(s), true);
+  s.exp = 300;
+  assert.strictEqual(L.canEvolve(s), false, '공부한 날이 부족하면 진화 불가');
+  for (let d = 0; d < 5; d++) L.markStudy(s, day(d), 'basic');
+  assert.strictEqual(s.studyDays, 5);
+  s.exp = 299; assert.strictEqual(L.canEvolve(s), false, '경험치 부족');
+  s.exp = 300; assert.strictEqual(L.evolve(s), true);
   assert.strictEqual(s.stage, 1);
   assert.deepStrictEqual(s.cards, [0, 1]);
   assert.strictEqual(L.canEvolve(s), false);
+});
+
+test('사과(코인): 새 정답·세트·단원·출석·보스로 모이고 상점에서 산다', () => {
+  const s = L.newState(D.DEFAULT_RULES);
+  L.award(s, 'q1', 'basic', T0); L.award(s, 'q1', 'basic', T0);
+  assert.strictEqual(s.coins, 1, '같은 문제는 하루 한 번');
+  L.markStudy(s, T0, 'basic'); L.markStudy(s, T0 + 1000, 'basic');
+  assert.strictEqual(s.coins, 6, '출석 보너스는 하루 한 번');
+  L.completeSet(s, 1, 0, 5, 5, T0); L.completeSet(s, 1, 1, 5, 5, T0);
+  assert.strictEqual(s.coins, 6 + 3 + 3 + 10);
+  const item = { id: 'x', slot: 'face', price: 20, stage: 0 }, lockItem = { id: 'y', slot: 'back', price: 5, stage: 1 };
+  assert.strictEqual(L.buyItem(s, lockItem), 'locked');
+  assert.strictEqual(L.buyItem(s, { ...item, price: 999 }), 'poor');
+  assert.strictEqual(L.buyItem(s, item), 'ok');
+  assert.strictEqual(s.coins, 2); assert.strictEqual(s.wear.face, 'x');
+  assert.strictEqual(L.buyItem(s, item), 'owned');
+  L.toggleWear(s, item); assert.strictEqual(s.wear.face, undefined);
 });
 
 test('세트 통과 기준 미달이면 단원 완료가 아니다', () => {
@@ -61,19 +80,22 @@ test('세트 통과 기준 미달이면 단원 완료가 아니다', () => {
   assert.strictEqual(s.fruits, 1);
 });
 
-test('퇴화: 주말 제외 일수 기준, 기록과 카드는 유지, 복습으로 복구', () => {
+test('퇴화: 하루라도 빠지면 한 단계 전으로, 주말 제외, 기록 유지, 복습으로 복구', () => {
   const s = L.newState(D.DEFAULT_RULES);
   s.maxStage = 2; s.stage = 2; s.cards = [0, 1, 2]; s.exp = 300; s.lastStudy = T0; // 월
-  let r = L.applyDecay(s, day(2)); // 수: 화 1일만 지남... 오늘 포함 2
+  L.applyDecay(s, day(1)); // 화: 빠진 날 없음
   assert.strictEqual(s.stage, 2); assert.strictEqual(s.energy, 100);
-  r = L.applyDecay(s, day(4)); // 금: 화수목금 = 4 → 에너지 감소
-  assert.ok(s.energy < 100); assert.strictEqual(s.stage, 2);
-  r = L.applyDecay(s, day(11)); // 다음 주 금: 평일 9일 → 1단계 하락
-  assert.strictEqual(s.stage, 1);
-  L.applyDecay(s, day(25));
+  L.applyDecay(s, day(2)); // 수: 화요일 하루 빠짐
+  assert.strictEqual(s.stage, 1); assert.ok(s.energy < 100);
+  L.markStudy(s, day(2), 'review');
+  assert.strictEqual(s.stage, 2);
+  s.lastStudy = day(4); // 금
+  L.applyDecay(s, day(7)); // 다음 월: 주말만 지남 → 그대로
+  assert.strictEqual(s.stage, 2);
+  L.applyDecay(s, day(20));
   assert.strictEqual(s.stage, 0);
   assert.strictEqual(s.exp, 300); assert.deepStrictEqual(s.cards, [0, 1, 2]);
-  L.markStudy(s, day(25), 'review');
+  L.markStudy(s, day(20), 'review');
   assert.strictEqual(s.stage, 2); assert.strictEqual(s.energy, 100);
 });
 
@@ -85,8 +107,8 @@ test('교사가 퇴화를 끄면 변화 없음', () => {
 });
 
 test('주말 일시정지 끄면 주말도 센다', () => {
-  assert.strictEqual(L.inactiveDays(T0, day(7), true), 5);
-  assert.strictEqual(L.inactiveDays(T0, day(7), false), 7);
+  assert.strictEqual(L.inactiveDays(T0, day(7), true), 4);
+  assert.strictEqual(L.inactiveDays(T0, day(7), false), 6);
 });
 
 test('복습·보스 문제 생성', () => {

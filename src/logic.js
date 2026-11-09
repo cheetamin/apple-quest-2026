@@ -11,6 +11,7 @@
       units: {}, bosses: {}, cards: [0], badges: [],
       earned: {}, wrong: {}, stats: { answered: 0, correct: 0, ms: 0, best: 0 },
       fruits: 0, lastStudy: 0, lastSeen: 0, forest: {},
+      coins: 0, owned: [], wear: {}, studyDays: 0, lastStudyDay: '',
       settings: { sound: true, music: true, reduceMotion: false, slowVoice: false },
       rules: JSON.parse(JSON.stringify(rules)),
     };
@@ -31,7 +32,7 @@
       { label: `누적 경험치 ${c.exp}`, have: s.exp, need: c.exp, done: s.exp >= c.exp },
       { label: `단원 완료 ${c.units}개`, have: unitsDone(s), need: c.units, done: unitsDone(s) >= c.units },
       { label: `${c.boss}차 복습 보스전 성공`, have: s.bosses[c.boss] ? 1 : 0, need: 1, done: !!s.bosses[c.boss] },
-    ];
+    ].concat(c.days ? [{ label: `공부한 날 ${c.days}일`, have: s.studyDays || 0, need: c.days, done: (s.studyDays || 0) >= c.days }] : []);
   }
   function canEvolve(s) {
     const req = evoRequirements(s);
@@ -58,7 +59,7 @@
     if (s.earned[k][qid]) return 0;
     s.earned[k][qid] = 1;
     const g = kind === 'review' || kind === 'boss' ? s.rules.expReview : s.rules.expBasic;
-    s.exp += g;
+    s.exp += g; s.coins = (s.coins || 0) + 1; // 🍎 사과: 새로 맞힌 문제마다 1개
     return g;
   }
 
@@ -78,7 +79,7 @@
     const a = new Date(last); a.setHours(0, 0, 0, 0);
     const b = new Date(now); b.setHours(0, 0, 0, 0);
     let n = 0;
-    for (let t = a.getTime() + DAY; t < b.getTime() + 1; t += DAY) {
+    for (let t = a.getTime() + DAY; t < b.getTime(); t += DAY) { // 오늘은 빼고, 완전히 빠진 날만
       const wd = new Date(t).getDay();
       if (pauseWeekends && (wd === 0 || wd === 6)) continue;
       n++;
@@ -106,6 +107,9 @@
   /* 학습 활동 기록. 복습 퀴즈 완료 시 퇴화에서 원래 단계로 복구. */
   function markStudy(s, now, kind) {
     s.lastStudy = now;
+    const k = dayKey(now);
+    if (s.lastStudyDay !== k) { s.lastStudyDay = k; s.studyDays = (s.studyDays || 0) + 1; s.coins = (s.coins || 0) + 5; } // 출석 보너스
+    if (kind === 'review') s.coins = (s.coins || 0) + 3;
     s.energy = Math.min(100, s.energy + (kind === 'review' ? 100 : 10));
     if (kind === 'review') s.stage = s.maxStage;
   }
@@ -114,14 +118,15 @@
     const u = unitRec(s, unitId);
     u.ok += ok; u.n += total; u.last = now;
     const passed = ok >= s.rules.setPass;
-    if (passed) u.sets[setIdx] = true;
+    if (passed) { u.sets[setIdx] = true; s.coins = (s.coins || 0) + 3; }
     let newlyDone = false;
-    if (!u.done && u.sets.every(Boolean)) { u.done = true; newlyDone = true; s.fruits += 1; }
+    if (!u.done && u.sets.every(Boolean)) { u.done = true; newlyDone = true; s.fruits += 1; s.coins += 10; }
     return { passed, newlyDone };
   }
 
   function completeBoss(s, bossId, ok) {
     const win = ok >= s.rules.bossPass;
+    if (win) s.coins = (s.coins || 0) + (s.bosses[bossId] ? 5 : 20);
     if (win && !s.bosses[bossId]) {
       s.bosses[bossId] = true;
       if (bossId === 3 && !s.badges.includes('legend')) s.badges.push('legend');
@@ -309,7 +314,24 @@
     return given === q.answer;
   }
 
-  root.AQ_LOGIC = { newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  /* 꾸미기 상점 */
+  function buyItem(s, item) {
+    if (!item) return 'none';
+    s.owned = s.owned || []; s.wear = s.wear || {};
+    if (s.owned.includes(item.id)) return 'owned';
+    if ((item.stage || 0) > s.maxStage) return 'locked';
+    if ((s.coins || 0) < item.price) return 'poor';
+    s.coins -= item.price; s.owned.push(item.id); s.wear[item.slot] = item.id;
+    return 'ok';
+  }
+  function toggleWear(s, item) {
+    s.wear = s.wear || {};
+    if (!(s.owned || []).includes(item.id)) return false;
+    if (s.wear[item.slot] === item.id) delete s.wear[item.slot]; else s.wear[item.slot] = item.id;
+    return true;
+  }
+
+  root.AQ_LOGIC = { buyItem, toggleWear, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;

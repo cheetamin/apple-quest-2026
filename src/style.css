@@ -1348,3 +1348,46 @@ select.field { padding: 6px 8px; appearance: auto; }
   background: linear-gradient(180deg, #7a86a8, #3e4a6e); box-shadow: inset 0 2px 0 rgba(255,255,255,.35), 0 0 0 3px rgba(255,212,92,.7), 0 4px 8px rgba(0,0,0,.3); }
 .s-mute small { display: block; font-size: 19px; font-weight: 700; opacity: .85; }
 .s-mute:active, .mute-btn:active { transform: scale(.97); }
+
+/* ---------- 꾸미기 · 입은 캐릭터 ---------- */
+svg.dressed { overflow: visible; display: block; }
+.mascot svg.dressed { position: absolute; left: 0; top: 0; width: 100%; height: 100%; filter: drop-shadow(0 0 1.5px #fff) drop-shadow(0 6px 6px rgba(0,0,0,.35)); transform-origin: 50% 100%; animation: idle 2.8s ease-in-out infinite; }
+.f3d .walker svg.dressed { width: 100%; height: auto; }
+.thanks-in svg.dressed { width: 140px; height: 150px; margin: 0 auto; }
+svg.dressed .flap { transform-origin: 0 0; animation: dflap 1.6s ease-in-out infinite; }
+svg.dressed .flap.r { animation-delay: .05s; }
+@keyframes dflap { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.86); } }
+svg.dressed .bob { animation: dbob 2.4s ease-in-out infinite; }
+@keyframes dbob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+svg.dressed .tw, .shop-item .tw { animation: dtw 1.8s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-delay: 1.2s; }
+@keyframes dtw { 0%, 100% { opacity: .2; transform: scale(.5); } 50% { opacity: 1; transform: scale(1.1); } }
+.reduce svg.dressed *, .reduce svg.dressed { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { svg.dressed, svg.dressed * { animation: none !important; } }
+
+.btn.shop-entry { width: 100%; margin: 4px 0 2px; background: linear-gradient(180deg, #ffb3d6, #ff6aa8 55%, #c8306e); color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.3); }
+.btn.shop-entry small { color: #fff; opacity: .95; }
+.shop-top { display: flex; gap: 12px; align-items: stretch; padding: 12px; margin-bottom: 10px; }
+.shop-prev { flex: 0 0 46%; height: 190px; display: flex; align-items: flex-end; justify-content: center; border-radius: 4px;
+  background: radial-gradient(60% 50% at 50% 60%, rgba(255,230,150,.45), transparent 70%), linear-gradient(180deg, #2a4a8a, #1a2c5a); box-shadow: inset 0 0 0 2px rgba(255,212,92,.6); padding: 30px 14px 8px; }
+.shop-prev svg.dressed, .shop-prev img { width: 100%; height: 100%; max-height: 150px; filter: drop-shadow(0 4px 4px rgba(0,0,0,.4)); }
+.shop-info { flex: 1; display: flex; flex-direction: column; gap: 2px; color: #fff; }
+.shop-info .coins { font-family: var(--f-display); font-weight: 400; font-size: 30px; color: #ffe27a; letter-spacing: .04em; }
+.shop-info small { color: #c9d6f0; font-size: 12px; }
+.shop-info p { margin: 8px 0 0; font-size: 12px; line-height: 1.55; color: #dfe8ff; }
+.shop-tabs { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none; }
+.shop-tabs button { flex: 0 0 auto; padding: 6px 12px; border-radius: 4px; font-size: 13px; font-weight: 800; color: #dfe8ff; background: rgba(255,255,255,.1); box-shadow: inset 0 0 0 1.5px rgba(255,212,92,.35); }
+.shop-tabs button.on { color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); }
+.shop-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.shop-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 4px; border-radius: 4px; color: #fff; text-align: center;
+  background: linear-gradient(180deg, rgba(255,255,255,.16), rgba(255,255,255,.05)); box-shadow: inset 0 0 0 1.5px rgba(255,212,92,.4); }
+.shop-item .ic { width: 64px; height: 56px; display: flex; align-items: center; justify-content: center; }
+.shop-item .ic svg { width: 100%; height: 100%; overflow: visible; filter: drop-shadow(0 2px 2px rgba(0,0,0,.4)); }
+.shop-item b { font-size: 12px; line-height: 1.25; min-height: 30px; display: flex; align-items: center; }
+.shop-item em { font-style: normal; font-size: 11.5px; font-weight: 800; padding: 2px 8px; border-radius: 3px; background: rgba(0,0,0,.3); color: #dfe8ff; }
+.shop-item em.price { color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); }
+.shop-item em.on { color: #fff; background: var(--ok); }
+.shop-item em.lock { color: #ffd0d0; }
+.shop-item.on { box-shadow: inset 0 0 0 2.5px var(--ok), 0 0 12px rgba(80,220,120,.5); }
+.shop-item.lock .ic { filter: grayscale(.8) brightness(.7); }
+.shop-item:active { transform: scale(.97); }

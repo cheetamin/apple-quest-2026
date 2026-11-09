@@ -113,11 +113,12 @@
   ];
 
   const DEFAULT_RULES = {
+    v: 2, // 규칙 버전 — 올리면 기존 학생의 진화·퇴화 규칙도 새 값으로 바뀜
     expBasic: 5, expReview: 7,
-    evo1: { exp: 100, units: 3, boss: 1 },
-    evo2: { exp: 250, units: 6, boss: 2 },
+    evo1: { exp: 300, units: 5, boss: 1, days: 5 },
+    evo2: { exp: 900, units: 10, boss: 2, days: 15 },
     quizLen: 10, setLen: 5, reviewLen: 5, bossLen: 10, bossPass: 7, setPass: 3,
-    decayOn: true, decayEnergyDays: 3, decayStageDays: 7, decayBaseDays: 14, pauseWeekends: true,
+    decayOn: true, decayEnergyDays: 1, decayStageDays: 1, decayBaseDays: 7, pauseWeekends: true, // 하루 빠지면 한 단계 전으로
     openUnits: [1,2,3,4,5,6,7,8,9,10,11],
   };
 

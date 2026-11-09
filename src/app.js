@@ -43,6 +43,12 @@
     const base = L.newState(DEFAULT_RULES);
     const s = Object.assign(base, o);
     s.rules = Object.assign(JSON.parse(JSON.stringify(DEFAULT_RULES)), o.rules || {});
+    if ((s.rules.v || 1) < DEFAULT_RULES.v) { // 규칙 업데이트(진화 더 어렵게 · 하루 빠지면 한 단계 전으로)
+      for (const k of ['v', 'evo1', 'evo2', 'decayEnergyDays', 'decayStageDays', 'decayBaseDays']) s.rules[k] = JSON.parse(JSON.stringify(DEFAULT_RULES[k]));
+    }
+    if (o.coins == null && o.exp) s.coins = Math.floor(o.exp / 5); // 기존 학생: 지금까지 쌓은 경험치만큼 사과로 시작
+    if (o.studyDays == null && o.lastStudy) { s.studyDays = Math.max(1, o.streak || 1); s.lastStudyDay = o.lastDay || ''; }
+    s.owned = s.owned || []; s.wear = s.wear || {};
     s.settings = Object.assign(L.newState(DEFAULT_RULES).settings, o.settings || {});
     s.mastered = s.mastered || {}; s.streak = s.streak || 0; s.sentOK = s.sentOK || 0;
     s.cardAt = s.cardAt || {}; s.pin = s.pin || '1234';
@@ -101,7 +107,7 @@
   }
   if (TTS.ok) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
   let quietToastAt = 0;
-  function quietify() { if (Q && S.settings.quiet) Q.list = Q.list.map(L.silentQ); }
+  function quietify() { if (Q) Q.coins0 = S.coins || 0; if (Q && S.settings.quiet) Q.list = Q.list.map(L.silentQ); }
   function speak(text, rate, times = 1) {
     if (S.settings.quiet) { if (Date.now() - quietToastAt > 4000) { quietToastAt = Date.now(); toast('🔇 조용한 교실 모드라 소리가 꺼져 있어요 · 설정에서 끌 수 있어요', 2200); } return; }
     if (!TTS.ok) { toast('이 브라우저는 발음 듣기를 지원하지 않아요.'); return; }
@@ -151,13 +157,13 @@
 
   /* ---------- 상단 바 ---------- */
   function updateHUD() {
-    $('#pEnergy').textContent = S.energy; $('#pFruit').textContent = S.fruits; $('#pExp').textContent = S.exp;
+    $('#pEnergy').textContent = S.energy; $('#pFruit').textContent = S.fruits; $('#pExp').textContent = S.coins || 0;
     const ep = L.expProgress(S);
     const f = $('#expFill'); if (f) f.style.width = ep.pct + '%';
     const t = $('#expTxt'); if (t) t.textContent = ep.to ? `${S.exp} / ${ep.to}` : `${S.exp} MAX`;
     const lv = $('#lvTxt'); if (lv) lv.textContent = 'Lv.' + L.level(S.exp);
     const hp = $('#hpTxt'); if (hp) hp.textContent = S.energy;
-    [['sEnergy', S.energy], ['sExp', S.exp], ['sFruit', S.fruits]].forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.textContent = v; });
+    [['sEnergy', S.energy], ['sExp', S.coins || 0], ['sFruit', S.fruits]].forEach(([id, v]) => { const e = document.getElementById(id); if (e) e.textContent = v; });
   }
 
   /* ---------- 캐릭터 카드 ---------- */
@@ -192,7 +198,7 @@
           <div class="glint"></div>
           ${SPARKS.map(([x, y, d]) => `<i class="spark" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join('')}
           <div class="aura"></div>
-          <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" ${live ? 'id="mascot" data-act="pet"' : ''}><img src="${IMG[i]}" alt="${st.name}" draggable="false"></div>
+          <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" ${live ? 'id="mascot" data-act="pet"' : ''}>${live ? SHOP.dressed(i, IMG[i], S.wear, st.name) : `<img src="${IMG[i]}" alt="${st.name}" draggable="false">`}</div>
           ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
         </div>
         <div class="c-trait"><span class="ribbon">특성</span><b>${st.trait}</b><p>${st.traitText}</p></div>
@@ -311,7 +317,7 @@
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
       title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
-      sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요. (${R.ok} / ${R.n})`;
+      sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}${R.coins ? ` · 🍎 +${R.coins}` : ''}` : `${S.rules.setPass}문제 이상 맞히면 통과예요. (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += `<br>🍎 성장 열매 +1${R.decor ? ` · 🎁 ${R.decor} 해금` : ''}`;
       if (R.boss) sub += `<br>🌳 ${R.boss} 보스전이 열렸어요!`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
@@ -320,7 +326,7 @@
       else { const nu = currentUnit(); if (nu.id !== Q.unit) btns += `<button class="btn" data-act="set" data-u="${nu.id}" data-s="0">Lesson ${nu.no} ▶</button>`; }
     } else if (Q.mode === 'review') {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
-      sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}`;
+      sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}${R.coins ? ` · 🍎 +${R.coins}` : ''}`;
       btns += `<button class="btn" data-act="review">복습 더 하기</button>`;
     } else {
       const b = BOSSES.find(x => x.id === Q.boss);
@@ -412,6 +418,7 @@
       L.markStudy(S, t, 'basic'); touchDay();
       if (R.win) { AU.fanfare(); if (Q.boss === 3) setTimeout(() => toast('🏆 전설 카드 장식과 특별 도감 배지를 얻었어요!', 3200), 600); }
     }
+    R.coins = Math.max(0, (S.coins || 0) - (Q.coins0 || 0));
     Q.summary = R; Q.phase = 'result';
     save(); cloudFlush();
     if (view === 'boss') { renderBossState(true); renderPanel(); } else render();
@@ -536,7 +543,7 @@
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -548,7 +555,7 @@
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
   }
   function autoQ(unitId) {
@@ -592,7 +599,7 @@
       <div class="stg-sheen" style="${P(163, 122, 920, 1000)}"></div>
       <div class="s-logo" style="${P(4, 0, 178, 110)}"><img src="${AQ_LOGO}" alt="애플왕의 진화 모험 English Quest"></div>
       <button class="s-stat" style="${P(196, 40, 410, 84)}" data-tip="⚡ 성장 에너지: 꾸준히 공부하면 가득 차요"><span class="ic">⚡</span><b><span id="sEnergy">${S.energy}</span><small>/100</small></b></button>
-      <button class="s-stat" style="${P(414, 40, 618, 84)}" data-tip="🍎 사과 포인트: 문제를 맞힐 때마다 쌓이는 누적 경험치"><span class="ic">🍎</span><b id="sExp">${S.exp}</b></button>
+      <button class="s-stat" style="${P(414, 40, 618, 84)}" data-act="go" data-v="shop" aria-label="사과 ${S.coins || 0}개 · 꾸미기 상점"><span class="ic">🍎</span><b id="sExp">${S.coins || 0}</b></button>
       <button class="s-stat" style="${P(622, 40, 828, 84)}" data-tip="💎 성장 보석: 단원을 완료하면 1개씩 받아요"><span class="ic">💎</span><b id="sFruit">${S.fruits}</b></button>
       <button class="s-hit" style="${P(857, 27, 923, 93)}" data-act="go" data-v="me" aria-label="설정"></button>
 
@@ -610,7 +617,7 @@
         <div class="glint"></div>
         ${SPARKS.map(([x, y, d]) => `<i class="spark" style="left:${x}%;top:${y}%;animation-delay:${d}s"></i>`).join('')}
         <div class="aura"></div>
-        <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet"><img src="${IMG[i]}" alt="${st.name}" draggable="false"></div>
+        <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -715,7 +722,7 @@
     if (Q.mode === 'set') {
       const rec = S.units[Q.unit];
       title = R.passed ? (R.newlyDone ? `${unitNo(Q.unit)}단원 완료!` : `세트 ${Q.setIdx + 1} 통과!`) : '조금만 더 해 볼까?';
-      sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}` : `${S.rules.setPass}문제 이상 맞히면 통과예요 (${R.ok} / ${R.n})`;
+      sub = R.passed ? `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}${R.coins ? ` · 🍎 +${R.coins}` : ''}` : `${S.rules.setPass}문제 이상 맞히면 통과예요 (${R.ok} / ${R.n})`;
       if (R.newlyDone) sub += ` · 💎 +1${R.decor ? ` · 🎁 ${R.decor}` : ''}`;
       const other = rec.sets[0] && !rec.sets[1] ? 1 : !rec.sets[0] ? 0 : null;
       if (!R.passed) acts.push(['다시 도전', 'set', `data-u="${Q.unit}" data-s="${Q.setIdx}"`]);
@@ -724,7 +731,7 @@
       if (R.boss) acts.push(['🌳 보스전', 'bossinfo', `data-v="${BOSSES.find(b => b.afterUnit === Q.unit).id}"`]);
     } else {
       title = R.recovered ? '원래 모습으로 돌아왔어요!' : R.ok >= S.rules.setPass ? '복습 완료!' : '복습 한 번 더?';
-      sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}`;
+      sub = `${R.ok} / ${R.n} 정답 · 경험치 +${R.gain}${R.coins ? ` · 🍎 +${R.coins}` : ''}`;
       acts.push(['복습 더 하기', 'review', '']);
     }
     acts.push(['🎧 공부방', 'go', 'data-v="study"']);
@@ -859,6 +866,7 @@
       <div class="stats"><div class="stat"><small>레벨</small><b>${L.level(S.exp)}</b></div><div class="stat"><small>누적 경험치</small><b>${S.exp}<em>EXP</em></b></div>
       <div class="stat"><small>완료한 단원</small><b>${L.unitsDone(S)}<em>/ 11</em></b></div><div class="stat"><small>정답률</small><b>${acc}<em>%</em></b></div>
       <div class="stat"><small>학습 시간</small><b>${mins}<em>분</em></b></div><div class="stat"><small>연속 학습</small><b>${S.streak}<em>일</em></b></div></div>
+      <button class="btn shop-entry" data-act="go" data-v="shop">👕 꾸미기 상점<small>🍎 사과 ${S.coins || 0}개 · 옷과 장식으로 ${esc(STAGES[S.stage].name)} 꾸미기</small></button>
       <div class="section-h">${req ? `${STAGES[S.maxStage + 1].name} 진화 조건` : '최종 성장'}</div>
       <div class="glass reqs">${req ? req.map(r => `<div class="req ${r.done ? 'done' : ''}"><i>${r.done ? '✓' : ''}</i>${r.label}<span>${Math.min(r.have, r.need)} / ${r.need}</span></div>`).join('') :
         `<div class="req ${L.unitsDone(S) >= 11 ? 'done' : ''}"><i>${L.unitsDone(S) >= 11 ? '✓' : ''}</i>11단원 완료<span>${L.unitsDone(S)} / 11</span></div><div class="req ${S.bosses[3] ? 'done' : ''}"><i>${S.bosses[3] ? '✓' : ''}</i>최종 보스전 성공<span>${S.bosses[3] ? 1 : 0} / 1</span></div>`}
@@ -876,10 +884,28 @@
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
   }
 
+  /* 꾸미기 상점 */
+  let shopSlot = 'all';
+  function renderShop() {
+    const wearing = Object.values(S.wear || {});
+    const list = SHOP.ITEMS.filter(it => shopSlot === 'all' || it.slot === shopSlot);
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>꾸미기 상점</h2><p>문제를 맞히고 모은 🍎 사과로 옷과 장식을 사요</p></div></div>
+      <div class="shop-top glass"><div class="shop-prev">${SHOP.dressed(S.stage, IMG[S.stage], S.wear, STAGES[S.stage].name)}</div>
+        <div class="shop-info"><b class="coins">🍎 ${S.coins || 0}</b><small>내 사과</small>
+          <p>🍎 모으는 방법<br>· 새로 맞힌 문제 1개<br>· 세트 통과 3개 · 단원 완료 10개<br>· 오늘 첫 공부 5개 · 보스전 승리 20개</p></div></div>
+      <div class="shop-tabs">${[['all', '전체']].concat(SHOP.SLOTS.map(x => [x.key, x.name])).map(([k, n]) => `<button class="${shopSlot === k ? 'on' : ''}" data-act="shoptab" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="shop-grid">${list.map(it => {
+        const own = (S.owned || []).includes(it.id), on = wearing.includes(it.id), lock = (it.stage || 0) > S.maxStage;
+        const tag = on ? '<em class="on">입는 중</em>' : own ? '<em>가지고 있음</em>' : lock ? `<em class="lock">🔒 ${STAGES[it.stage].name}부터</em>` : `<em class="price">🍎 ${it.price}</em>`;
+        return `<button class="shop-item ${on ? 'on' : ''} ${lock && !own ? 'lock' : ''}" data-act="shopitem" data-v="${it.id}"><span class="ic">${SHOP.icon(it)}</span><b>${it.name}</b>${tag}</button>`;
+      }).join('')}</div>
+      <p class="voice-note">산 아이템은 홈 카드와 사과숲에서 캐릭터가 입고 나와요. 진화하면 더 멋진 아이템이 열려요!</p>`;
+  }
+
   /* 사과숲 */
   let forestT = null;
   function stopForest() { clearInterval(forestT); forestT = null; }
-  const FX = AQ_FOREST;
+  const FX = AQ_FOREST, SHOP = AQ_SHOP;
   const depthS = y => 0.5 + (Math.max(44, Math.min(98, y)) - 44) / 54 * 0.72; // 멀수록 작게
   const placeStyle = (x, y, w) => `left:${x}%;top:${y}%;--s:${depthS(y).toFixed(3)};--w:${w}px;z-index:${Math.round(y * 10)}`;
   function decorHTML(d) { return (FX.DECOR[d.key] || (() => d.e))(); }
@@ -890,7 +916,7 @@
       <div class="forest f3d" id="forest">${FX.DEFS}${FX.scene()}
         <div class="f-item f-tree" style="${placeStyle(50, 60, 190)}">${FX.tree(false)}</div>
         ${placed.map(d => { const p = S.forest[d.key]; const y = Math.max(46, p.y); return `<div class="item f-item ${['flowers', 'garden', 'mushroom'].includes(d.key) ? 'sway' : ''}" data-k="${d.key}" style="${placeStyle(p.x, y, FX.SIZE[d.key] || 80)}">${decorHTML(d)}</div>`; }).join('')}
-        <div class="walker f-item" id="walker" style="${placeStyle(50, 84, 74)}"><img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}"></div>
+        <div class="walker f-item" id="walker" style="${placeStyle(50, 84, 74)}">${SHOP.dressed(S.stage, IMG[S.stage], S.wear, STAGES[S.stage].name)}</div>
         ${FX.overlay()}
       </div>
       <div class="tray">${DECOR.map(d => { const u = unlocked.includes(d); const p = !!S.forest[d.key] && u; return `<button class="slot ${u ? '' : 'lock'} ${p ? 'placed' : ''}" data-act="decor" data-v="${d.key}"><span class="ico">${u ? decorHTML(d) : '🔒'}</span>${d.name}<br><small>${u ? (p ? '놓았어요 · 누르면 치우기' : '눌러서 놓기') : d.unit + '단원 완료'}</small></button>`; }).join('')}</div>`;
@@ -1018,6 +1044,15 @@
       Q.list = Q.list.map((q, k) => (k >= Q.i ? L.silentQ(q) : q));
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
+    },
+    shoptab: d => { AU.tap(); shopSlot = d.v; renderShop(); },
+    shopitem: d => {
+      const it = SHOP.byId(d.v); if (!it) return;
+      if ((S.owned || []).includes(it.id)) { L.toggleWear(S, it); AU.tap(); save(); cloudFlush(); renderShop(); return; }
+      const r = L.buyItem(S, it);
+      if (r === 'locked') { toast(`🔒 ${STAGES[it.stage].name}(으)로 진화하면 살 수 있어요!`); return; }
+      if (r === 'poor') { toast(`🍎 사과가 ${it.price - (S.coins || 0)}개 더 필요해요. 문제를 풀고 모아 봐요!`); return; }
+      if (r === 'ok') { AU.fanfare(); toast(`🎉 ${it.name}을(를) 샀어요! 바로 입었어요`); save(); cloudFlush(); renderShop(); }
     },
     speakq: () => { const q = Q && Q.list[Q.i]; if (q) speak(q.speak); },
     speakslow: () => { const q = Q && Q.list[Q.i]; if (q) speak(q.speak, .55); },
@@ -1499,7 +1534,7 @@
     AU.bgm(false); AU.fanfare();
     const ov = document.createElement('div'); ov.className = 'thanks';
     ov.innerHTML = `<div class="thanks-in">
-      <img src="${IMG[S.stage]}" alt="${STAGES[S.stage].name}">
+      ${SHOP.dressed(S.stage, IMG[S.stage], S.wear, STAGES[S.stage].name, 'thx-char')}
       <h3>함께해 줘서 고마워요!</h3>
       <p>오늘도 영어 모험에 함께해 주셔서 진심으로 감사합니다.<br>
       여러분이 익힌 단어와 문장 하나하나가 ${STAGES[S.stage].name}을 더 크고 멋지게 키워 주었어요.<br>
