@@ -587,3 +587,7 @@ body, button, input, select, textarea { font-family: var(--font); }
 @keyframes st-pop { 0% { opacity: 0; transform: scale(.3); } 70% { transform: scale(1.15); } 100% { opacity: 1; transform: none; } }
 .story-art.still *, body.reduce-motion .story-art * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .story-art * { animation: none !important; } }
+
+/* 첫 화면: 계기교육 안내 띠 */
+.edu-badge { display: inline-block; margin: 18px 0 0; padding: 8px 26px; background: #2e7d32; color: #fff; font-family: var(--font-read); font-weight: 900; font-size: 32px; letter-spacing: -0.5px; border: 5px solid var(--line); box-shadow: 6px 6px 0 rgba(20, 12, 4, .45); }
+.edu-badge + .tagline { margin-top: 12px; }

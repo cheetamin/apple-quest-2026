@@ -9,6 +9,7 @@ export function show(app, root) {
     <div class="main-left">
       <div class="sign-board"><span class="date" data-pixel="54" data-pc="#fff7dc,#ffe7b0,#f8d58a">11월 11일</span><span class="sub" data-pixel="32" data-pc="#fff7dc,#ffe7b0">가래떡 운동회</span></div>
       <h1 class="logo" aria-label="가래떡 모션 게임"><span class="l1" data-pixel="132" data-pc="#ffffff,#fff6e0,#ffe9bd,#f3c47a">가래떡</span><span class="l2" data-pixel="118" data-pc="#fff59a,#ffd23f,#f7a81b,#e07b00">모션 게임</span><span class="press">PRESS START</span></h1>
+      <p class="edu-badge">🌾 11월 11일 농업인의 날 계기교육 프로그램</p>
       <p class="tagline">움직이고, 생각하고, 함께 배우는 학급 대항전!</p>
       <div class="main-chars">
         <canvas data-char="blue" data-pose="cheer" width="230" height="280"></canvas>
