@@ -100,7 +100,10 @@
     TTS.voice = vs.find(v => /en[-_]US/i.test(v.lang) && /Google|Samantha|Aria|Jenny|Zira|Ava/i.test(v.name)) || vs.find(v => /en[-_]US/i.test(v.lang)) || vs.find(v => /^en/i.test(v.lang)) || null;
   }
   if (TTS.ok) { pickVoice(); speechSynthesis.onvoiceschanged = pickVoice; }
+  let quietToastAt = 0;
+  function quietify() { if (Q && S.settings.quiet) Q.list = Q.list.map(L.silentQ); }
   function speak(text, rate, times = 1) {
+    if (S.settings.quiet) { if (Date.now() - quietToastAt > 4000) { quietToastAt = Date.now(); toast('🔇 조용한 교실 모드라 소리가 꺼져 있어요 · 설정에서 끌 수 있어요', 2200); } return; }
     if (!TTS.ok) { toast('이 브라우저는 발음 듣기를 지원하지 않아요.'); return; }
     rate = rate || (S.settings.slowVoice ? .7 : .9);
     speechSynthesis.cancel();
@@ -226,7 +229,7 @@
   let Q = null;
   function startSet(unitId, setIdx) {
     if (!isOpen(unitId)) { toast('선생님이 아직 열지 않은 단원이에요.'); return; }
-    Q = { mode: 'set', unit: unitId, setIdx, list: L.buildSet(UNITS, unitId, setIdx, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
+    Q = { mode: 'set', unit: unitId, setIdx, list: L.buildSet(UNITS, unitId, setIdx, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
     closeSheet(); go('play');
   }
   function startReview() {
@@ -234,14 +237,14 @@
     const wrongUnits = [...new Set(Object.values(S.wrong).map(w => w.unit))];
     ids = [...new Set(ids.concat(wrongUnits))].filter(id => isOpen(id) && UNITS.some(u => u.id === id));
     if (!ids.length) ids = [currentUnit().id];
-    Q = { mode: 'review', units: ids, list: L.buildMixed(UNITS, ids, S.rules.reviewLen, now() & 0xffff, 'review', S.wrong), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
+    Q = { mode: 'review', units: ids, list: L.buildMixed(UNITS, ids, S.rules.reviewLen, now() & 0xffff, 'review', S.wrong), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
     closeSheet(); go('play');
     setTimeout(() => { setMood('cheer'); say('복습하면 더 튼튼해져! 힘내!'); }, 300);
   }
   function startBoss(id) {
     const b = BOSSES.find(x => x.id === id);
     if (!L.bossOpen(S, b)) { toast(`${unitNo(b.afterUnit)}단원을 완료하면 열려요.`); return; }
-    Q = { mode: 'boss', boss: id, list: L.buildMixed(UNITS, b.range, S.rules.bossLen, now() & 0xffff, 'boss'), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
+    Q = { mode: 'boss', boss: id, list: L.buildMixed(UNITS, b.range, S.rules.bossLen, now() & 0xffff, 'boss'), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
     closeSheet(); go('boss');
   }
 
@@ -268,13 +271,14 @@
   }
   function bodyHTML(q) {
     const opts = (list, ko, wide) => `<div class="opts ${wide ? 'wide' : ''}">${list.map((o, i) => `<button class="opt" data-act="pick" data-v="${i}"><span class="k">${LETTERS[i]}</span><span class="t ${ko ? 'ko' : ''} ${!wide && o.length > 8 ? 'long' : ''}">${esc(o)}</span></button>`).join('')}</div>`;
-    const listen = `<div class="listen"><button class="spk" data-act="speakq" aria-label="듣기">🔊</button><button class="spk slow" data-act="speakslow" aria-label="천천히 듣기">🐢</button>눌러서 다시 들어요</div>`;
+    const listen = `<div class="listen"><button class="spk" data-act="speakq" aria-label="듣기">🔊</button><button class="spk slow" data-act="speakslow" aria-label="천천히 듣기">🐢</button>눌러서 다시 들어요</div><button class="mute-btn" data-act="mute">🔇 소리를 켤 수 없어요 → 읽기 문제로 풀기</button>`;
     switch (q.type) {
       case 'pic': return `<div class="qshow banner"><span class="pic">${q.show}</span></div>${opts(q.options)}`;
       case 'ko2en': return `<div class="qshow banner"><span class="ko">${esc(q.show)}</span></div>${opts(q.options)}`;
       case 'en2ko': return `<div class="qshow banner"><span class="sent">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="side-pic">${q.item.e}</span>` : ''}</div>${opts(q.options, true)}`;
       case 'listen': return `<div class="qshow banner">${listen}</div>${opts(q.options)}`;
       case 'listenSent': return `<div class="qshow banner">${listen}</div>${opts(q.options, false, true)}`;
+      case 'ko2sent': return `<div class="qshow banner"><span class="ko" style="font-size:22px">${esc(q.show)}</span></div>${opts(q.options, false, true)}`;
       case 'blank': return `<div class="qshow banner"><span class="sent">${esc(q.show).replace('____', '<i class="blank"></i>')}<small style="display:block;font-family:var(--f-body);font-size:14px;font-weight:500;color:#4a5277;margin-top:4px">${esc(q.item.ko)}</small></span><span class="side-pic">${unitById(q.unit).icon}</span></div>${opts(q.options)}`;
       case 'order': return `<div class="qshow banner" style="min-height:48px"><span class="ko" style="font-size:20px">${esc(q.show)}</span></div>
         <div class="answer-line" id="aline">${(Q.order || []).map((ti, k) => `<button class="tile" data-act="untile" data-v="${k}">${esc(q.tiles[ti])}</button>`).join('')}</div>
@@ -363,7 +367,7 @@
       if (ok) {
         gain = L.award(S, q.id, Q.mode === 'set' ? 'basic' : Q.mode, now());
         Q.gain = (Q.gain || 0) + gain;
-        if (['blank', 'order', 'listenSent'].includes(q.type)) S.sentOK++;
+        if (['blank', 'order', 'listenSent', 'ko2sent'].includes(q.type)) S.sentOK++;
         else if (q.item) S.mastered[q.item.en] = 1;
         Q.combo++;
       }
@@ -550,7 +554,7 @@
   function autoQ(unitId) {
     const u = unitById(unitId || currentUnit().id); const rec = S.units[u.id];
     const si = rec && rec.sets[0] && !rec.sets[1] ? 1 : 0;
-    Q = { mode: 'set', unit: u.id, setIdx: si, list: L.buildSet(UNITS, u.id, si, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' };
+    Q = { mode: 'set', unit: u.id, setIdx: si, list: L.buildSet(UNITS, u.id, si, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
   }
   function shiftLesson(dir) {
     const open = UNITS.filter(u => isOpen(u.id)).map(u => u.id);
@@ -657,12 +661,13 @@
     const prompt = q.type === 'order' ? `순서대로 눌러 문장을 만들어요` : q.type === 'match' ? `뜻에 맞는 영어 단어를 차례로 골라요 (${(Q.match ? Q.match.k : 0) + 1}/4)` : q.prompt;
     let banner = '', opts = '';
     const L4 = (list, ko) => list.map((o, k) => { const [x1, y1, x2, y2] = OPT_SLOTS[k]; return `<button class="s-opt" style="${P(x1, y1, x2, y2)}" data-act="pick" data-v="${k}"><i>${LETTERS[k]}</i><span class="${ko ? 'ko' : ''}" style="font-size:${optSize(o, ko)}px">${esc(o)}</span></button>`; }).join('');
-    const listen = `<div class="s-listen"><button class="s-spk" data-act="speakq" aria-label="듣기">🔊</button><button class="s-spk slow" data-act="speakslow" aria-label="천천히 듣기">🐢</button><span>잘 듣고 골라요</span></div>`;
+    const listen = `<div class="s-listen"><button class="s-spk" data-act="speakq" aria-label="듣기">🔊</button><button class="s-spk slow" data-act="speakslow" aria-label="천천히 듣기">🐢</button><button class="s-mute" data-act="mute">🔇 소리를 켤 수 없어요<small>읽기 문제로 풀기</small></button></div>`;
     switch (q.type) {
       case 'pic': banner = `<span class="s-pic">${q.show}</span>`; opts = L4(q.options); break;
       case 'ko2en': banner = `<span class="s-ko">${esc(q.show)}</span>`; opts = L4(q.options); break;
       case 'en2ko': banner = `<span class="s-sent" style="font-size:48px">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="s-side">${q.item.e}</span>` : ''}`; opts = L4(q.options, true); break;
       case 'listen': case 'listenSent': banner = listen; opts = L4(q.options); break;
+      case 'ko2sent': banner = `<span class="s-ko" style="font-size:${q.show.length > 14 ? 34 : 42}px">${esc(q.show)}</span>`; opts = L4(q.options); break;
       case 'blank': banner = `<span class="s-sentwrap"><span class="s-sent" style="font-size:${sentSize(q.show)}px">${esc(q.show).replace('____', '<i class="blank"></i>')}</span><small>${esc(q.item.ko)}</small></span><span class="s-side">${unitById(q.unit).icon}</span>`; opts = L4(q.options); break;
       case 'order': {
         const ord = Q.order || [];
@@ -861,7 +866,7 @@
       <div class="section-h">자주 틀리는 단어</div>
       ${wrong.length ? `<div class="wlist">${wrong.map(([en, w]) => `<span><b>${esc(en)}</b>${w.n}회</span>`).join('')}</div><div class="row-btns"><button class="btn blue" data-act="review">틀린 단어 복습하기</button></div>` : `<p style="color:#c9d6f0;font-size:13.5px;margin:0">아직 없어요. 멋져요!</p>`}
       <div class="section-h">설정</div>
-      <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
+      <div class="toggles">${tg('sound', '효과음')}${tg('music', '배경음악')}${tg('quiet', '🔇 조용한 교실 모드 (소리 없이 · 듣기 문제를 읽기 문제로)')}${tg('slowVoice', '발음 기본 속도 느리게')}${tg('reduceMotion', '화면 흔들림·번쩍임 줄이기')}</div>
       <button class="link" data-act="course">📚 교재: <b>${COURSE.label}</b> · 바꾸기</button>
       <button class="link" data-act="rename" style="margin-top:8px">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       ${SESS ? `<p class="voice-note">🏫 ${esc(SESS.school_name)} ${SESS.grade}학년 ${SESS.cls}반 ${SESS.num}번 · 기록은 학급 서버에 자동 저장돼요.</p>` : ''}
@@ -1007,6 +1012,13 @@
     replayevo: () => { const t = Math.max(...S.cards); playEvolution(t - 1, t, true); },
     intro: () => { AU.tap(); playIntro(() => render()); },
     closeSheet: () => closeSheet(),
+    mute: () => {
+      if (!Q) return; AU.tap(); if (window.speechSynthesis) speechSynthesis.cancel();
+      S.settings.quiet = true; save();
+      Q.list = Q.list.map((q, k) => (k >= Q.i ? L.silentQ(q) : q));
+      toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
+      renderPanel();
+    },
     speakq: () => { const q = Q && Q.list[Q.i]; if (q) speak(q.speak); },
     speakslow: () => { const q = Q && Q.list[Q.i]; if (q) speak(q.speak, .55); },
     pick: (d, el) => {

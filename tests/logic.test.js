@@ -125,3 +125,15 @@ test('모든 교재(3·4·5·6학년·천재 4학년) 단원에서 퀴즈가 정
   }
   const ids = C.ALL_UNITS.map(u => u.id); assert.strictEqual(new Set(ids).size, ids.length, '단원 번호 중복');
 });
+
+test('조용한 교실: 듣기 문제가 같은 정답의 읽기 문제로 바뀐다', () => {
+  const C = require('../src/courses.js');
+  for (const c of C.COURSES) for (const u of c.units) for (const si of [0, 1]) {
+    for (const q of L.buildSet(c.units, u.id, si, 7)) {
+      const s = L.silentQ(q);
+      assert.ok(!['listen', 'listenSent'].includes(s.type));
+      assert.strictEqual(s.id, q.id); assert.strictEqual(s.answer, q.answer);
+      if (s.silent) { assert.ok(s.show && s.options.includes(s.answer)); }
+    }
+  }
+});

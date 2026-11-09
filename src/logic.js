@@ -295,6 +295,14 @@
     return out;
   }
 
+  // 조용한 교실: 듣기 문제 → 같은 정답·보기의 읽기 문제로 (문제 id는 그대로라 경험치 규칙도 그대로)
+  function silentQ(q) {
+    if (!q) return q;
+    if (q.type === 'listen') return { ...q, type: 'ko2en', silent: true, prompt: '뜻에 알맞은 영어 단어를 고르세요.', show: q.item.ko };
+    if (q.type === 'listenSent') return { ...q, type: 'ko2sent', silent: true, prompt: '뜻에 알맞은 영어 문장을 고르세요.', show: q.item.ko };
+    return q;
+  }
+
   function checkAnswer(q, given) {
     if (q.type === 'order') return norm(given) === norm(q.answer);
     if (q.type === 'match') return given === true;
@@ -303,6 +311,6 @@
 
   root.AQ_LOGIC = { newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
-    buildSet, buildMixed, checkAnswer, shuffle, rng, tokenize, norm, DAY };
+    buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
