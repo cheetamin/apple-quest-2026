@@ -12,6 +12,7 @@
       earned: {}, wrong: {}, stats: { answered: 0, correct: 0, ms: 0, best: 0 },
       fruits: 0, lastStudy: 0, lastSeen: 0, forest: {},
       coins: 0, owned: [], wear: {}, studyDays: 0, lastStudyDay: '',
+      full: 80, fullAt: 0, love: 0, house: 0, town: {},
       settings: { sound: true, music: true, reduceMotion: false, slowVoice: false },
       rules: JSON.parse(JSON.stringify(rules)),
     };
@@ -118,7 +119,7 @@
     const u = unitRec(s, unitId);
     u.ok += ok; u.n += total; u.last = now;
     const passed = ok >= s.rules.setPass;
-    if (passed) { u.sets[setIdx] = true; s.coins = (s.coins || 0) + 3; }
+    if (passed) { u.sets[setIdx] = true; s.coins = (s.coins || 0) + 3 + (hungerNow(s, now) >= 50 ? 2 : 0); } // 배부르면 보너스 +2
     let newlyDone = false;
     if (!u.done && u.sets.every(Boolean)) { u.done = true; newlyDone = true; s.fruits += 1; s.coins += 10; }
     return { passed, newlyDone };
@@ -314,6 +315,44 @@
     return given === q.answer;
   }
 
+  /* 먹이 · 집 · 마을 */
+  const HUNGER_PER_DAY = 20;
+  function hungerNow(s, now) { // 배부름 0~100: 평일 하루 지날 때마다 20씩 줄어듦(주말은 그대로)
+    if (s.full == null) return 80;
+    if (!s.fullAt) return s.full;
+    const d = inactiveDays(s.fullAt, now + DAY, true); // 오늘까지 지난 평일 수
+    return Math.max(0, s.full - d * HUNGER_PER_DAY);
+  }
+  function feed(s, food, now) {
+    if (!food) return 'none';
+    const cur = hungerNow(s, now);
+    if (cur >= 100) return 'full';
+    if ((s.coins || 0) < food.price) return 'poor';
+    s.coins -= food.price;
+    s.full = Math.min(100, cur + food.fill); s.fullAt = now;
+    s.love = (s.love || 0) + (food.love || 1);
+    return 'ok';
+  }
+  const loveLevel = love => love >= 60 ? 4 : love >= 30 ? 3 : love >= 12 ? 2 : love >= 4 ? 1 : 0;
+  function buildHouse(s, houses) {
+    const next = houses[(s.house || 0) + 1];
+    if (!next) return 'max';
+    if ((next.stage || 0) > s.maxStage) return 'locked';
+    if ((s.studyDays || 0) < (next.days || 0)) return 'days';
+    if ((s.coins || 0) < next.price) return 'poor';
+    s.coins -= next.price; s.house = (s.house || 0) + 1;
+    return 'ok';
+  }
+  function buyBuilding(s, b, unlocked) {
+    s.town = s.town || {};
+    if (!b) return 'none';
+    if (s.town[b.key]) return 'owned';
+    if (!unlocked) return 'locked';
+    if ((s.coins || 0) < b.price) return 'poor';
+    s.coins -= b.price; s.town[b.key] = 1;
+    return 'ok';
+  }
+
   /* 꾸미기 상점 */
   function buyItem(s, item) {
     if (!item) return 'none';
@@ -331,7 +370,7 @@
     return true;
   }
 
-  root.AQ_LOGIC = { buyItem, toggleWear, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  root.AQ_LOGIC = { buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;

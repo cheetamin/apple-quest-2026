@@ -49,6 +49,7 @@
     if (o.coins == null && o.exp) s.coins = Math.floor(o.exp / 5); // 기존 학생: 지금까지 쌓은 경험치만큼 사과로 시작
     if (o.studyDays == null && o.lastStudy) { s.studyDays = Math.max(1, o.streak || 1); s.lastStudyDay = o.lastDay || ''; }
     s.owned = s.owned || []; s.wear = s.wear || {};
+    if (o.full == null) { s.full = 80; s.fullAt = 0; } s.town = s.town || {}; s.house = s.house || 0; s.love = s.love || 0;
     s.settings = Object.assign(L.newState(DEFAULT_RULES).settings, o.settings || {});
     s.mastered = s.mastered || {}; s.streak = s.streak || 0; s.sentOK = s.sentOK || 0;
     s.cardAt = s.cardAt || {}; s.pin = s.pin || '1234';
@@ -543,7 +544,7 @@
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -555,7 +556,7 @@
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
   }
   function autoQ(unitId) {
@@ -606,6 +607,7 @@
       <div class="s-railtab" style="${P(30, 222, 156, 266)}">진화 라인</div>
       ${[350, 522, 690].map((cy, k) => `<div class="s-pt ${S.stage === k ? 'cur' : ''} ${S.cards.includes(k) ? '' : 'lock'}" style="${P(88 - 62, cy - 62, 88 + 62, cy + 62)}"><img src="${IMG[k]}" alt="${STAGES[k].name}"></div>`).join('')}
       <button class="s-forest" style="${P(22, 832, 156, 908)}" data-act="go" data-v="forest"><span>🌳</span>사과숲</button>
+      <button class="s-forest s-village ${L.hungerNow(S, now()) < 30 ? 'alert' : ''}" style="${P(22, 918, 156, 994)}" data-act="go" data-v="village"><span>🏘️</span>마을</button>
       <button class="s-exit" style="${P(24, 112, 154, 196)}" data-act="exit" aria-label="나가기"><span>🚪</span>나가기</button>
 
       <div class="s-tier" style="${P(182, 171, 304, 207)}">${TIER[i]}</div>
@@ -619,6 +621,7 @@
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
+        ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
       <div class="s-ttl" style="${P(366, 626, 880, 676)}">${st.trait}</div>
@@ -866,6 +869,7 @@
       <div class="stats"><div class="stat"><small>레벨</small><b>${L.level(S.exp)}</b></div><div class="stat"><small>누적 경험치</small><b>${S.exp}<em>EXP</em></b></div>
       <div class="stat"><small>완료한 단원</small><b>${L.unitsDone(S)}<em>/ 11</em></b></div><div class="stat"><small>정답률</small><b>${acc}<em>%</em></b></div>
       <div class="stat"><small>학습 시간</small><b>${mins}<em>분</em></b></div><div class="stat"><small>연속 학습</small><b>${S.streak}<em>일</em></b></div></div>
+      <button class="btn shop-entry vil" data-act="go" data-v="village">🏘️ 애플 마을<small>먹이 주기 · 집 짓기 · 마을 만들기</small></button>
       <button class="btn shop-entry" data-act="go" data-v="shop">👕 꾸미기 상점<small>🍎 사과 ${S.coins || 0}개 · 옷과 장식으로 ${esc(STAGES[S.stage].name)} 꾸미기</small></button>
       <div class="section-h">${req ? `${STAGES[S.maxStage + 1].name} 진화 조건` : '최종 성장'}</div>
       <div class="glass reqs">${req ? req.map(r => `<div class="req ${r.done ? 'done' : ''}"><i>${r.done ? '✓' : ''}</i>${r.label}<span>${Math.min(r.have, r.need)} / ${r.need}</span></div>`).join('') :
@@ -897,15 +901,73 @@
       <div class="shop-grid">${list.map(it => {
         const own = (S.owned || []).includes(it.id), on = wearing.includes(it.id), lock = (it.stage || 0) > S.maxStage;
         const tag = on ? '<em class="on">입는 중</em>' : own ? '<em>가지고 있음</em>' : lock ? `<em class="lock">🔒 ${STAGES[it.stage].name}부터</em>` : `<em class="price">🍎 ${it.price}</em>`;
-        return `<button class="shop-item ${on ? 'on' : ''} ${lock && !own ? 'lock' : ''}" data-act="shopitem" data-v="${it.id}"><span class="ic">${SHOP.icon(it)}</span><b>${it.name}</b>${tag}</button>`;
+        return `<button class="shop-item t${it.tier || 1} ${on ? 'on' : ''} ${lock && !own ? 'lock' : ''}" data-act="shopitem" data-v="${it.id}"><i class="tier">${SHOP.TIERS[it.tier || 1]}</i><span class="ic">${SHOP.icon(it)}</span><b>${it.name}</b>${tag}</button>`;
       }).join('')}</div>
       <p class="voice-note">산 아이템은 홈 카드와 사과숲에서 캐릭터가 입고 나와요. 진화하면 더 멋진 아이템이 열려요!</p>`;
+  }
+
+  /* 애플 마을: 먹이 · 집 · 마을 */
+  let vTab = 'food', villT = null;
+  const LOVE_NAMES = ['새 친구', '친한 친구', '단짝', '베스트 프렌드', '영원한 단짝'];
+  function villageScene() {
+    const H = VIL.HOUSES[S.house || 0], hs = VIL.HOUSE_SPOT;
+    const owned = VIL.BUILDINGS.filter(b => S.town && S.town[b.key]).length;
+    const plots = VIL.BUILDINGS.map(b => {
+      if (S.town && S.town[b.key]) return `<button class="f-item v-bld" data-act="vbld" data-v="${b.key}" style="${placeStyle(b.x, b.y, b.w)}" aria-label="${b.name}">${b.art()}</button>`;
+      const open = decorDone(b);
+      return `<button class="f-item v-plot ${open ? 'open' : ''}" data-act="vbld" data-v="${b.key}" style="${placeStyle(b.x, b.y, 54)}" aria-label="${b.name} 자리"><span>${open ? `🍎${b.price}` : `🔒${b.unit}단원`}</span></button>`;
+    }).join('');
+    const vill = VIL.VILLAGERS.slice(0, Math.min(3, Math.floor(owned / 3) + (owned ? 1 : 0))).map((g, k) => `<div class="f-item v-npc" data-k="${k}" style="${placeStyle(20 + k * 30, 80 + k * 5, 30)}">${VIL.villager(g)}</div>`).join('');
+    return `<div class="forest f3d village" id="vscene">${FX.DEFS}${SHOP.DEFS.replace('<defs>', '<svg width="0" height="0" style="position:absolute"><defs>').replace('</defs>', '</defs></svg>')}${VIL.DEFS.replace('<defs>', '<svg width="0" height="0" style="position:absolute"><defs>').replace('</defs>', '</defs></svg>')}${FX.scene()}
+      <button class="f-item v-house" data-act="vtab" data-v="house" style="${placeStyle(hs.x, hs.y, hs.w)}" aria-label="${H.name}">${H.art()}</button>
+      ${plots}${vill}
+      <div class="walker f-item" id="vwalker" style="${placeStyle(50, 80, 70)}">${SHOP.dressed(S.stage, IMG[S.stage], S.wear, STAGES[S.stage].name)}</div>
+      ${FX.overlay()}</div>`;
+  }
+  function renderVillage() {
+    const full = L.hungerNow(S, now()), lv = L.loveLevel(S.love || 0);
+    const fcol = full >= 60 ? 'ok' : full >= 30 ? 'mid' : 'low';
+    let panel = '';
+    if (vTab === 'food') {
+      panel = `<p class="v-hint">${full < 30 ? `😢 ${esc(STAGES[S.stage].name)}가 배고파요! 맛있는 걸 주세요.` : full >= 100 ? '😋 배불러요! 내일 또 주세요.' : '먹이를 주면 배부름과 애정도가 올라요. 배가 부르면(50 이상) 세트를 통과할 때 사과를 2개 더 받아요!'} 주말을 빼고 하루에 20씩 배가 고파져요.</p>
+        <div class="v-grid">${VIL.FOODS.map(f => { const lock = (f.stage || 0) > S.maxStage; return `<button class="v-card ${lock ? 'lock' : ''}" data-act="vfeed" data-v="${f.key}"><span class="ic">${f.art()}</span><b>${f.name}</b><small>배부름 +${f.fill} · 💕+${f.love}</small><em class="price">${lock ? `🔒 ${STAGES[f.stage].name}부터` : `🍎 ${f.price}`}</em></button>`; }).join('')}</div>`;
+    } else if (vTab === 'house') {
+      const cur = VIL.HOUSES[S.house || 0], nx = VIL.HOUSES[(S.house || 0) + 1];
+      const need = nx ? [`🍎 사과 ${nx.price}개 (${S.coins || 0})`, nx.days ? `📅 공부한 날 ${nx.days}일 (${S.studyDays || 0})` : '', nx.stage ? `✨ ${STAGES[nx.stage].name} 진화` : ''].filter(Boolean) : [];
+      panel = `<div class="v-house-row"><div class="v-card big"><span class="ic">${cur.art()}</span><b>지금: ${cur.name}</b><small>${S.house || 0} / ${VIL.HOUSES.length - 1}단계</small></div>
+        ${nx ? `<div class="v-arrow">▶</div><div class="v-card big next"><span class="ic">${nx.art()}</span><b>다음: ${nx.name}</b><small>${need.join('<br>')}</small><button class="btn" data-act="vbuild">🔨 집 짓기</button></div>` : '<div class="v-card big next"><b>🏰 최고의 집을 완성했어요!</b><small>정말 대단해요!</small></div>'}</div>
+        <p class="v-hint">집은 텐트 → 오두막 → 사과 지붕 집 → 2층 집 → 애플 궁전으로 커져요. 꾸준히 공부한 날이 쌓여야 더 큰 집을 지을 수 있어요.</p>`;
+    } else {
+      panel = `<p class="v-hint">단원을 하나 마칠 때마다 마을에 새 건물 자리가 열려요. 사과로 건물을 지어 마을을 키워요! 건물이 늘면 이웃 친구들도 이사 와요.</p>
+        <div class="v-grid">${VIL.BUILDINGS.map(b => { const own = S.town && S.town[b.key], open = decorDone(b); return `<button class="v-card ${own ? 'own' : ''} ${!own && !open ? 'lock' : ''}" data-act="vbld" data-v="${b.key}"><span class="ic">${b.art()}</span><b>${b.name}</b><em class="${own ? 'on' : 'price'}">${own ? '완성!' : open ? `🍎 ${b.price}` : `🔒 ${b.unit}단원 완료`}</em></button>`; }).join('')}</div>`;
+    }
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="home" aria-label="뒤로">←</button><div><h2>${esc(S.name || '나')}의 애플 마을</h2><p>먹이를 주고, 집을 짓고, 마을을 키워요</p></div></div>
+      ${villageScene()}
+      <div class="v-status glass"><div class="v-bar ${fcol}"><span>🍽️ 배부름</span><i><b style="width:${full}%"></b></i><em>${full}</em></div>
+        <div class="v-love"><span>💕 ${LOVE_NAMES[lv]}</span><em>애정 ${S.love || 0}</em></div><div class="v-coin">🍎 ${S.coins || 0}</div></div>
+      <div class="v-tabs">${[['food', '🍽️ 먹이 주기'], ['house', '🏠 내 집'], ['town', '🏘️ 마을']].map(([k, n]) => `<button class="${vTab === k ? 'on' : ''}" data-act="vtab" data-v="${k}">${n}</button>`).join('')}</div>
+      <div class="v-panel">${panel}</div>`;
+    clearInterval(villT);
+    if (!S.settings.reduceMotion) {
+      const wander = () => { const sc = $('#vscene'); if (!sc) return clearInterval(villT);
+        const w = $('#vwalker'); if (w) { const x = 30 + Math.random() * 40, y = 74 + Math.random() * 10; w.classList.toggle('flipx', x < parseFloat(w.style.left)); w.style.cssText = placeStyle(x, y, 70); }
+        sc.querySelectorAll('.v-npc').forEach(n => { const x = 8 + Math.random() * 84, y = 72 + Math.random() * 24; n.classList.toggle('flipx', x < parseFloat(n.style.left)); n.style.cssText = placeStyle(x, y, 30); }); };
+      villT = setInterval(wander, 3800); setTimeout(wander, 300);
+    }
+  }
+  function feedFx(food) {
+    const sc = $('#vscene'), w = $('#vwalker'); if (!sc || !w) return;
+    const f = document.createElement('div'); f.className = 'v-fly'; f.innerHTML = food.art();
+    f.style.left = w.style.left; f.style.top = w.style.top; sc.append(f);
+    const b = document.createElement('div'); b.className = 'bubble v-yum'; b.innerHTML = ['냠냠! 고마워!', '맛있어요! 💕', 'Yummy! Thank you!', '배불러요~ 😋'][Math.floor(Math.random() * 4)];
+    w.append(b); for (let k = 0; k < 5; k++) { const h = document.createElement('i'); h.className = 'v-heart'; h.textContent = '💕'; h.style.left = (20 + k * 15) + '%'; h.style.animationDelay = (k * .12) + 's'; w.append(h); }
+    setTimeout(() => { f.remove(); b.remove(); w.querySelectorAll('.v-heart').forEach(x => x.remove()); }, 2200);
   }
 
   /* 사과숲 */
   let forestT = null;
   function stopForest() { clearInterval(forestT); forestT = null; }
-  const FX = AQ_FOREST, SHOP = AQ_SHOP;
+  const FX = AQ_FOREST, SHOP = AQ_SHOP, VIL = AQ_VILLAGE;
   const depthS = y => 0.5 + (Math.max(44, Math.min(98, y)) - 44) / 54 * 0.72; // 멀수록 작게
   const placeStyle = (x, y, w) => `left:${x}%;top:${y}%;--s:${depthS(y).toFixed(3)};--w:${w}px;z-index:${Math.round(y * 10)}`;
   function decorHTML(d) { return (FX.DECOR[d.key] || (() => d.e))(); }
@@ -1044,6 +1106,32 @@
       Q.list = Q.list.map((q, k) => (k >= Q.i ? L.silentQ(q) : q));
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
+    },
+    vtab: d => { AU.tap(); vTab = d.v; renderVillage(); },
+    vfeed: d => {
+      const f = VIL.FOODS.find(x => x.key === d.v); if (!f) return;
+      if ((f.stage || 0) > S.maxStage) { toast(`🔒 ${STAGES[f.stage].name}(으)로 진화하면 줄 수 있어요!`); return; }
+      const r = L.feed(S, f, now());
+      if (r === 'full') { toast('😋 배가 가득 찼어요! 내일 또 주세요.'); return; }
+      if (r === 'poor') { toast(`🍎 사과가 ${f.price - (S.coins || 0)}개 더 필요해요. 문제를 풀고 모아 봐요!`); return; }
+      AU.sparkle(); save(); cloudFlush(); renderVillage(); feedFx(f);
+      const before = L.loveLevel((S.love || 0) - (f.love || 1)), after = L.loveLevel(S.love || 0);
+      if (after > before) setTimeout(() => { AU.fanfare(); toast(`💕 애정도가 올라서 "${LOVE_NAMES[after]}"가 되었어요!`, 2600); }, 900);
+    },
+    vbuild: () => {
+      const nx = VIL.HOUSES[(S.house || 0) + 1]; const r = L.buildHouse(S, VIL.HOUSES);
+      if (r === 'locked') { toast(`🔒 ${STAGES[nx.stage].name}(으)로 진화해야 지을 수 있어요!`); return; }
+      if (r === 'days') { toast(`📅 공부한 날이 ${nx.days - (S.studyDays || 0)}일 더 필요해요. 매일 조금씩 공부해요!`); return; }
+      if (r === 'poor') { toast(`🍎 사과가 ${nx.price - (S.coins || 0)}개 더 필요해요!`); return; }
+      if (r === 'ok') { AU.fanfare(); save(); cloudFlush(); renderVillage(); const h = $('.v-house'); if (h) h.classList.add('built'); toast(`🔨 뚝딱뚝딱! ${nx.name}을(를) 지었어요!`, 2600); }
+    },
+    vbld: d => {
+      const b = VIL.BUILDINGS.find(x => x.key === d.v); if (!b) return;
+      if (S.town && S.town[b.key]) { AU.tap(); toast(`🏘️ ${b.name} — 우리 마을의 자랑이에요!`); return; }
+      const r = L.buyBuilding(S, b, decorDone(b));
+      if (r === 'locked') { toast(`🔒 ${b.unit}단원을 마치면 ${b.name} 자리가 열려요!`); return; }
+      if (r === 'poor') { toast(`🍎 사과가 ${b.price - (S.coins || 0)}개 더 필요해요!`); return; }
+      if (r === 'ok') { AU.fanfare(); save(); cloudFlush(); vTab = 'town'; renderVillage(); toast(`🎉 마을에 ${b.name}이(가) 생겼어요!`, 2400); }
     },
     shoptab: d => { AU.tap(); shopSlot = d.v; renderShop(); },
     shopitem: d => {

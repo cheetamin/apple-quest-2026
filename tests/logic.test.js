@@ -61,12 +61,12 @@ test('사과(코인): 새 정답·세트·단원·출석·보스로 모이고 �
   L.markStudy(s, T0, 'basic'); L.markStudy(s, T0 + 1000, 'basic');
   assert.strictEqual(s.coins, 6, '출석 보너스는 하루 한 번');
   L.completeSet(s, 1, 0, 5, 5, T0); L.completeSet(s, 1, 1, 5, 5, T0);
-  assert.strictEqual(s.coins, 6 + 3 + 3 + 10);
+  assert.strictEqual(s.coins, 6 + 5 + 5 + 10, '처음엔 배가 불러서 세트 보너스 +2');
   const item = { id: 'x', slot: 'face', price: 20, stage: 0 }, lockItem = { id: 'y', slot: 'back', price: 5, stage: 1 };
   assert.strictEqual(L.buyItem(s, lockItem), 'locked');
   assert.strictEqual(L.buyItem(s, { ...item, price: 999 }), 'poor');
   assert.strictEqual(L.buyItem(s, item), 'ok');
-  assert.strictEqual(s.coins, 2); assert.strictEqual(s.wear.face, 'x');
+  assert.strictEqual(s.coins, 6); assert.strictEqual(s.wear.face, 'x');
   assert.strictEqual(L.buyItem(s, item), 'owned');
   L.toggleWear(s, item); assert.strictEqual(s.wear.face, undefined);
 });
@@ -158,4 +158,48 @@ test('조용한 교실: 듣기 문제가 같은 정답의 읽기 문제로 바�
       if (s.silent) { assert.ok(s.show && s.options.includes(s.answer)); }
     }
   }
+});
+
+test('먹이: 평일마다 배고파지고(주말 제외), 사과로 먹이를 주면 배부름·애정도가 오른다', () => {
+  const s = L.newState(D.DEFAULT_RULES);
+  s.full = 100; s.fullAt = T0; // 월
+  assert.strictEqual(L.hungerNow(s, T0 + 3600e3), 100);
+  assert.strictEqual(L.hungerNow(s, day(1)), 80); // 화
+  assert.strictEqual(L.hungerNow(s, day(4)), 20); // 금
+  assert.strictEqual(L.hungerNow(s, day(6)), 20); // 일: 주말은 그대로
+  assert.strictEqual(L.hungerNow(s, day(7)), 0); // 다음 월
+  s.coins = 30;
+  const pie = { price: 25, fill: 80, love: 3 };
+  assert.strictEqual(L.feed(s, pie, day(7)), 'ok');
+  assert.strictEqual(L.hungerNow(s, day(7)), 80); assert.strictEqual(s.coins, 5); assert.strictEqual(s.love, 3);
+  assert.strictEqual(L.feed(s, pie, day(7)), 'poor');
+  s.coins = 100; L.feed(s, { price: 1, fill: 50 }, day(7));
+  assert.strictEqual(L.feed(s, { price: 1, fill: 10 }, day(7)), 'full');
+});
+
+test('배부르면 세트 통과 보너스 사과 +2', () => {
+  const a = L.newState(D.DEFAULT_RULES), b = L.newState(D.DEFAULT_RULES);
+  a.full = 90; a.fullAt = T0; b.full = 10; b.fullAt = T0;
+  L.completeSet(a, 1, 0, 5, 5, T0); L.completeSet(b, 1, 0, 5, 5, T0);
+  assert.strictEqual(a.coins - b.coins, 2);
+});
+
+test('집 짓기: 사과·진화 단계·공부한 날이 필요하고 한 단계씩 올라간다', () => {
+  const H = [null, { price: 10 }, { price: 20, days: 3 }, { price: 30, stage: 1 }];
+  const s = L.newState(D.DEFAULT_RULES); s.coins = 100;
+  assert.strictEqual(L.buildHouse(s, H), 'ok'); assert.strictEqual(s.house, 1);
+  assert.strictEqual(L.buildHouse(s, H), 'days'); s.studyDays = 3;
+  assert.strictEqual(L.buildHouse(s, H), 'ok');
+  assert.strictEqual(L.buildHouse(s, H), 'locked'); s.maxStage = 1;
+  assert.strictEqual(L.buildHouse(s, H), 'ok'); assert.strictEqual(L.buildHouse(s, H), 'max');
+  assert.strictEqual(s.coins, 40);
+});
+
+test('마을 건물: 해금된 것만, 한 번만 산다', () => {
+  const s = L.newState(D.DEFAULT_RULES); s.coins = 50;
+  const b = { key: 'bakery', price: 40 };
+  assert.strictEqual(L.buyBuilding(s, b, false), 'locked');
+  assert.strictEqual(L.buyBuilding(s, b, true), 'ok');
+  assert.strictEqual(L.buyBuilding(s, b, true), 'owned');
+  assert.strictEqual(s.coins, 10);
 });
