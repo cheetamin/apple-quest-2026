@@ -1,6 +1,7 @@
 // 카메라 연결 및 2인 보정
 import { h, $, $$, onTap, esc, toast } from '../ui.js';
 import { motion, CAMERA_ERRORS } from '../core/motion.js';
+import { CAMERA_HELP } from '../data/camerahelp.js';
 import { audio } from '../core/audio.js';
 
 export function show(app, root) {
@@ -9,6 +10,7 @@ export function show(app, root) {
     <div class="screen-title"><button class="btn small ghost" data-a="back">← 설정</button><h2 data-pixel="60">카메라 연결 · 2인 보정</h2><span></span></div>
     <div class="cam-layout">
       <div class="cam-view card"><canvas width="1280" height="720"></canvas>
+        <div class="cam-help" id="cam-help" hidden></div>
         <div class="cam-tags"><span class="tag blue">← 청팀 자리 (화면 왼쪽)</span><span class="tag white">백팀 자리 (화면 오른쪽) →</span></div>
       </div>
       <div class="cam-side card">
@@ -40,30 +42,52 @@ export function show(app, root) {
   let stableSince = null, lrCheck = null, raf = 0, startedAt = performance.now();
   const startBtn = $('[data-a="start"]', el);
 
-  motion.listCameras().then((list) => {
-    const sel = $('#cam-sel', el);
+  const sel = $('#cam-sel', el), help = $('#cam-help', el);
+  const fillCams = async (active) => {
+    const list = await motion.listCameras();
+    motion.diag.devices = list.map((d, i) => d.label || `카메라 ${i + 1}`);
+    const keep = active || sel.value || s.cameraId || '';
+    sel.innerHTML = '<option value="">자동 선택</option>';
     list.forEach((d, i) => sel.appendChild(h(`<option value="${esc(d.deviceId)}">${esc(d.label || '카메라 ' + (i + 1))}</option>`)));
-  });
+    if (keep && list.some((d) => d.deviceId === keep)) sel.value = keep;
+    sel.title = list.length ? `카메라 ${list.length}대 발견` : '카메라를 찾지 못했어요';
+  };
+  fillCams();
 
   const showErr = (e) => {
-    const text = CAMERA_ERRORS[e.code] || CAMERA_ERRORS[e.name] || `오류: ${e.message || e}`;
+    const code = e.code || e.name;
+    const text = CAMERA_ERRORS[code] || `오류: ${e.message || e}`;
     msg.innerHTML = `<b class="err">⚠ ${esc(text)}</b>`;
+    const steps = CAMERA_HELP[code] || CAMERA_HELP.DEFAULT;
+    help.hidden = false;
+    help.innerHTML = `<b>이렇게 해 보세요</b><ol>${steps.map((x) => `<li>${x}</li>`).join('')}</ol>
+      <div class="row gap"><button class="btn small" data-h="retry">🔄 다시 시도</button><button class="btn small ghost" data-h="copy">📋 진단 정보 복사</button><button class="btn small ghost" data-h="nocam">🖐 카메라 없이 진행</button></div>`;
+    $$('[data-h]', help).forEach((b) => onTap(b, () => ({ retry: connect, copy: copyDiag, nocam: () => act.nocam() })[b.dataset.h]()));
+  };
+  const copyDiag = async () => {
+    const text = motion.diagnostics();
+    try { await navigator.clipboard.writeText(text); toast('진단 정보를 복사했어요. 문의할 때 붙여 넣어 주세요.'); }
+    catch { help.hidden = false; help.insertAdjacentHTML('beforeend', `<textarea class="txt diag-text" readonly>${esc(text)}</textarea>`); toast('아래 칸의 내용을 복사해 주세요.'); }
   };
 
   const connect = async () => {
     audio.unlock();
     setC('cam', 'wait', '연결 중…'); msg.textContent = '카메라를 연결하고 있어요… 브라우저가 권한을 물으면 "허용"을 눌러 주세요.';
+    help.hidden = true; help.innerHTML = '';
     try {
-      const info = await motion.startCamera($('#cam-sel', el).value || undefined);
+      const info = await motion.startCamera(sel.value || s.cameraId || undefined);
       setC('cam', 'ok', `${info.width}×${info.height}`);
+      if (info.deviceId) { s.cameraId = info.deviceId; app.saveSettings(); }
+      fillCams(info.deviceId);
       if (info.width < 640) setC('light', 'warn', '해상도가 낮아요(640×480 이상 권장)');
-    } catch (e) { setC('cam', 'bad', '실패'); showErr(e); return; }
+    } catch (e) { setC('cam', 'bad', '실패'); fillCams(); showErr(e); return; }
     setC('model', 'wait', '불러오는 중… (처음 한 번은 수십 초 걸릴 수 있어요)');
     try {
       const r = await motion.loadModel(s.model);
       setC('model', r.delegate === 'GPU' ? 'ok' : 'warn', r.delegate === 'GPU' ? 'GPU 가속' : 'CPU 모드(느릴 수 있음)');
       msg.innerHTML = '두 학생이 화면 왼쪽(청팀)과 오른쪽(백팀)에 나란히 서 주세요.';
     } catch (e) { setC('model', 'bad', '실패'); showErr({ code: 'MODEL' }); return; }
+    lastSeenAt = 0;
     app.applySettings(); startedAt = performance.now();
   };
 
@@ -86,9 +110,10 @@ export function show(app, root) {
     },
   };
   $$('[data-a]', el).forEach((b) => onTap(b, () => act[b.dataset.a]()));
+  sel.addEventListener('change', () => { s.cameraId = sel.value; app.saveSettings(); if (motion.mode === 'camera') connect(); });
   $('#mir', el).addEventListener('change', (e) => { s.mirror = e.target.checked; app.saveSettings(); motion.recalibrate(); });
 
-  let lastBright = 0, bright = null;
+  let lastBright = 0, bright = null, lastSeenAt = 0;
   const loop = (t) => {
     raf = requestAnimationFrame(loop);
     const st = motion.tick(t);
@@ -136,6 +161,13 @@ export function show(app, root) {
         lrCheck = null;
       }
     }
+    if (st.count > 0) lastSeenAt = t;
+    if (motion.mode === 'camera' && t - Math.max(lastSeenAt, startedAt) > 12000 && help.hidden) {
+      help.hidden = false;
+      help.innerHTML = `<b>카메라 화면은 나오는데 사람을 못 찾고 있어요</b><ol>${CAMERA_HELP.NO_PERSON.map((x) => `<li>${x}</li>`).join('')}</ol><div class="row gap"><button class="btn small ghost" data-h2="copy">📋 진단 정보 복사</button></div>`;
+      onTap($('[data-h2]', help), copyDiag);
+    }
+    if (st.count > 0 && help.innerHTML.includes('사람을 못 찾고')) { help.hidden = true; help.innerHTML = ''; }
     const both = st.blue.active && st.white.active && !st.overlap;
     if (both) { if (!stableSince) stableSince = t; } else stableSince = null;
     const ready = stableSince && t - stableSince > 1500;

@@ -11,13 +11,19 @@ export const TEAM_HEX = { blue: '#2f80ed', white: '#f5b301' };
 export const CAMERA_ERRORS = {
   HTTPS_REQUIRED: '카메라는 보안 연결(https:// 또는 localhost)에서만 사용할 수 있어요. GitHub Pages 주소(https)로 접속하거나 로컬 서버(localhost)로 실행해 주세요.',
   NO_API: '이 브라우저는 카메라 기능을 지원하지 않아요. 최신 Chrome 또는 Edge를 사용해 주세요.',
-  NotAllowedError: '카메라 사용 권한이 거부되었어요. 주소창 왼쪽의 자물쇠(사이트 설정)에서 카메라를 "허용"으로 바꾼 뒤 다시 시도해 주세요.',
-  NotFoundError: '연결된 카메라를 찾지 못했어요. 전자칠판 카메라가 켜져 있는지, 케이블이 연결되어 있는지 확인해 주세요.',
-  NotReadableError: '카메라를 다른 프로그램(화상회의 등)이 사용 중이에요. 다른 프로그램을 닫고 다시 시도해 주세요.',
+  NotAllowedError: '카메라 사용이 막혀 있어요.',
+  NotFoundError: '연결된 카메라를 찾지 못했어요.',
+  NotReadableError: '카메라를 켤 수 없어요. 다른 프로그램이 카메라를 쓰고 있거나 윈도우 설정에서 막혀 있을 수 있어요.',
   OverconstrainedError: '선택한 카메라 설정을 사용할 수 없어요. 다른 카메라를 선택해 주세요.',
-  MODEL: '자세 인식 모델을 불러오지 못했어요. 인터넷 연결을 확인하거나, 오프라인용 vendor 폴더 설치 방법(docs/OFFLINE.md)을 참고해 주세요.',
+  NO_FRAMES: '카메라는 연결됐지만 화면이 들어오지 않아요.',
+  SecurityError: '이 화면(또는 학교 PC 관리 정책)에서 카메라 사용이 막혀 있어요.',
+  AbortError: '카메라를 켜는 도중에 멈췄어요. 잠시 후 다시 시도해 주세요.',
+  MODEL: '자세 인식 모델을 불러오지 못했어요.',
   GPU: '그래픽 가속(WebGL)을 사용할 수 없어 CPU 모드로 실행 중이에요. 인식 속도가 느릴 수 있어요.',
 };
+
+// 상대 경로는 페이지(index.html) 기준으로 바꾼다 — import()는 이 파일 기준으로 풀리기 때문
+const abs = (u) => { try { return new URL(u, document.baseURI).href; } catch { return u; } };
 
 async function firstOk(urls, test) {
   let lastErr;
@@ -115,7 +121,7 @@ export class MotionHub {
     this.sim = new SimPeople();
     this.lastPoses = []; this.lastVideoTime = -1;
     this.frames = []; this.fps = 0; this.inferMs = 0;
-    this.warnings = [];
+    this.warnings = []; this.diag = {};
     this.state = this._emptyState();
     this.aspect = 16 / 9;
     this.stream = null;
@@ -129,25 +135,75 @@ export class MotionHub {
     try { return (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === 'videoinput'); } catch { return []; }
   }
 
+  /** 적외선(얼굴 인식용)·가상 카메라는 뒤로 미룬다 */
+  static rankCamera(d) {
+    const l = (d.label || '').toLowerCase();
+    if (/\bir\b|infrared|적외선|hello/.test(l)) return 3;
+    if (/virtual|obs|snap|manycam|xsplit|broadcast|droidcam|ndi|가상/.test(l)) return 2;
+    return 0;
+  }
+
+  async _open(video) {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: false, video });
+    try {
+      this.video.srcObject = stream;
+      this.video.muted = true; this.video.playsInline = true;
+      await this.video.play().catch(() => {});
+      // 실제 화면이 들어오는지 확인 (일부 카메라는 연결만 되고 영상이 안 옴)
+      const ok = await new Promise((res) => {
+        const t0 = performance.now();
+        const chk = () => {
+          if (this.video.videoWidth > 0 && this.video.readyState >= 2) return res(true);
+          if (performance.now() - t0 > 6000) return res(false);
+          setTimeout(chk, 100);
+        };
+        chk();
+      });
+      if (!ok) throw Object.assign(new Error('no frames'), { name: 'NO_FRAMES' });
+      return stream;
+    } catch (e) { stream.getTracks().forEach((t) => t.stop()); this.video.srcObject = null; throw e; }
+  }
+
   async startCamera(deviceId) {
+    this.diag.steps = [];
+    const note = (x) => { this.diag.steps.push(x); };
     if (!window.isSecureContext) throw Object.assign(new Error('https'), { code: 'HTTPS_REQUIRED' });
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error('api'), { code: 'NO_API' });
     this.stopCamera();
+    const base = { width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } };
+    // 1) 고른 카메라(또는 기본) → 2) 해상도 조건 없이 → 3) 아무 카메라나 → 4) 목록의 다른 카메라
+    const tries = [];
+    if (deviceId) { tries.push({ deviceId: { exact: deviceId }, ...base }, { deviceId: { exact: deviceId } }); }
+    tries.push(base, true);
+    let lastErr = null;
+    const tryOne = async (v, label) => {
+      try { this.stream = await this._open(v); note(`✔ ${label}`); return true; }
+      catch (e) { lastErr = e; note(`✘ ${label}: ${e.name || ''} ${e.message || ''}`.trim()); if (e.name === 'NotAllowedError' || e.name === 'SecurityError') throw e; return false; }
+    };
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: false,
-        video: { deviceId: deviceId ? { exact: deviceId } : undefined, width: { ideal: 1280 }, height: { ideal: 720 }, frameRate: { ideal: 30 } },
-      });
-    } catch (e) { throw Object.assign(e, { code: e.name }); }
-    this.video.srcObject = this.stream;
-    await this.video.play().catch(() => {});
-    await new Promise((r) => { if (this.video.videoWidth) r(); else this.video.onloadedmetadata = () => r(); });
+      let ok = false;
+      for (let i = 0; i < tries.length && !ok; i++) ok = await tryOne(tries[i], i === tries.length - 1 ? '기본 설정' : (deviceId ? `선택 카메라 #${i + 1}` : '권장 해상도'));
+      if (!ok) {
+        const list = (await this.listCameras()).filter((d) => d.deviceId && d.deviceId !== deviceId)
+          .sort((a, b) => MotionHub.rankCamera(a) - MotionHub.rankCamera(b));
+        for (const d of list) { if (await tryOne({ deviceId: { exact: d.deviceId } }, `다른 카메라: ${d.label || d.deviceId.slice(0, 6)}`)) { ok = true; break; } }
+      }
+      if (!ok) throw lastErr || Object.assign(new Error('camera'), { name: 'NotFoundError' });
+    } catch (e) {
+      this.diag.camError = `${e && e.name}: ${e && e.message}`;
+      // DOMException 은 code 속성을 바꿀 수 없으므로 새 오류로 감싼다
+      const err = new Error((e && e.message) || 'camera'); err.name = (e && e.name) || 'Error'; err.code = err.name; err.cause = e;
+      throw err;
+    }
     this.aspect = this.video.videoWidth / this.video.videoHeight || 16 / 9;
     this.mode = 'camera';
     this.tracker.reset();
     const tr = this.stream.getVideoTracks()[0];
     this.trackLabel = tr ? tr.label : '';
-    return { width: this.video.videoWidth, height: this.video.videoHeight, label: this.trackLabel };
+    this.deviceId = tr && tr.getSettings ? tr.getSettings().deviceId : deviceId;
+    this.diag.camera = `${this.trackLabel || '(이름 없음)'} ${this.video.videoWidth}×${this.video.videoHeight}`;
+    this.diag.camError = '';
+    return { width: this.video.videoWidth, height: this.video.videoHeight, label: this.trackLabel, deviceId: this.deviceId };
   }
   stopCamera() {
     if (this.stream) this.stream.getTracks().forEach((t) => t.stop());
@@ -156,19 +212,50 @@ export class MotionHub {
 
   async loadModel(variant = 'lite') {
     if (this.landmarker && this.modelVariant === variant) return { delegate: this.delegate };
-    const vision = await firstOk(CONFIG.visionBundle, (u) => import(/* @vite-ignore */ u)).catch((e) => { throw Object.assign(e, { code: 'MODEL' }); });
-    const wasm = await firstOk(CONFIG.wasmBase, (u) => exists(u + '/vision_wasm_internal.js').then(() => u)).catch((e) => { throw Object.assign(e, { code: 'MODEL' }); });
-    const model = await firstOk(CONFIG.models[variant], exists).catch((e) => { throw Object.assign(e, { code: 'MODEL' }); });
-    const fileset = await vision.FilesetResolver.forVisionTasks(wasm);
-    const make = (delegate) => vision.PoseLandmarker.createFromOptions(fileset, {
+    const log = (x) => { (this.diag.model = this.diag.model || []).push(x); };
+    this.diag.model = [];
+    const fail = (e) => { this.diag.modelError = `${e && e.name || ''} ${e && e.message || e}`.trim(); const err = new Error((e && e.message) || 'model'); err.code = 'MODEL'; err.cause = e; throw err; };
+    let vision, wasm;
+    try { vision = await firstOk(CONFIG.visionBundle, async (u) => { try { const m = await import(/* @vite-ignore */ abs(u)); log(`✔ 엔진 ${u}`); return m; } catch (e) { log(`✘ 엔진 ${u}`); throw e; } }); } catch (e) { fail(e); }
+    try { wasm = await firstOk(CONFIG.wasmBase, async (u) => { try { await exists(u + '/vision_wasm_internal.js'); log(`✔ wasm ${u}`); return abs(u); } catch (e) { log(`✘ wasm ${u}`); throw e; } }); } catch (e) { fail(e); }
+    const fileset = await vision.FilesetResolver.forVisionTasks(wasm).catch(fail);
+    const make = (model, delegate) => vision.PoseLandmarker.createFromOptions(fileset, {
       baseOptions: { modelAssetPath: model, delegate },
       runningMode: 'VIDEO', numPoses: 2,
       minPoseDetectionConfidence: 0.4, minPosePresenceConfidence: 0.4, minTrackingConfidence: 0.4,
     });
-    try { this.landmarker = await make('GPU'); this.delegate = 'GPU'; }
-    catch { this.landmarker = await make('CPU'); this.delegate = 'CPU'; this.warnings.push(CAMERA_ERRORS.GPU); }
-    this.modelVariant = variant;
-    return { delegate: this.delegate };
+    let lastErr = null;
+    for (const model of CONFIG.models[variant] || CONFIG.models.lite) {
+      if (!/^https?:/.test(model)) { try { await exists(model); } catch { log(`✘ 모델 없음 ${model}`); continue; } }
+      for (const delegate of ['GPU', 'CPU']) {
+        try {
+          this.landmarker = await make(abs(model), delegate); this.delegate = delegate;
+          if (delegate === 'CPU') this.warnings.push(CAMERA_ERRORS.GPU);
+          log(`✔ 모델 ${model} (${delegate})`);
+          this.modelVariant = variant; this.diag.modelError = '';
+          return { delegate: this.delegate };
+        } catch (e) { lastErr = e; log(`✘ 모델 ${model} (${delegate}) ${e && e.message ? e.message.slice(0, 80) : ''}`); }
+      }
+    }
+    fail(lastErr);
+  }
+
+  /** 선생님이 복사해서 보낼 수 있는 진단 정보 */
+  diagnostics() {
+    const gl = (() => { try { const c = document.createElement('canvas'); return c.getContext('webgl2') ? 'WebGL2' : c.getContext('webgl') ? 'WebGL1' : '없음'; } catch { return '확인 불가'; } })();
+    return [
+      `[가래떡 모션 게임 진단 정보] ${new Date().toLocaleString('ko-KR')}`,
+      `주소: ${location.href.split('?')[0]}`,
+      `브라우저: ${navigator.userAgent}`,
+      `보안 연결: ${window.isSecureContext ? '예' : '아니오'} · 카메라 API: ${navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? '있음' : '없음'} · 그래픽: ${gl}`,
+      `카메라: ${this.diag.camera || '연결 안 됨'}`,
+      this.diag.camError ? `카메라 오류: ${this.diag.camError}` : '',
+      ...(this.diag.steps || []).map((x) => `  ${x}`),
+      `카메라 목록: ${(this.diag.devices || []).join(' / ') || '(없음 또는 권한 전)'}`,
+      `자세 인식: ${this.landmarker ? `준비됨(${this.delegate})` : '안 됨'}${this.diag.modelError ? ` · 오류: ${this.diag.modelError}` : ''}`,
+      ...(this.diag.model || []).map((x) => `  ${x}`),
+      `인식 속도: ${this.fps || 0}fps`,
+    ].filter(Boolean).join('\n');
   }
 
   startSim() { this.mode = 'sim'; this.tracker.reset(); this.aspect = 16 / 9; }
