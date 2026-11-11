@@ -599,3 +599,7 @@ body, button, input, select, textarea { font-family: var(--font); }
 .cam-help ol { margin: 6px 0 10px; padding-left: 22px; }
 .cam-help li { margin: 3px 0; }
 .cam-help .diag-text { width: 100%; height: 160px; font-size: 15px; margin-top: 10px; }
+
+/* 켜짐/꺼짐이 한눈에 보이도록 스위치 안에 글자 표시 */
+.tog span::before { content: 'OFF'; position: absolute; right: 6px; top: 50%; transform: translateY(-50%); font: 900 11px/1 var(--font-read, sans-serif); color: #5a4a35; letter-spacing: 0; }
+.tog input:checked + span::before { content: 'ON'; right: auto; left: 7px; color: #fff; }
