@@ -7,7 +7,7 @@
  *   RESEND_API_KEY   (선택, 비밀) 선생님 등록 알림 메일 발송(resend.com 무료)
  *   NOTIFY_EMAIL     (선택, 비밀) 알림 받을 제작자 메일 주소
  *   (AI 선생님) 기본은 Cloudflare Workers AI 무료 사용량(바인딩 AI, 키 필요 없음). ANTHROPIC_API_KEY(비밀)를 넣으면 Claude로 바뀜
- *   AI_CF_MODEL (선택) Workers AI 모델(기본 @cf/google/gemma-4-26b-a4b-it)
+ *   AI_CF_MODEL (선택) Workers AI 모델(기본 @cf/google/gemma-3-12b-it — 생각 과정 없이 바로 답하는 모델)
  *   AI_DAILY_LIMIT   (선택) AI 설명 하루 최대 횟수(기본 300) · AI_MODEL (선택, 기본 claude-haiku-5-5)
  * 바인딩: DB = D1 데이터베이스(원래 버전), DB_CONTEST = 공모전 체험판 전용 D1 (/contest/api/... 주소)
  */
@@ -220,7 +220,7 @@ async function aiExplain(env, req, b) {
   const key = await sha256(JSON.stringify([q.type, q.show, q.answer, q.given]));
   const hit = await env.DB.prepare('SELECT text FROM ai_cache WHERE k=?').bind(key).first();
   if (hit) return json({ ok: true, text: hit.text, cached: true });
-  const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), limit = Number(env.AI_DAILY_LIMIT) || 300;
+  const day = new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10), limit = Number(env.AI_DAILY_LIMIT) || (env.ANTHROPIC_API_KEY ? 300 : 200); // 무료 AI는 하루 무료 사용량 안에 들도록 200번
   const u = await env.DB.prepare('SELECT n FROM ai_usage WHERE day=?').bind(day).first();
   if (u && u.n >= limit) return fail('오늘은 AI 선생님이 너무 많이 설명해서 쉬고 있어요. 내일 다시 물어봐 주세요!', 429);
   await env.DB.prepare('INSERT INTO ai_usage (day,n) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET n=n+1').bind(day).run();
@@ -234,7 +234,7 @@ async function aiExplain(env, req, b) {
     text = j && Array.isArray(j.content) ? j.content.filter(c => c.type === 'text').map(c => c.text).join('') : '';
   } else { // 무료: Cloudflare Workers AI (하루 무료 사용량 안에서만, 넘으면 오류로 멈춤 → 요금 없음)
     let out;
-    try { out = await env.AI.run(env.AI_CF_MODEL || '@cf/google/gemma-4-26b-a4b-it', { messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user }], max_tokens: 400 }); }
+    try { out = await env.AI.run(env.AI_CF_MODEL || '@cf/google/gemma-3-12b-it', { messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user }], max_tokens: 400 }); }
     catch (e) { return fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: String(e && e.message || e).slice(0, 120) }); }
     text = typeof out === 'string' ? out : out && (out.response || (out.choices && out.choices[0] && out.choices[0].message && out.choices[0].message.content) || '');
     if (!String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: JSON.stringify(out).slice(0, 600) });
