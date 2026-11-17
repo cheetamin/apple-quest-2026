@@ -7,7 +7,7 @@
  *   RESEND_API_KEY   (선택, 비밀) 선생님 등록 알림 메일 발송(resend.com 무료)
  *   NOTIFY_EMAIL     (선택, 비밀) 알림 받을 제작자 메일 주소
  *   (AI 선생님) 기본은 Cloudflare Workers AI 무료 사용량(바인딩 AI, 키 필요 없음). ANTHROPIC_API_KEY(비밀)를 넣으면 Claude로 바뀜
- *   AI_CF_MODEL (선택) Workers AI 모델(기본 @cf/google/gemma-3-12b-it — 생각 과정 없이 바로 답하는 모델)
+ *   AI_CF_MODEL (선택) Workers AI 모델을 직접 정할 때 (기본: qwen3-30b → gemma-4 → llama-3.1-8b 순서로 시도)
  *   AI_DAILY_LIMIT   (선택) AI 설명 하루 최대 횟수(기본 300) · AI_MODEL (선택, 기본 claude-haiku-5-5)
  * 바인딩: DB = D1 데이터베이스(원래 버전), DB_CONTEST = 공모전 체험판 전용 D1 (/contest/api/... 주소)
  */
@@ -225,7 +225,7 @@ async function aiExplain(env, req, b) {
   if (u && u.n >= limit) return fail('오늘은 AI 선생님이 너무 많이 설명해서 쉬고 있어요. 내일 다시 물어봐 주세요!', 429);
   await env.DB.prepare('INSERT INTO ai_usage (day,n) VALUES (?,1) ON CONFLICT(day) DO UPDATE SET n=n+1').bind(day).run();
   const user = `[문제 유형] ${q.type}\n[문제] ${q.prompt}\n[화면에 보인 것] ${q.show || '(소리로 들려준 문제)'}\n[보기] ${q.options.join(' / ') || '(없음)'}\n[정답] ${q.answer}\n[아이가 고른 답] ${q.given || '(모름)'}\n[참고] ${q.explain}`;
-  let text = '';
+  let text = '', model = env.ANTHROPIC_API_KEY ? (env.AI_MODEL || 'claude-haiku-5-5') : '';
   if (env.ANTHROPIC_API_KEY) { // 유료: Claude
     const r = await fetch('https://api.anthropic.com/v1/messages', { method: 'POST', headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({ model: env.AI_MODEL || 'claude-haiku-5-5', max_tokens: 320, system: AI_SYSTEM, messages: [{ role: 'user', content: user }] }) });
@@ -233,16 +233,23 @@ async function aiExplain(env, req, b) {
     const j = await r.json().catch(() => null);
     text = j && Array.isArray(j.content) ? j.content.filter(c => c.type === 'text').map(c => c.text).join('') : '';
   } else { // 무료: Cloudflare Workers AI (하루 무료 사용량 안에서만, 넘으면 오류로 멈춤 → 요금 없음)
-    let out;
-    try { out = await env.AI.run(env.AI_CF_MODEL || '@cf/google/gemma-3-12b-it', { messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user }], max_tokens: 400 }); }
-    catch (e) { return fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: String(e && e.message || e).slice(0, 120) }); }
-    text = typeof out === 'string' ? out : out && (out.response || (out.choices && out.choices[0] && out.choices[0].message && out.choices[0].message.content) || '');
-    if (!String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: JSON.stringify(out).slice(0, 600) });
+    const models = [env.AI_CF_MODEL, '@cf/qwen/qwen3-30b-a3b-fp8', '@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-3.1-8b-instruct'].filter(Boolean);
+    let lastErr = '';
+    for (const m of models) {
+      const thinkOff = m.includes('qwen3') ? '\n/no_think' : '';
+      let out;
+      try { out = await env.AI.run(m, { messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user + thinkOff }], max_tokens: m.includes('gemma-4') ? 1600 : 500 }); }
+      catch (e) { lastErr = String(e && e.message || e); if (/neuron|allocation|daily|quota|4006/i.test(lastErr)) return fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: lastErr.slice(0, 120) }); continue; }
+      const t = typeof out === 'string' ? out : out && (out.response || (out.choices && out.choices[0] && out.choices[0].message && out.choices[0].message.content) || '');
+      if (String(t || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()) { text = t; model = m; break; }
+      lastErr = 'empty:' + JSON.stringify(out).slice(0, 160);
+    }
+    if (!text) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: lastErr.slice(0, 300) });
   }
   text = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim().slice(0, 700);
   if (!text) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502);
   await env.DB.prepare('INSERT OR REPLACE INTO ai_cache (k,text,created_at) VALUES (?,?,?)').bind(key, text, Date.now()).run();
-  return json({ ok: true, text });
+  return json({ ok: true, text, model });
 }
 
 /* ---------------- 라우터 ---------------- */
