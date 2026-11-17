@@ -237,6 +237,7 @@ async function aiExplain(env, req, b) {
     try { out = await env.AI.run(env.AI_CF_MODEL || '@cf/google/gemma-4-26b-a4b-it', { messages: [{ role: 'system', content: AI_SYSTEM }, { role: 'user', content: user }], max_tokens: 400 }); }
     catch (e) { return fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: String(e && e.message || e).slice(0, 120) }); }
     text = typeof out === 'string' ? out : out && (out.response || (out.choices && out.choices[0] && out.choices[0].message && out.choices[0].message.content) || '');
+    if (!String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: JSON.stringify(out).slice(0, 600) });
   }
   text = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim().slice(0, 700);
   if (!text) return fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502);
