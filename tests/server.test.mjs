@@ -17,7 +17,7 @@ function makeD1() {
     },
   };
 }
-const env = { DB: makeD1(), TOKEN_SECRET: 'test-secret', ADMIN_PASSWORD: 'test-admin-pw' }; // 테스트 전용 비밀번호
+const env = { DB: makeD1(), DB_CONTEST: makeD1(), TOKEN_SECRET: 'test-secret', ADMIN_PASSWORD: 'test-admin-pw' }; // 테스트 전용 비밀번호
 const call = async (path, body, headers = {}) => {
   const init = body === undefined ? { method: 'GET', headers } : { method: 'POST', headers: { 'Content-Type': 'application/json', ...headers }, body: JSON.stringify(body) };
   const res = await worker.fetch(new Request('https://api.test' + path, init), env);
@@ -119,4 +119,44 @@ test('제작자 전체 백업: 비밀번호 해시는 빼고 모든 기록을 �
 test('제작자: 비밀번호가 틀리면 401, 맞으면 들어간다', async () => {
   assert.strictEqual((await call('/api/admin/check', undefined, { 'X-Admin-Password': 'wrong' })).status, 401);
   assert.strictEqual((await call('/api/admin/check', undefined, ADMIN)).status, 200);
+});
+
+test('공모전 체험판: 다른 DB를 쓰고, 토큰도 서로 통하지 않으며, 선생님은 바로 승인된다', async () => {
+  const S2 = { school_code: 'S10-7777777', school_name: '체험초등학교', grade: 5, cls: 1 };
+  let r = await call('/contest/api/student/login', { ...S2, num: 1, nickname: '심사위원', pin: '1111' });
+  assert.ok(r.body.created); const ctok = r.body.token;
+  r = await call('/api/student/login', { ...S2, num: 1, nickname: '심사위원', pin: '2222' });
+  assert.ok(r.body.created, '원래 버전 DB에는 체험판 학생이 없다');
+  const mtok = r.body.token;
+  assert.strictEqual((await call('/api/student/state', undefined, { Authorization: 'Bearer ' + ctok })).status, 401, '체험판 토큰은 원래 서버에서 안 통함');
+  assert.strictEqual((await call('/contest/api/student/state', undefined, { Authorization: 'Bearer ' + mtok })).status, 401, '원래 토큰은 체험판에서 안 통함');
+  r = await call('/contest/api/teacher/register', { ...S2, password: 'judge1234', teacher_name: '심사' });
+  assert.strictEqual(r.body.status, 'approved');
+  r = await call('/contest/api/teacher/login', { ...S2, password: 'judge1234' });
+  assert.ok(r.body.token);
+  r = await call('/contest/api/teacher/students', undefined, { Authorization: 'Bearer ' + r.body.token });
+  assert.strictEqual(r.body.students.length, 1);
+  r = await call('/api/teacher/register', { ...S2, password: 'judge1234', teacher_name: '심사' });
+  assert.strictEqual(r.body.status, 'pending', '원래 버전은 여전히 제작자 승인');
+});
+
+test('AI 선생님 설명: 체험판 + 로그인한 학생만, 같은 질문은 저장해 두고 하루 한도를 지킨다', async () => {
+  const S2 = { school_code: 'S10-7777777', school_name: '체험초등학교', grade: 5, cls: 1 };
+  const tok = (await call('/contest/api/student/login', { ...S2, num: 1, nickname: '심사위원', pin: '1111' })).body.token;
+  const Q = { type: 'ko2en', prompt: '뜻에 알맞은 영어 단어를 고르세요.', show: '상자', options: ['box', 'bag', 'bed', 'bus'], answer: 'box', given: 'bag', explain: 'box = 상자' };
+  assert.strictEqual((await call('/contest/api/ai/explain', Q, { Authorization: 'Bearer ' + tok })).status, 503, '키가 없으면 꺼짐');
+  env.ANTHROPIC_API_KEY = 'test-key'; env.AI_DAILY_LIMIT = '2';
+  let calls = 0; const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => { calls++; assert.ok(String(url).includes('anthropic')); const b = JSON.parse(init.body); assert.ok(b.system.includes('초등학생')); return new Response(JSON.stringify({ content: [{ type: 'text', text: 'box는 상자예요! 📦' }] }), { status: 200 }); };
+  try {
+    assert.strictEqual((await call('/api/ai/explain', Q, { Authorization: 'Bearer ' + tok })).status, 404, '원래 버전에는 AI 없음');
+    assert.strictEqual((await call('/contest/api/ai/explain', Q)).status, 401, '로그인 필요');
+    let r = await call('/contest/api/ai/explain', Q, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.body.text, 'box는 상자예요! 📦');
+    r = await call('/contest/api/ai/explain', Q, { Authorization: 'Bearer ' + tok });
+    assert.ok(r.body.cached); assert.strictEqual(calls, 1);
+    await call('/contest/api/ai/explain', { ...Q, given: 'bed' }, { Authorization: 'Bearer ' + tok });
+    r = await call('/contest/api/ai/explain', { ...Q, given: 'bus' }, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.status, 429, '하루 한도'); assert.strictEqual(calls, 2);
+  } finally { globalThis.fetch = realFetch; delete env.ANTHROPIC_API_KEY; delete env.AI_DAILY_LIMIT; }
 });

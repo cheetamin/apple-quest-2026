@@ -131,8 +131,7 @@
   const CREATOR = '치타민';
 
   /* 학급 서버(Cloudflare Worker) 주소. 비워 두면 기록은 각 기기에만 저장됩니다. 예: 'https://apple-quest-api.이름.workers.dev' */
-  // 공모전 체험판(root.AQ_CONTEST)은 학급 서버를 쓰지 않고 이 기기에만 저장
-  const API_BASE = root.AQ_CONTEST ? '' : 'https://apple-quest-2026.cheetamin.workers.dev';
+  const API_BASE = 'https://apple-quest-2026.cheetamin.workers.dev' + (root.AQ_CONTEST ? '/contest' : ''); // 체험판은 같은 서버의 별도 DB(/contest)
 
   root.AQ_DATA = { UNITS, STAGES, DECOR, BOSSES, DEFAULT_RULES, SURVEY, CREATOR, API_BASE };
   if (typeof module !== 'undefined') module.exports = root.AQ_DATA;

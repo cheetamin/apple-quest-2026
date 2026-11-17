@@ -2,8 +2,8 @@
 import http from 'node:http';
 import { DatabaseSync } from 'node:sqlite';
 import worker from '../server/worker.js';
-const db = new DatabaseSync(':memory:');
-const D1 = { prepare(sql) { let a = []; const st = { bind(...x) { a = x; return st; }, async first() { return db.prepare(sql).get(...a) ?? null; }, async all() { return { results: db.prepare(sql).all(...a) }; }, async run() { const r = db.prepare(sql).run(...a); return { meta: { last_row_id: Number(r.lastInsertRowid) } }; } }; return st; } };
+const mkD1 = () => { const db = new DatabaseSync(':memory:'); return { prepare(sql) { let a = []; const st = { bind(...x) { a = x; return st; }, async first() { return db.prepare(sql).get(...a) ?? null; }, async all() { return { results: db.prepare(sql).all(...a) }; }, async run() { const r = db.prepare(sql).run(...a); return { meta: { last_row_id: Number(r.lastInsertRowid) } }; } }; return st; } }; };
+const D1 = mkD1(), D1C = mkD1();
 const realFetch = globalThis.fetch;
 globalThis.fetch = async (u, o) => {
   if (String(u).startsWith('https://open.neis.go.kr')) {
@@ -13,9 +13,13 @@ globalThis.fetch = async (u, o) => {
     const row = all.filter(x => x.SCHUL_NM.includes(q));
     return new Response(JSON.stringify(row.length ? { schoolInfo: [{ head: [{ list_total_count: row.length }] }, { row }] } : { RESULT: { CODE: 'INFO-200' } }), { headers: { 'Content-Type': 'application/json' } });
   }
+  if (String(u).startsWith('https://api.anthropic.com')) { // 가짜 AI 응답
+    const b = JSON.parse(o.body); const ans = (b.messages[0].content.match(/\[정답\] (.*)/) || [])[1];
+    return new Response(JSON.stringify({ content: [{ type: 'text', text: `정답은 "${ans}"예요! 🍎 (로컬 시험용 가짜 AI 답이에요) 헷갈렸던 답과 뜻을 한 번 더 비교해 보면 금방 기억할 수 있어요.` }] }), { headers: { 'Content-Type': 'application/json' } });
+  }
   return realFetch(u, o);
 };
-const env = { DB: D1, TOKEN_SECRET: 'dev-secret' };
+const env = { DB: D1, DB_CONTEST: D1C, TOKEN_SECRET: 'dev-secret', ANTHROPIC_API_KEY: 'dev-fake' };
 http.createServer(async (req, res) => {
   const chunks = []; for await (const c of req) chunks.push(c);
   const r = await worker.fetch(new Request('http://127.0.0.1:8787' + req.url, { method: req.method, headers: req.headers, body: ['GET', 'HEAD', 'OPTIONS'].includes(req.method) ? undefined : Buffer.concat(chunks) }), env);

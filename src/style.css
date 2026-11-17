@@ -1518,3 +1518,9 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 
 .contest-badge { margin: 0 auto 10px; padding: 6px 14px; width: fit-content; border-radius: 20px; font-size: 14px; font-weight: 900; color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,.35); }
 .demo-btns .btn { min-height: 44px; font-size: 14px; }
+
+.btn.ai-btn { background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); color: #fff; }
+.s-next.ai { background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0) !important; color: #fff !important; }
+.ai-box { padding: 12px 14px; border-radius: 8px; background: #f4f0ff; box-shadow: inset 0 0 0 2px #c8b8ff; text-align: left; font-size: 15px; line-height: 1.65; }
+.ai-box p { margin: 0 0 6px; }
+.ai-wait span { display: inline-block; animation: vPulse 1s infinite; }

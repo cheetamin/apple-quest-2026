@@ -361,7 +361,7 @@
     } else {
       const ans = q.type === 'order' ? q.answer : q.type === 'match' ? '' : q.answer;
       fb.innerHTML = `<div class="feedback no"><b>아쉬워요, 괜찮아요!</b>${ans ? `정답은 <strong class="en">${esc(ans)}</strong> 예요.<br>` : ''}${esc(q.explain)}</div>
-        <div class="row-btns"><button class="btn" data-act="retry">다시 도전</button><button class="btn ghost" data-act="next">다음 ▶</button></div>`;
+        <div class="row-btns">${CONTEST ? '<button class="btn ai-btn" data-act="aiexplain">🤖 AI 선생님</button>' : ''}<button class="btn" data-act="retry">다시 도전</button><button class="btn ghost" data-act="next">다음 ▶</button></div>`;
     }
     const qp = $('#qp'); if (qp) { const c = qp.querySelector('.combo'); if (c) c.remove(); if (ok && Q.combo >= 2) { const s = document.createElement('div'); s.className = 'combo'; s.textContent = Q.combo + ' COMBO'; qp.append(s); } }
     fb.scrollIntoView({ block: 'nearest', behavior: S.settings.reduceMotion ? 'auto' : 'smooth' });
@@ -712,7 +712,7 @@
       autoNextT = setTimeout(() => { if (Q && Q.phase === 'fb' && $('#sq')) nextQ(); }, 1900);
     } else {
       pr.innerHTML = `<span class="s-fb no">아쉬워요, 괜찮아요! ${q.type !== 'match' ? `정답은 <b>${esc(q.answer)}</b>` : ''}</span>`;
-      bn.innerHTML = `<span class="s-explain">${esc(q.explain)}</span><span class="s-fbtns"><button class="s-next re" data-act="retry">다시</button><button class="s-next" data-act="next">다음 ▶</button></span>`;
+      bn.innerHTML = `<span class="s-explain">${esc(q.explain)}</span><span class="s-fbtns">${CONTEST ? '<button class="s-next ai" data-act="aiexplain">🤖 AI</button>' : ''}<button class="s-next re" data-act="retry">다시</button><button class="s-next" data-act="next">다음 ▶</button></span>`;
     }
   }
   function floatExp(g) {
@@ -890,7 +890,8 @@
       <p class="voice-note" style="margin-top:0">실제 학생들은 매일 공부해서 모으는 것들을, 체험판에서는 바로 볼 수 있게 해 두었어요.</p>
       <div class="grid2 demo-btns"><button class="btn" data-act="demo" data-v="coins">🍎 사과 +1000</button><button class="btn" data-act="demo" data-v="units">📚 이 교재 단원 모두 완료</button>
       <button class="btn" data-act="demo" data-v="evolve">✨ 다음 단계로 진화</button><button class="btn" data-act="demo" data-v="hungry">🍽️ 배고픈 상태 만들기</button>
-      <button class="btn ghost" data-act="demo" data-v="decay">😴 하루 빠진 상태 만들기</button><button class="btn ghost" data-act="demo" data-v="reset">🔄 처음부터 다시</button></div>` : `<button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
+      <button class="btn ghost" data-act="demo" data-v="decay">😴 하루 빠진 상태 만들기</button><button class="btn ghost" data-act="demo" data-v="reset">🔄 처음부터 다시</button></div>
+      <button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭 (체험판은 등록하면 바로 승인)</button>` : `<button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>`}
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
@@ -1142,6 +1143,15 @@
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
     },
+    aiexplain: async () => {
+      if (!CONTEST || !Q) return; AU.tap();
+      const q = Q.list[Q.i];
+      if (!SESS) { toast('🤖 AI 선생님은 로그인한 친구만 쓸 수 있어요.'); return; }
+      openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🤖 AI 애플 선생님</h3><div class="ai-box"><p class="ai-wait">생각하는 중이에요<span>…</span></p></div>`);
+      const r = await api('/api/ai/explain', { type: q.type, prompt: q.prompt, show: q.type === 'phonics' ? '?' + q.show : (q.show || ''), options: q.options || q.tiles || [], answer: q.answer === 'match' ? q.explain : q.answer, given: Q.given || '', explain: q.explain }, { token: SESS.token, timeout: 25000 });
+      const box = $('.sheet .ai-box'); if (!box) return;
+      box.innerHTML = r.ok ? `<p>${esc(r.text).replace(/\n/g, '<br>')}</p><p class="voice-note">AI가 만든 설명이에요. 이상한 점이 있으면 선생님께 물어보세요.</p>` : `<p>${esc(r.error || 'AI 선생님과 연결이 안 돼요.')}</p>`;
+    },
     demo: d => {
       if (!CONTEST) return;
       const v = d.v; AU.tap();
@@ -1150,7 +1160,7 @@
       if (v === 'evolve') { if (S.maxStage >= 2) { toast('이미 최종 단계(애플대왕)예요!'); return; } S.maxStage += 1; S.stage = S.maxStage; if (!S.cards.includes(S.maxStage)) S.cards.push(S.maxStage); S.exp = Math.max(S.exp, [0, 300, 900][S.maxStage]); toast(`✨ ${STAGES[S.stage].name}(으)로 진화했어요!`); }
       if (v === 'hungry') { S.full = 10; S.fullAt = now(); toast('🍽️ 배고픈 상태가 되었어요. 홈과 마을을 확인해 보세요.'); }
       if (v === 'decay') { if (!S.maxStage) { toast('먼저 진화해야 퇴화를 볼 수 있어요.'); return; } S.lastStudy = now() - 5 * 86400000; S.lastSeen = S.lastStudy; L.applyDecay(S, now()); toast('😴 며칠 빠진 상태예요. 복습 퀴즈로 되찾아 보세요!'); }
-      if (v === 'reset') { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); return; }
+      if (v === 'reset') { try { localStorage.removeItem(KEY); localStorage.removeItem(SESS_KEY); } catch (e) {} location.reload(); return; }
       save(); render();
     },
     phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
@@ -1195,7 +1205,7 @@
     speakslow: () => { const q = Q && Q.list[Q.i]; if (q) speak(q.speak, .55); },
     pick: (d, el) => {
       if (!Q || Q.phase !== 'ask') return;
-      const q = Q.list[Q.i]; const val = q.options[+d.v]; const ok = L.checkAnswer(q, val);
+      const q = Q.list[Q.i]; const val = q.options[+d.v]; const ok = L.checkAnswer(q, val); Q.given = val;
       const btns = el.parentElement.querySelectorAll('[data-act=pick]');
       btns.forEach(b => { const i = +b.dataset.v; if (q.options[i] === q.answer) b.classList.add('right'); else if (b !== el) b.classList.add('dim'); });
       el.classList.add(ok ? 'right' : 'wrong');
@@ -1208,7 +1218,7 @@
       Q.order = Q.order || []; Q.order.push(+d.v);
       const q = Q.list[Q.i];
       if (Q.order.length === q.tiles.length) {
-        const ok = L.checkAnswer(q, Q.order.map(k => q.tiles[k]).join(' '));
+        Q.given = Q.order.map(k => q.tiles[k]).join(' '); const ok = L.checkAnswer(q, Q.given);
         renderPanelKeepFb(); handle(ok);
       } else renderPanelKeepFb();
     },
@@ -1330,7 +1340,8 @@
 
   /* ================= 학급 서버: 로그인 · 자동 저장 · 선생님 탭 · 승인 ================= */
   const API = (AQ_DATA.API_BASE || '').replace(/\/+$/, '');
-  const SESS_KEY = 'aq-session-v1', TSESS_KEY = 'aq-teacher-v1', LAST_SCHOOL = 'aq-last-school';
+  const PFX = CONTEST ? 'aq-contest-' : 'aq-'; // 체험판은 로그인 정보도 따로 저장
+  const SESS_KEY = PFX + 'session-v1', TSESS_KEY = PFX + 'teacher-v1', LAST_SCHOOL = PFX + 'last-school';
   const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   let SESS = API ? lsGet(SESS_KEY) : null, TS = API ? lsGet(TSESS_KEY) : null, TV = 'login', TLIST = null, TERR = '', adminPw = '', ADMIN = null;
@@ -1546,6 +1557,7 @@
     btn.disabled = false;
     if (!r.ok) { err.textContent = r.error; return; }
     const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls });
+    if (reg && r.status === 'approved') { const lr = await api('/api/teacher/login', { school_code: body.school_code, school_name: body.school_name, grade: body.grade, cls: body.cls, password: body.password }); if (lr.ok) { toast('✅ 체험판이라 바로 승인됐어요!'); TS = { token: lr.token, school_name: lr.school_name, grade: lr.grade, cls: lr.cls, teacher_name: lr.teacher_name, export_key: lr.export_key }; lsSet(TSESS_KEY, TS); TERR = ''; loadTeach(); return; } }
     if (reg) { TV = 'login'; TERR = ''; renderTeach(); openSheet(`<h3>등록 요청을 보냈어요</h3><p class="sub">${esc(body.school_name)} ${body.grade}학년 ${body.cls}반<br>제작자가 확인하고 승인하면 같은 정보와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="closeSheet">확인</button></div>`); return; }
     TS = { token: r.token, school_name: r.school_name, grade: r.grade, cls: r.cls, teacher_name: r.teacher_name, export_key: r.export_key };
     lsSet(TSESS_KEY, TS); TERR = ''; loadTeach();
@@ -1696,7 +1708,7 @@
     t.innerHTML = `<div class="frame916"><div class="title-bg" style="background-image:url(${AQ_TITLE})"></div><div class="title-shade"></div>
       ${Array.from({ length: 12 }, (_, k) => `<i class="tspark" style="left:${(k * 37) % 100}%;top:${40 + (k * 53) % 55}%;animation-delay:${(k % 6) * .5}s"></i>`).join('')}
       <div class="title-bottom">
-        ${CONTEST ? '<p class="contest-badge">🏆 공모전 출품 체험판 · 로그인 없이 바로 체험</p>' : ''}
+        ${CONTEST ? '<p class="contest-badge">🏆 공모전 출품 체험판 · 🤖 AI 선생님</p>' : ''}
         ${SESS ? `<p class="title-hello">${esc(SESS.school_name)} ${SESS.grade}-${SESS.cls} ${SESS.num}번 ${esc(SESS.nickname)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : returning && !API ? `<p class="title-hello">${esc(S.name)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : ''}
         <button class="startgame" data-t="start"><span>게임 시작하기</span></button>
         <div class="title-links"><button class="title-sound" data-t="sound">${S.settings.sound ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'}</button>${SESS ? '<button class="title-sound" data-act="switchkid">👥 다른 친구로 시작하기</button>' : ''}</div>
