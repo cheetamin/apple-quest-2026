@@ -1515,3 +1515,6 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .s-ph small { font-size: 28px; font-weight: 800; }
 @media (prefers-reduced-motion: reduce) { .mouth.anim .m-rest, .mouth.anim .m-shape { animation: none !important; } .mouth.anim .m-rest { display: none; } }
 .reduce .mouth.anim .m-rest { display: none; } .reduce .mouth.anim .m-shape { animation: none; opacity: 1; }
+
+.contest-badge { margin: 0 auto 10px; padding: 6px 14px; width: fit-content; border-radius: 20px; font-size: 14px; font-weight: 900; color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); box-shadow: 0 0 0 2px #fff, 0 4px 10px rgba(0,0,0,.35); }
+.demo-btns .btn { min-height: 44px; font-size: 14px; }

@@ -31,7 +31,8 @@
   let adminOK = false;
   const L = AQ_LOGIC;
   const IMG = AQ_IMG;
-  const KEY = 'aq-apple-quest-v1';
+  const CONTEST = !!window.AQ_CONTEST;
+  const KEY = CONTEST ? 'aq-contest-v1' : 'aq-apple-quest-v1'; // 체험판은 저장 공간도 따로
   const $ = s => document.querySelector(s);
   const esc = t => String(t).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   let clockOffset = 0; // 서버 시간과의 차이(기기 시계를 바꿔도 퇴화 판정이 흔들리지 않게)
@@ -521,7 +522,7 @@
   function playIntro(done) {
     AU.bgm(false);
     const ov = document.createElement('div'); ov.className = 'vintro';
-    ov.innerHTML = `<div class="frame916"><video id="introVideo" playsinline webkit-playsinline preload="auto" src="intro.mp4"></video>
+    ov.innerHTML = `<div class="frame916"><video id="introVideo" playsinline webkit-playsinline preload="auto" src="${CONTEST ? '../intro.mp4' : 'intro.mp4'}"></video>
       <div class="vload" id="vload"><i></i>영상을 불러오는 중…</div>
       <button class="vplay" id="vplay" hidden aria-label="재생">▶<small>눌러서 영상 보기</small></button>
       <div class="vbar"><i id="vprog"></i></div>
@@ -885,8 +886,12 @@
       <button class="link" data-act="course">📚 교재: <b>${COURSE.label}</b> · 바꾸기</button>
       <button class="link" data-act="rename" style="margin-top:8px">이름 바꾸기 · 현재: ${esc(S.name || '모험가')}</button>
       ${SESS ? `<p class="voice-note">🏫 ${esc(SESS.school_name)} ${SESS.grade}학년 ${SESS.cls}반 ${SESS.num}번 · 기록은 학급 서버에 자동 저장돼요.</p>` : ''}
-      <button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
-      <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
+      ${CONTEST ? `<div class="section-h">🎁 체험 도우미 (심사·시연용)</div>
+      <p class="voice-note" style="margin-top:0">실제 학생들은 매일 공부해서 모으는 것들을, 체험판에서는 바로 볼 수 있게 해 두었어요.</p>
+      <div class="grid2 demo-btns"><button class="btn" data-act="demo" data-v="coins">🍎 사과 +1000</button><button class="btn" data-act="demo" data-v="units">📚 이 교재 단원 모두 완료</button>
+      <button class="btn" data-act="demo" data-v="evolve">✨ 다음 단계로 진화</button><button class="btn" data-act="demo" data-v="hungry">🍽️ 배고픈 상태 만들기</button>
+      <button class="btn ghost" data-act="demo" data-v="decay">😴 하루 빠진 상태 만들기</button><button class="btn ghost" data-act="demo" data-v="reset">🔄 처음부터 다시</button></div>` : `<button class="link" data-act="go" data-v="tch" style="margin-top:8px">👩‍🏫 선생님 탭</button>
+      <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>`}
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
   }
@@ -1136,6 +1141,17 @@
       Q.list = Q.list.map((q, k) => (k >= Q.i ? L.silentQ(q) : q));
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
+    },
+    demo: d => {
+      if (!CONTEST) return;
+      const v = d.v; AU.tap();
+      if (v === 'coins') { S.coins = (S.coins || 0) + 1000; toast('🍎 사과 1000개를 받았어요! 상점과 마을에서 써 보세요.'); }
+      if (v === 'units') { UNITS.forEach(u => { const r = L.unitRec(S, u.id); r.sets = [true, true]; if (!r.done) { r.done = true; S.fruits += 1; } }); BOSSES.forEach(b => { S.bosses[b.id] = true; }); S.studyDays = Math.max(S.studyDays || 0, 15); toast('📚 모든 단원·보스전 완료! 장식·마을 건물이 열렸어요.'); }
+      if (v === 'evolve') { if (S.maxStage >= 2) { toast('이미 최종 단계(애플대왕)예요!'); return; } S.maxStage += 1; S.stage = S.maxStage; if (!S.cards.includes(S.maxStage)) S.cards.push(S.maxStage); S.exp = Math.max(S.exp, [0, 300, 900][S.maxStage]); toast(`✨ ${STAGES[S.stage].name}(으)로 진화했어요!`); }
+      if (v === 'hungry') { S.full = 10; S.fullAt = now(); toast('🍽️ 배고픈 상태가 되었어요. 홈과 마을을 확인해 보세요.'); }
+      if (v === 'decay') { if (!S.maxStage) { toast('먼저 진화해야 퇴화를 볼 수 있어요.'); return; } S.lastStudy = now() - 5 * 86400000; S.lastSeen = S.lastStudy; L.applyDecay(S, now()); toast('😴 며칠 빠진 상태예요. 복습 퀴즈로 되찾아 보세요!'); }
+      if (v === 'reset') { try { localStorage.removeItem(KEY); } catch (e) {} location.reload(); return; }
+      save(); render();
     },
     phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
     phcell: d => { AU.tap(); closeSheet(); phonicsSheet(+d.v); },
@@ -1680,6 +1696,7 @@
     t.innerHTML = `<div class="frame916"><div class="title-bg" style="background-image:url(${AQ_TITLE})"></div><div class="title-shade"></div>
       ${Array.from({ length: 12 }, (_, k) => `<i class="tspark" style="left:${(k * 37) % 100}%;top:${40 + (k * 53) % 55}%;animation-delay:${(k % 6) * .5}s"></i>`).join('')}
       <div class="title-bottom">
+        ${CONTEST ? '<p class="contest-badge">🏆 공모전 출품 체험판 · 로그인 없이 바로 체험</p>' : ''}
         ${SESS ? `<p class="title-hello">${esc(SESS.school_name)} ${SESS.grade}-${SESS.cls} ${SESS.num}번 ${esc(SESS.nickname)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : returning && !API ? `<p class="title-hello">${esc(S.name)}의 ${STAGES[S.stage].name}이 기다리고 있어요!</p>` : ''}
         <button class="startgame" data-t="start"><span>게임 시작하기</span></button>
         <div class="title-links"><button class="title-sound" data-t="sound">${S.settings.sound ? '🔊 소리 켜짐' : '🔇 소리 꺼짐'}</button>${SESS ? '<button class="title-sound" data-act="switchkid">👥 다른 친구로 시작하기</button>' : ''}</div>

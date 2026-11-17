@@ -30,3 +30,9 @@ page = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
 shutil.copy(R / 'assets' / 'video' / 'intro.mp4', R / 'docs' / 'intro.mp4')
 (R / 'docs' / '.nojekyll').write_text('')
 print('docs/index.html (GitHub Pages) ready')
+
+# 공모전 체험판 (docs/contest/) — 학급 서버 없이 이 기기에만 저장, 출판사 교과서 기반 교재 제외
+contest = page.replace('<body>\n', '<body>\n<script>window.AQ_CONTEST=true;</script>\n', 1).replace('<title>', '<title>[체험판] ', 1)
+(R / 'docs' / 'contest').mkdir(exist_ok=True)
+(R / 'docs' / 'contest' / 'index.html').write_text(contest, encoding='utf-8')
+print('docs/contest/index.html (공모전 체험판) ready')

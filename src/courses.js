@@ -167,6 +167,7 @@
     { key: 'g6', label: '6학년', sub: '교육과정 권장 어휘', grade: 6, src: 'curriculum', units: tag(G6, 'g6') },
     { key: 'cj4', label: '천재(이) 4학년', sub: '교과서 학습지 + 응용 문장', grade: 4, src: 'textbook', units: tag(CJ4, 'cj4') },
   ];
+  if (root.AQ_CONTEST) COURSES.splice(COURSES.findIndex(c => c.key === 'cj4'), 1); // 체험판: 출판사 교과서 기반 교재 제외
   const ALL_UNITS = COURSES.flatMap(c => c.units);
 
   root.AQ_COURSES = { COURSES, ALL_UNITS };
