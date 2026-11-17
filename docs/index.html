@@ -1488,6 +1488,47 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .btn.shop-entry.vil { background: linear-gradient(180deg, #a8f0b0, #3ec06e 55%, #1f8a4a); }
 .reduce .village *, .reduce .v-card, .reduce .hungry-bubble, .reduce .s-village { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .village *, .hungry-bubble, .s-village { animation: none !important; } }
+
+/* ===== 파닉스 ===== */
+.unit.ph-unit { width: 100%; text-align: left; background: linear-gradient(180deg, rgba(255,230,140,.25), rgba(255,180,60,.12)); box-shadow: inset 0 0 0 2px #ffd45c, 0 0 12px rgba(255,212,92,.35); }
+.unit.ph-unit p { margin: 2px 0 0; font-size: 12.5px; color: #ffe9b0; }
+.ph-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; }
+.ph-grid.long, .ph-grid.team { grid-template-columns: repeat(3, 1fr); }
+.ph-cell { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 2px 6px; border-radius: 4px; color: #3a2300;
+  background: linear-gradient(180deg, #fffdf2, #f6e8c0); box-shadow: inset 0 0 0 2px #e8c060, 0 3px 0 #b8862a, 0 4px 8px rgba(0,0,0,.25); }
+.ph-cell b { font-family: 'Barlow', var(--f-display), sans-serif; font-weight: 800; font-size: 25px; letter-spacing: .04em; color: #c2302a; line-height: 1.05; }
+.ph-cell .e { font-size: 22px; line-height: 1.1; }
+.ph-cell small { font-size: 12px; font-weight: 800; color: #5a3a1a; }
+.ph-cell i { font-style: normal; font-size: 11px; color: #8a6a3a; }
+.ph-cell:active { transform: translateY(2px); box-shadow: inset 0 0 0 2px #e8c060, 0 1px 0 #b8862a; }
+.ph-detail { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 4px 0 8px; }
+.ph-big { font-family: 'Barlow', var(--f-display), sans-serif; font-weight: 800; font-size: 64px; line-height: 1; color: #c2302a; text-shadow: 0 3px 0 rgba(0,0,0,.12); }
+.ph-sound { display: flex; flex-direction: column; }
+.ph-sound b { font-size: 26px; font-family: 'Barlow', sans-serif; }
+.ph-sound span { font-size: 15px; font-weight: 800; color: var(--ink-soft); }
+.ph-mouth { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 6px; background: #fff7ea; box-shadow: inset 0 0 0 2px #f0d8a8; text-align: left; }
+.ph-mouth svg { flex: 0 0 132px; width: 132px; height: auto; }
+.ph-mouth b { font-size: 15px; }
+.ph-mouth p { margin: 4px 0 0; font-size: 13.5px; line-height: 1.5; }
+.ph-mouth p.sub { font-size: 12px; color: var(--ink-soft); }
+.mouth.anim .m-rest { animation: mRest 2.4s ease-in-out infinite; }
+.mouth.anim .m-shape { animation: mShape 2.4s ease-in-out infinite; }
+@keyframes mRest { 0%, 20% { opacity: 1; } 35%, 85% { opacity: 0; } 100% { opacity: 1; } }
+@keyframes mShape { 0%, 20% { opacity: 0; } 35%, 85% { opacity: 1; } 100% { opacity: 0; } }
+.mouth:not(.anim) .m-rest { display: none; }
+.ph-ex { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 10px 0; }
+.ph-ex .e { font-size: 40px; }
+.ph-ex .w { font-family: 'Barlow', sans-serif; font-size: 36px; font-weight: 700; letter-spacing: .04em; }
+.ph-ex em { font-style: normal; color: #e2302a; text-decoration: underline; text-underline-offset: 5px; }
+.ph-word { font-family: 'Barlow', sans-serif; font-weight: 700; letter-spacing: .06em; }
+.ph-blank { display: inline-block; min-width: 1.1em; margin-right: 2px; padding: 0 6px; border-radius: 6px; color: #fff; background: linear-gradient(180deg, #ff8a6a, #e2453a); box-shadow: inset 0 -3px 0 rgba(0,0,0,.2); }
+.ph-q .ph-word { font-size: 34px; }
+.ph-q .ph-hint, .s-ph small { display: block; font-size: 14px; color: var(--ink-soft); margin-top: 4px; }
+.s-ph { display: flex; flex-direction: column; align-items: center; line-height: 1.1; }
+.s-ph .ph-word { font-size: 64px; color: #3a2300; }
+.s-ph small { font-size: 28px; font-weight: 800; }
+@media (prefers-reduced-motion: reduce) { .mouth.anim .m-rest, .mouth.anim .m-shape { animation: none !important; } .mouth.anim .m-rest { display: none; } }
+.reduce .mouth.anim .m-rest { display: none; } .reduce .mouth.anim .m-shape { animation: none; opacity: 1; }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -2352,6 +2393,106 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   root.AQ_VILLAGE = { DEFS, FOODS, HOUSES, BUILDINGS, HOUSE_SPOT, villager, VILLAGERS };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
+<script>/* 파닉스 표 — 글자 소리 · 예시 단어 · 입 모양(SVG) */
+(function (root) {
+  'use strict';
+  // 입 모양 9가지 (앞에서 본 모습)
+  const MOUTH = {
+    closed: { name: '입술 꾹', tip: '두 입술을 꼭 붙였다가 "퍽" 하고 터뜨리듯 소리 내요. (m은 입을 붙인 채 코로 "음~")' },
+    fv: { name: '윗니로 아랫입술', tip: '윗니를 아랫입술에 살짝 올리고 바람을 "프~" 하고 내보내요. 한국어 "ㅍ"와 달라요!' },
+    th: { name: '혀를 이 사이로', tip: '혀끝을 윗니와 아랫니 사이로 살짝 내밀고 바람을 내보내요. 거울로 혀가 보이면 성공!' },
+    tip: { name: '혀끝을 윗잇몸에', tip: '입을 살짝 벌리고 혀끝을 윗니 뒤 잇몸에 붙였다가 떼면서 소리 내요.' },
+    round: { name: '입술 동그랗게', tip: '입술을 동그랗게 오므려 앞으로 내밀어요. 뽀뽀하는 입 모양처럼!' },
+    pucker: { name: '입술 앞으로 쭉', tip: '입술을 네모나게 앞으로 쭉 내밀고, 이는 살짝 붙여요. "쉬~" 할 때 입 모양이에요.' },
+    smile: { name: '활짝 웃는 입', tip: '입꼬리를 양옆으로 쭉 당겨 웃는 입을 만들고, 윗니와 아랫니를 가까이 해요.' },
+    open: { name: '입 크게 벌리기', tip: '입을 크게 아래로 벌리고, 혀는 아래에 편하게 두어요.' },
+    back: { name: '혀 뒤쪽을 올리기', tip: '입을 조금 벌리고, 혀 뒤쪽을 입천장 안쪽에 붙였다가 떼면서 소리 내요.' },
+  };
+  // [글자, 소리 표기, 한국어로 비슷한 소리, 예시 단어, 그림, 입 모양, 한 줄 팁]
+  const ALPHABET = [
+    ['A a', '/æ/', '애', 'apple', '🍎', 'open', '입을 옆으로 넓게 벌리며 "애"'],
+    ['B b', '/b/', '브', 'bus', '🚌', 'closed', ''],
+    ['C c', '/k/', '크', 'cat', '🐱', 'back', ''],
+    ['D d', '/d/', '드', 'dog', '🐶', 'tip', ''],
+    ['E e', '/e/', '에', 'egg', '🥚', 'smile', '입을 살짝 옆으로 벌리며 짧게 "에"'],
+    ['F f', '/f/', '프(f)', 'fish', '🐟', 'fv', ''],
+    ['G g', '/g/', '그', 'goat', '🐐', 'back', ''],
+    ['H h', '/h/', '흐', 'hat', '🎩', 'open', '입을 벌리고 "하~" 하고 입김을 내보내요.'],
+    ['I i', '/ɪ/', '이(짧게)', 'igloo', '🛖', 'smile', '힘을 빼고 짧게 "이"'],
+    ['J j', '/dʒ/', '쥐', 'juice', '🧃', 'pucker', ''],
+    ['K k', '/k/', '크', 'king', '👑', 'back', ''],
+    ['L l', '/l/', '을', 'lion', '🦁', 'tip', '혀끝을 윗잇몸에 붙인 채로 "을~"'],
+    ['M m', '/m/', '음', 'moon', '🌙', 'closed', ''],
+    ['N n', '/n/', '은', 'nest', '🪺', 'tip', ''],
+    ['O o', '/ɑ/', '아', 'octopus', '🐙', 'open', '입을 크게 동그랗게 벌리며 "아"'],
+    ['P p', '/p/', '프', 'pig', '🐷', 'closed', ''],
+    ['Q q', '/kw/', '쿠', 'queen', '👸', 'round', 'q는 거의 늘 u와 함께 "qu(쿠)"로 써요.'],
+    ['R r', '/r/', '(우)르', 'rabbit', '🐰', 'pucker', '입술을 조금 내밀고 혀끝은 어디에도 닿지 않게 말아요.'],
+    ['S s', '/s/', '스', 'sun', '☀️', 'smile', ''],
+    ['T t', '/t/', '트', 'tiger', '🐯', 'tip', ''],
+    ['U u', '/ʌ/', '어', 'umbrella', '☂️', 'open', '입을 조금 벌리고 짧게 "어"'],
+    ['V v', '/v/', '브(v)', 'violin', '🎻', 'fv', '윗니를 아랫입술에 대고 떨리게 "브~"'],
+    ['W w', '/w/', '우', 'watch', '⌚', 'round', ''],
+    ['X x', '/ks/', '크스', 'box', '📦', 'smile', 'x는 주로 단어 끝에서 "크스" 소리가 나요.'],
+    ['Y y', '/j/', '이', 'yo-yo', '🪀', 'smile', ''],
+    ['Z z', '/z/', '즈', 'zebra', '🦓', 'smile', '"스"처럼 하되 목이 떨리게 "즈~"'],
+  ];
+  const LONG = [
+    ['a_e', '/eɪ/', '에이', 'cake', '🎂', 'smile', '끝의 e는 소리가 안 나고, 앞의 a가 이름 소리 "에이"가 돼요. (매직 e)'],
+    ['i_e', '/aɪ/', '아이', 'kite', '🪁', 'open', '매직 e가 i를 "아이"로 바꿔요.'],
+    ['o_e', '/oʊ/', '오우', 'bone', '🦴', 'round', '매직 e가 o를 "오우"로 바꿔요.'],
+    ['u_e', '/juː/', '유', 'cube', '🧊', 'round', '매직 e가 u를 "유"로 바꿔요.'],
+    ['ee', '/iː/', '이~', 'bee', '🐝', 'smile', 'e가 두 개면 길게 "이~"'],
+    ['ea', '/iː/', '이~', 'tea', '🍵', 'smile', 'ea도 대부분 길게 "이~"'],
+    ['ai', '/eɪ/', '에이', 'rain', '🌧️', 'smile', '단어 가운데에서 "에이"'],
+    ['ay', '/eɪ/', '에이', 'play', '🛝', 'smile', '단어 끝에서 "에이"'],
+    ['oa', '/oʊ/', '오우', 'boat', '⛵', 'round', ''],
+    ['oo', '/uː/', '우~', 'moon', '🌙', 'round', 'book처럼 짧게 "우"가 되기도 해요.'],
+  ];
+  const TEAMS = [
+    ['sh', '/ʃ/', '쉬', 'ship', '🚢', 'pucker', '"쉿!" 조용히 할 때 소리예요.'],
+    ['ch', '/tʃ/', '취', 'chick', '🐥', 'pucker', ''],
+    ['th', '/θ/', '쓰(th)', 'three', '3️⃣', 'th', ''],
+    ['wh', '/w/', '우', 'whale', '🐳', 'round', 'h는 거의 들리지 않아요.'],
+    ['ph', '/f/', '프(f)', 'phone', '📱', 'fv', 'ph는 f와 같은 소리예요.'],
+    ['ck', '/k/', '크', 'duck', '🦆', 'back', '짧은 모음 뒤, 단어 끝에 와요.'],
+    ['ng', '/ŋ/', '응', 'king', '👑', 'back', '혀 뒤쪽을 올리고 코로 "응"'],
+    ['ar', '/ɑːr/', '아알', 'car', '🚗', 'open', ''],
+    ['or', '/ɔːr/', '오얼', 'corn', '🌽', 'round', ''],
+    ['er', '/ər/', '얼', 'tiger', '🐯', 'pucker', 'ir, ur도 같은 소리예요. (bird, nurse)'],
+    ['ou', '/aʊ/', '아우', 'house', '🏠', 'open', ''],
+    ['ow', '/aʊ/', '아우', 'cow', '🐄', 'open', 'snow처럼 "오우"가 되기도 해요.'],
+  ];
+  const mk = ([g, ipa, ko, word, e, mouth, tip]) => ({ g, ipa, ko, word, e, mouth, tip });
+  const GROUPS = [
+    { key: 'abc', name: '알파벳 소리', items: ALPHABET.map(mk) },
+    { key: 'long', name: '긴 모음', items: LONG.map(mk) },
+    { key: 'team', name: '짝꿍 글자', items: TEAMS.map(mk) },
+  ];
+
+  // 입 모양 그림 (앞에서 본 얼굴 아래쪽)
+  const L = '#c8324a', LS = '#3b2314';
+  function mouthSVG(key, anim = true) {
+    const skin = '<ellipse cx="80" cy="64" rx="76" ry="58" fill="#ffe0c8"/><ellipse cx="34" cy="50" rx="12" ry="7" fill="#ffb0a8" opacity=".55"/><ellipse cx="126" cy="50" rx="12" ry="7" fill="#ffb0a8" opacity=".55"/>';
+    const teethTop = (y, w = 44) => `<path d="M${80 - w} ${y} Q80 ${y - 4} ${80 + w} ${y} L${80 + w - 2} ${y + 9} Q80 ${y + 6} ${80 - w + 2} ${y + 9}Z" fill="#fff" stroke="#d8cfc8" stroke-width="1"/>`;
+    const teethBot = (y, w = 40) => `<path d="M${80 - w} ${y} Q80 ${y + 4} ${80 + w} ${y} L${80 + w - 2} ${y - 8} Q80 ${y - 5} ${80 - w + 2} ${y - 8}Z" fill="#fff" stroke="#d8cfc8" stroke-width="1"/>`;
+    const S = {
+      closed: `<path d="M38 64 Q80 54 122 64 Q80 70 38 64Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M38 64 Q80 76 122 64 Q80 82 38 64Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/><path d="M40 64 Q80 66 120 64" stroke="${LS}" stroke-width="2.5"/>`,
+      fv: `<path d="M34 56 Q80 40 126 56 Q80 52 34 56Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M36 56 Q80 50 124 56 L120 70 Q80 66 40 70Z" fill="#5a1a24"/>${teethTop(56, 40)}<path d="M36 70 Q80 62 124 70 Q80 92 36 70Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`,
+      th: `<path d="M32 54 Q80 38 128 54 Q80 50 32 54Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M34 54 Q80 48 126 54 Q126 80 80 82 Q34 80 34 54Z" fill="#5a1a24"/>${teethTop(54, 40)}${teethBot(80, 36)}<path d="M54 66 Q80 56 106 66 Q104 78 80 78 Q56 78 54 66Z" fill="#ff7a8a" stroke="${LS}" stroke-width="1.6"/><path d="M80 62 L80 72" stroke="#d84a5a" stroke-width="1.4"/><path d="M34 80 Q80 102 126 80 Q80 90 34 80Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`,
+      tip: `<path d="M34 52 Q80 36 126 52 Q80 48 34 52Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M36 52 Q80 46 124 52 Q122 82 80 84 Q38 82 36 52Z" fill="#5a1a24"/>${teethTop(52, 40)}<path d="M52 82 Q54 64 80 62 Q106 64 108 82Z" fill="#ff7a8a" stroke="${LS}" stroke-width="1.6"/><path d="M68 64 Q80 58 92 64" stroke="#ff9aa8" stroke-width="3" fill="none"/><path d="M36 82 Q80 104 124 82 Q80 92 36 82Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`,
+      round: `<ellipse cx="80" cy="66" rx="24" ry="22" fill="${L}" stroke="${LS}" stroke-width="2"/><ellipse cx="80" cy="66" rx="12" ry="12" fill="#5a1a24"/><path d="M62 54 Q80 46 98 54" stroke="#ff9aa8" stroke-width="3" fill="none" stroke-linecap="round"/>`,
+      pucker: `<path d="M48 52 Q80 40 112 52 Q118 66 112 80 Q80 92 48 80 Q42 66 48 52Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M60 60 Q80 56 100 60 Q102 68 100 74 Q80 78 60 74 Q58 68 60 60Z" fill="#5a1a24"/><path d="M62 61 Q80 58 98 61 L97 67 Q80 65 63 67Z" fill="#fff"/><path d="M63 73 Q80 75 97 73 L97 69 Q80 70 63 69Z" fill="#fff"/>`,
+      smile: `<path d="M24 58 Q80 44 136 58 Q80 54 24 58Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M26 58 Q80 52 134 58 Q122 76 80 78 Q38 76 26 58Z" fill="#5a1a24"/>${teethTop(58, 48)}<path d="M34 66 Q80 72 126 66 L124 60 Q80 66 36 60Z" fill="#fff"/><path d="M26 58 Q80 92 134 58 Q122 80 80 82 Q38 80 26 58Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/><path d="M22 56 q-4 -2 -6 -6 M138 56 q4 -2 6 -6" stroke="${LS}" stroke-width="2" stroke-linecap="round"/>`,
+      open: `<path d="M40 44 Q80 30 120 44 Q80 40 40 44Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M40 44 Q80 38 120 44 Q124 96 80 104 Q36 96 40 44Z" fill="#5a1a24"/>${teethTop(44, 36)}<path d="M50 94 Q56 78 80 76 Q104 78 110 94 Q96 104 80 104 Q64 104 50 94Z" fill="#ff7a8a" stroke="${LS}" stroke-width="1.6"/><path d="M40 44 Q36 96 80 104 Q124 96 120 44 Q130 110 80 114 Q30 110 40 44Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`,
+      back: `<path d="M38 50 Q80 36 122 50 Q80 46 38 50Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M40 50 Q80 44 120 50 Q120 86 80 90 Q40 86 40 50Z" fill="#5a1a24"/>${teethTop(50, 38)}<path d="M48 86 Q50 70 80 72 Q110 70 112 86 Q98 92 80 92 Q62 92 48 86Z" fill="#ff7a8a" stroke="${LS}" stroke-width="1.6"/><path d="M60 62 Q80 54 100 62" stroke="#ff7a8a" stroke-width="6" fill="none" stroke-linecap="round" opacity=".7"/><path d="M40 50 Q40 86 80 90 Q120 86 120 50 Q126 98 80 100 Q34 98 40 50Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`,
+    };
+    const rest = `<path d="M44 64 Q80 58 116 64 Q80 68 44 64Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M44 64 Q80 74 116 64 Q80 78 44 64Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`;
+    return `<svg viewBox="0 0 160 124" class="mouth ${anim ? 'anim' : ''}" aria-hidden="true">${skin}<g class="m-rest">${rest}</g><g class="m-shape">${S[key] || S.open}</g></svg>`;
+  }
+  root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG };
+})(typeof globalThis !== 'undefined' ? globalThis : this);
+</script>
 <script>/* 애플왕의 진화 모험 — 게임 규칙(순수 함수). 브라우저와 node 테스트에서 함께 사용합니다.
  * 서버(Cloudflare Workers) 단계에서는 이 파일의 보상·진화·퇴화 계산을 서버로 옮겨 검증합니다.
  */
@@ -2472,7 +2613,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function completeSet(s, unitId, setIdx, ok, total, now) {
     const u = unitRec(s, unitId);
     u.ok += ok; u.n += total; u.last = now;
-    const passed = ok >= s.rules.setPass;
+    const passed = ok >= Math.ceil(total * s.rules.setPass / 5); // 기준은 5문제 중 몇 개 → 문제 수에 맞춰 비율로 (6문제면 5개)
     if (passed) { u.sets[setIdx] = true; s.coins = (s.coins || 0) + 3 + (hungerNow(s, now) >= 50 ? 2 : 0); } // 배부르면 보너스 +2
     let newlyDone = false;
     if (!u.done && u.sets.every(Boolean)) { u.done = true; newlyDone = true; s.fruits += 1; s.coins += 10; }
@@ -2523,6 +2664,31 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 
   function tokenize(sent) { return sent.replace(/’/g, "'").split(/\s+/).filter(Boolean); }
 
+  /* 파닉스: 단어의 첫소리 글자 고르기 */
+  const PH_TEAMS = ['sh', 'ch', 'th', 'wh', 'ph'];
+  const PH_SAME = [['c', 'k', 'q'], ['f', 'ph'], ['w', 'wh'], ['s', 'c'], ['j', 'g']]; // 같은 소리가 날 수 있는 글자는 함께 보기로 내지 않음
+  const PH_NEAR = { b: ['d', 'p', 'v'], d: ['b', 't', 'g'], p: ['b', 'f', 't'], t: ['d', 'th', 'p'], f: ['v', 'p', 'th'], v: ['f', 'b', 'w'], m: ['n', 'b', 'w'], n: ['m', 'l', 'd'],
+    l: ['r', 'n', 'd'], r: ['l', 'w', 'n'], s: ['sh', 'z', 'th'], z: ['s', 'j', 'ch'], sh: ['s', 'ch', 'th'], ch: ['sh', 'j', 't'], th: ['t', 's', 'f'], j: ['ch', 'z', 'd'],
+    g: ['k', 'd', 'b'], k: ['g', 't', 'h'], c: ['g', 't', 'd'], q: ['g', 'p', 'd'], h: ['f', 'w', 'k'], w: ['v', 'r', 'y'], y: ['w', 'j', 'l'], wh: ['v', 'h', 'sh'], ph: ['p', 'b', 'v'],
+    a: ['e', 'i', 'o'], e: ['a', 'i', 'u'], i: ['e', 'a', 'o'], o: ['a', 'u', 'e'], u: ['o', 'a', 'i'], x: ['s', 'z', 'k'] };
+  const PH_ALL = 'b c d f g h j k l m n p r s t v w y z a e i o u sh ch th wh'.split(' ');
+  function phonicsOnset(word) {
+    const w = String(word || '');
+    if (!/^[a-z]{3,10}$/.test(w)) return null;
+    if (/^(kn|wr|gn|ps|hour|hon|ce|ci|cy|ge|gi|gy)/.test(w)) return null; // 소리 안 나는 글자 · 부드러운 c/g는 빼기
+    const t = PH_TEAMS.find(x => w.startsWith(x));
+    return t || w[0];
+  }
+  function phonicsOptions(ans, r) {
+    const same = new Set([ans]); PH_SAME.forEach(g => { if (g.includes(ans)) g.forEach(x => same.add(x)); });
+    const ok = x => !same.has(x) && !PH_SAME.some(g => g.includes(x) && g.some(y => same.has(y)));
+    const ds = [];
+    for (const x of shuffle(PH_NEAR[ans] || [], r)) if (ds.length < 3 && ok(x) && !ds.includes(x)) ds.push(x);
+    for (const x of shuffle(PH_ALL, r)) { if (ds.length >= 3) break; if (ok(x) && !ds.includes(x) && /[aeiou]/.test(x) === /^[aeiou]$/.test(ans)) ds.push(x); }
+    for (const x of shuffle(PH_ALL, r)) { if (ds.length >= 3) break; if (ok(x) && !ds.includes(x)) ds.push(x); }
+    return shuffle([ans, ...ds], r);
+  }
+
   function makeQ(type, unit, item, ctx, r) {
     const pool = ctx.pool;
     const base = { type, unit: unit.id, item, kind: ctx.kind };
@@ -2533,6 +2699,11 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
       const opts = shuffle([item, ...ds], r).map(w => w.en);
       const prompt = type === 'pic' ? '그림에 알맞은 영어 단어를 고르세요.' : type === 'ko2en' ? '뜻에 알맞은 영어 단어를 고르세요.' : '잘 듣고 들리는 단어를 고르세요.';
       return { ...base, id, prompt, show: type === 'pic' ? item.e : type === 'ko2en' ? item.ko : '', speak: item.en, options: opts, answer: item.en, explain: `${item.en} = ${item.ko}` };
+    }
+    if (type === 'phonics') {
+      const on = phonicsOnset(item.en);
+      if (!on) return null;
+      return { ...base, id, prompt: '빈칸에 들어갈 첫소리 글자를 고르세요.', show: item.en.slice(on.length), blankLen: on.length, hint: `${item.e ? item.e + ' ' : ''}${item.ko}`, speak: item.en, options: phonicsOptions(on, r), answer: on, explain: `${on} + ${item.en.slice(on.length)} = ${item.en} (${item.ko})` };
     }
     if (type === 'en2ko') {
       const ds = pickDistractors(pool, item, 3, r, '');
@@ -2578,10 +2749,10 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     return null;
   }
 
-  // 세트마다 단어 2~3문제 + 문장(교과서 문형·응용 문장) 2~3문제
+  // 세트마다 단어 2~3문제 + 문장(교과서 문형·응용 문장) 2~3문제 + 파닉스 1문제
   const SET_PLANS = [
-    ['pic', 'blank', 'ko2en', 'order', 'listenSent'],
-    ['blank', 'listen', 'order', 'match', 'listenSent'],
+    ['pic', 'blank', 'phonics', 'ko2en', 'order', 'listenSent'],
+    ['blank', 'listen', 'phonics', 'order', 'match', 'listenSent'],
   ];
 
   function buildSet(UNITS, unitId, setIdx, seed) {
@@ -2609,6 +2780,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
         for (const w of words) {
           if (used.has(w.en)) continue;
           if (type === 'pic' && !w.e) continue;
+          if (type === 'phonics' && !phonicsOnset(w.en)) continue;
           q = makeQ(type, unit, w, { ...ctx, pool: unit.words.length >= 6 ? unit.words : pool }, r);
           if (!q && unit.words.length < 6) q = makeQ(type, unit, w, { ...ctx, pool }, r);
           if (q) { used.add(w.en); break; }
@@ -2724,7 +2896,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     return true;
   }
 
-  root.AQ_LOGIC = { buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  root.AQ_LOGIC = { phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;
@@ -2992,16 +3164,16 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function qtopHTML() {
     let tag, dots = '', label;
     if (Q.mode === 'set') {
-      const u = S.units[Q.unit]; const off = Q.setIdx * 5;
+      const u = S.units[Q.unit]; const N = Q.list.length, off = Q.setIdx * N;
       tag = `<span class="lesson">Lesson ${unitNo(Q.unit)}</span>`;
-      for (let k = 0; k < 10; k++) {
+      for (let k = 0; k < N * 2; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : '';
-        else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
+        else if (k >= off + N) c = u && u.sets[1] ? 'ok' : '';
         else { const r = Q.results[k - off]; c = r || (k - off === Q.i ? 'cur' : ''); }
         dots += `<i class="${c}"></i>`;
       }
-      label = `${Math.min(off + Q.i + 1, 10)} / 10`;
+      label = `${Math.min(off + Q.i + 1, N * 2)} / ${N * 2}`;
     } else {
       tag = Q.mode === 'boss' ? `<span class="lesson boss">Boss</span>` : `<span class="lesson review">Review</span>`;
       for (let k = 0; k < Q.list.length; k++) dots += `<i class="${Q.results[k] || (k === Q.i ? 'cur' : '')}"></i>`;
@@ -3015,6 +3187,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     switch (q.type) {
       case 'pic': return `<div class="qshow banner"><span class="pic">${q.show}</span></div>${opts(q.options)}`;
       case 'ko2en': return `<div class="qshow banner"><span class="ko">${esc(q.show)}</span></div>${opts(q.options)}`;
+      case 'phonics': return `<div class="qshow banner ph-q"><span class="ph-word"><b class="ph-blank">${'?'.repeat(q.blankLen)}</b>${esc(q.show)}</span><small class="ph-hint">${esc(q.hint)}</small></div>${opts(q.options)}`;
       case 'en2ko': return `<div class="qshow banner"><span class="sent">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="side-pic">${q.item.e}</span>` : ''}</div>${opts(q.options, true)}`;
       case 'listen': return `<div class="qshow banner">${listen}</div>${opts(q.options)}`;
       case 'listenSent': return `<div class="qshow banner">${listen}</div>${opts(q.options, false, true)}`;
@@ -3277,7 +3450,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -3289,7 +3462,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
   }
   function autoQ(unitId) {
@@ -3379,15 +3552,15 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function stageTop() {
     let tag, dots = '', label;
     if (Q.mode === 'set') {
-      const u = S.units[Q.unit], off = Q.setIdx * 5;
+      const u = S.units[Q.unit], N = Q.list.length, off = Q.setIdx * N;
       tag = `Lesson ${unitNo(Q.unit)}`;
-      for (let k = 0; k < 10; k++) {
+      for (let k = 0; k < N * 2; k++) {
         let c = '';
-        if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
+        if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + N) c = u && u.sets[1] ? 'ok' : '';
         else { const r = Q.results[k - off]; c = r || (k - off === Q.i && Q.phase !== 'result' ? 'cur' : ''); }
         dots += `<i class="${c}"></i>`;
       }
-      label = `${Math.min(off + Q.i + 1, 10)}/10`;
+      label = `${Math.min(off + Q.i + 1, N * 2)}/${N * 2}`;
     } else {
       tag = Q.mode === 'boss' ? 'Boss' : 'Review';
       for (let k = 0; k < Q.list.length; k++) dots += `<i class="${Q.results[k] || (k === Q.i ? 'cur' : '')}"></i>`;
@@ -3408,6 +3581,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     switch (q.type) {
       case 'pic': banner = `<span class="s-pic">${q.show}</span>`; opts = L4(q.options); break;
       case 'ko2en': banner = `<span class="s-ko">${esc(q.show)}</span>`; opts = L4(q.options); break;
+      case 'phonics': banner = `<span class="s-ph"><span class="ph-word"><b class="ph-blank">${'?'.repeat(q.blankLen)}</b>${esc(q.show)}</span><small>${esc(q.hint)}</small></span>`; opts = L4(q.options); break;
       case 'en2ko': banner = `<span class="s-sent" style="font-size:48px">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="s-side">${q.item.e}</span>` : ''}`; opts = L4(q.options, true); break;
       case 'listen': case 'listenSent': banner = listen; opts = L4(q.options); break;
       case 'ko2sent': banner = `<span class="s-ko" style="font-size:${q.show.length > 14 ? 34 : 42}px">${esc(q.show)}</span>`; opts = L4(q.options); break;
@@ -3493,6 +3667,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   }
   function renderUnits() {
     let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>📚 ${COURSE.label} · <button class="linkish" data-act="course">교재 바꾸기</button></p></div></div>`;
+    html += `<div class="sem">시작하기 전에</div><div class="units"><button class="unit ph-unit" data-act="go" data-v="phonics"><span class="num">🔤<b>0</b></span><span style="min-width:0"><h3>Phonics · 파닉스 표</h3><p>글자를 누르면 소리와 입 모양을 볼 수 있어요</p></span><span class="st">▶</span></button></div>`;
     const groups = COURSE.key === 'cj4' ? [[1, '1학기'], [2, '2학기']] : [[0, `${COURSE.label} · ${COURSE.sub}`]];
     for (const [sem, gl] of groups) {
       html += `<div class="sem">${gl}</div><div class="units">`;
@@ -3510,8 +3685,8 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     const rec = S.units[id];
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${u.no}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
       <div class="grid2"><button class="btn ghost" data-act="go" data-v="study" data-u="${id}">🎧 공부방<small>단어·문장 카드</small></button>
-      <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·듣기·빈칸</small></button>
-      <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>문장 듣기·순서·짝맞추기</small></button>
+      <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·빈칸·파닉스</small></button>
+      <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>듣기·순서·짝맞추기·파닉스</small></button>
       <button class="btn blue" data-act="review">🔁 복습 퀴즈<small>경험치 +${S.rules.expReview}</small></button></div>
       <p class="sub" style="margin-top:12px">${u.words.slice(0, 8).map(w => w.en).join(' · ')}${u.words.length > 8 ? ' …' : ''}</p>`);
   }
@@ -3524,7 +3699,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 
   function renderQuizHub() {
     const done = L.doneIds(S);
-    let html = `<div class="screen-title"><div><h2>퀴즈 도전</h2><p>5문제씩 나눠서 풀어요. 틀려도 경험치는 줄지 않아요.</p></div></div>`;
+    let html = `<div class="screen-title"><div><h2>퀴즈 도전</h2><p>6문제씩(파닉스 1문제 포함) 나눠서 풀어요. 틀려도 경험치는 줄지 않아요.</p></div></div>`;
     html += `<div class="glass" style="margin-bottom:10px;color:#fff"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:34px">🔁</span><div style="flex:1"><b style="font-family:var(--f-display);font-size:17px;font-weight:400">복습 퀴즈</b><div style="font-size:12.5px;color:#c9d6f0">완료한 단원 + 틀린 단어 · 정답마다 +${S.rules.expReview} EXP</div></div><button class="btn blue" data-act="review" style="flex:0 0 auto">시작</button></div></div>`;
     html += `<div class="units">` + BOSSES.map(bossRowHTML).join('') + `</div><div class="sem">단원별 퀴즈</div><div class="units">`;
     for (const u of UNITS) {
@@ -3619,6 +3794,33 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
+  }
+
+  /* 파닉스 표 */
+  const PH = AQ_PHONICS; let phGroup = 'abc';
+  function renderPhonics() {
+    const g = PH.GROUPS.find(x => x.key === phGroup) || PH.GROUPS[0];
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="units" aria-label="뒤로">←</button><div><h2>파닉스 표</h2><p>글자를 누르면 소리를 듣고 입 모양을 따라 할 수 있어요</p></div></div>
+      <div class="v-tabs">${PH.GROUPS.map(x => `<button class="${x.key === g.key ? 'on' : ''}" data-act="phgroup" data-v="${x.key}">${x.name}</button>`).join('')}</div>
+      <div class="ph-grid ${g.key}">${g.items.map((it, k) => `<button class="ph-cell" data-act="phcell" data-v="${k}"><b>${esc(it.g)}</b><span class="e">${it.e}</span><small>${esc(it.word)}</small><i>${esc(it.ko)}</i></button>`).join('')}</div>
+      <p class="voice-note">${g.key === 'abc' ? '글자마다 이름(에이, 비…)과 소리(애, 브…)가 달라요. 단어 속에서는 "소리"로 읽어요!' : g.key === 'long' ? '모음 뒤에 e가 붙거나 모음 두 개가 짝꿍이 되면, 모음이 자기 이름 소리를 내요.' : '두 글자가 만나서 새로운 한 소리를 만들어요.'} 🔊 발음은 기기의 영어 음성으로 들려줘요.</p>`;
+  }
+  function phSay(it, slow) {
+    const name = it.g.length <= 3 && it.g.includes(' ') ? it.g.split(' ')[0] + '.' : '';
+    speak(`${name} ${it.word}. ${it.word}.`, slow ? 0.55 : 0.8);
+  }
+  function phonicsSheet(k) {
+    const g = PH.GROUPS.find(x => x.key === phGroup), it = g.items[k]; if (!it) return;
+    const m = PH.MOUTH[it.mouth];
+    const word = it.word, idx = g.key === 'long' && it.g.includes('_') ? -1 : word.indexOf(it.g.split(' ').pop().toLowerCase());
+    const wordHTML = idx >= 0 ? `${esc(word.slice(0, idx))}<em>${esc(word.slice(idx, idx + it.g.split(' ').pop().length))}</em>${esc(word.slice(idx + it.g.split(' ').pop().length))}` : esc(word).replace(/[aeiou](?=[^aeiou]e$)|e$/g, c => `<em>${c}</em>`);
+    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
+      <div class="ph-detail"><div class="ph-big">${esc(it.g)}</div><div class="ph-sound"><b>${esc(it.ipa)}</b><span>"${esc(it.ko)}" 소리</span></div></div>
+      <div class="ph-mouth">${PH.mouthSVG(it.mouth, !S.settings.reduceMotion)}<div><b>👄 ${m.name}</b><p>${esc(it.tip || m.tip)}</p>${it.tip ? `<p class="sub">${esc(m.tip)}</p>` : ''}</div></div>
+      <div class="ph-ex"><span class="e">${it.e}</span><span class="w">${wordHTML}</span></div>
+      <div class="grid2"><button class="btn" data-act="phsay" data-v="${k}">🔊 소리 듣기</button><button class="btn ghost" data-act="phsay" data-v="${k}" data-slow="1">🐢 천천히</button></div>
+      <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="phcell" data-v="${(k + g.items.length - 1) % g.items.length}">◀ 이전</button><button class="btn ghost" data-act="phcell" data-v="${(k + 1) % g.items.length}">다음 ▶</button></div>`);
+    if (!S.settings.quiet) phSay(it);
   }
 
   /* 꾸미기 상점 */
@@ -3840,6 +4042,9 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
     },
+    phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
+    phcell: d => { AU.tap(); closeSheet(); phonicsSheet(+d.v); },
+    phsay: d => { const g = PH.GROUPS.find(x => x.key === phGroup); const it = g && g.items[+d.v]; if (it) phSay(it, !!d.slow); },
     vtab: d => { AU.tap(); vTab = d.v; renderVillage(); },
     vfeed: d => {
       const f = VIL.FOODS.find(x => x.key === d.v); if (!f) return;

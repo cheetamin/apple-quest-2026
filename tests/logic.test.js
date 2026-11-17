@@ -6,10 +6,10 @@ const L = require('../src/logic.js');
 const T0 = new Date(2026, 10, 2, 10).getTime(); // 2026-11-02 월요일
 const day = n => T0 + n * L.DAY;
 
-test('모든 단원에서 5문항 세트 2개가 만들어지고 정답이 보기에 있다', () => {
+test('모든 단원에서 6문항(파닉스 포함) 세트 2개가 만들어지고 정답이 보기에 있다', () => {
   for (const u of D.UNITS) for (const si of [0, 1]) for (let seed = 1; seed < 40; seed++) {
     const qs = L.buildSet(D.UNITS, u.id, si, seed);
-    assert.strictEqual(qs.length, 5, `unit ${u.id} set ${si}`);
+    assert.strictEqual(qs.length, 6, `unit ${u.id} set ${si}`);
     for (const q of qs) {
       assert.ok(q, `null question u${u.id}`);
       if (q.options) {
@@ -133,7 +133,7 @@ test('모든 교재(3·4·5·6학년·천재 4학년) 단원에서 퀴즈가 정
     assert.strictEqual(course.units.length, 11, course.key);
     for (const u of course.units) for (const si of [0, 1]) for (let seed = 1; seed < 25; seed++) {
       const qs = L.buildSet(course.units, u.id, si, seed);
-      assert.strictEqual(qs.length, 5, `${course.key} ${u.id}`);
+      assert.strictEqual(qs.length, 6, `${course.key} ${u.id}`);
       for (const q of qs) {
         assert.ok(q, `null q ${course.key} ${u.id}`);
         if (q.options) {
@@ -202,4 +202,28 @@ test('마을 건물: 해금된 것만, 한 번만 산다', () => {
   assert.strictEqual(L.buyBuilding(s, b, true), 'ok');
   assert.strictEqual(L.buyBuilding(s, b, true), 'owned');
   assert.strictEqual(s.coins, 10);
+});
+
+test('파닉스: 세트마다 6문제 중 파닉스 1문제, 정답은 첫소리이고 같은 소리 글자는 보기에 없음', () => {
+  const C = require('../src/courses.js');
+  let ph = 0, total = 0;
+  for (const c of C.COURSES) for (const u of c.units) for (const si of [0, 1]) for (const seed of [3, 9, 27]) {
+    const set = L.buildSet(c.units, u.id, si, seed);
+    assert.strictEqual(set.length, 6); total++;
+    for (const q of set.filter(q => q.type === 'phonics')) {
+      ph++;
+      assert.ok(q.item.en.startsWith(q.answer) && q.show === q.item.en.slice(q.answer.length));
+      assert.strictEqual(new Set(q.options).size, 4); assert.ok(q.options.includes(q.answer));
+      for (const g of [['c', 'k', 'q'], ['f', 'ph'], ['w', 'wh'], ['s', 'c'], ['j', 'g']]) assert.ok(q.options.filter(o => g.includes(o)).length <= 1, q.options.join(','));
+    }
+  }
+  assert.ok(ph / total > 0.95, `파닉스 문제 비율 ${ph}/${total}`);
+  assert.strictEqual(L.phonicsOnset('ship'), 'sh'); assert.strictEqual(L.phonicsOnset('know'), null); assert.strictEqual(L.phonicsOnset('giraffe'), null); assert.strictEqual(L.phonicsOnset('ice cream'), null);
+});
+
+test('세트 통과 기준은 문제 수에 비례 (5문제 중 3 → 6문제 중 4)', () => {
+  const s = L.newState(D.DEFAULT_RULES);
+  assert.strictEqual(L.completeSet(s, 1, 0, 3, 6, T0).passed, false);
+  assert.strictEqual(L.completeSet(s, 1, 0, 4, 6, T0).passed, true);
+  assert.strictEqual(L.completeSet(s, 2, 0, 3, 5, T0).passed, true);
 });

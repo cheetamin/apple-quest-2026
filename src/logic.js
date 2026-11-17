@@ -118,7 +118,7 @@
   function completeSet(s, unitId, setIdx, ok, total, now) {
     const u = unitRec(s, unitId);
     u.ok += ok; u.n += total; u.last = now;
-    const passed = ok >= s.rules.setPass;
+    const passed = ok >= Math.ceil(total * s.rules.setPass / 5); // 기준은 5문제 중 몇 개 → 문제 수에 맞춰 비율로 (6문제면 5개)
     if (passed) { u.sets[setIdx] = true; s.coins = (s.coins || 0) + 3 + (hungerNow(s, now) >= 50 ? 2 : 0); } // 배부르면 보너스 +2
     let newlyDone = false;
     if (!u.done && u.sets.every(Boolean)) { u.done = true; newlyDone = true; s.fruits += 1; s.coins += 10; }
@@ -169,6 +169,31 @@
 
   function tokenize(sent) { return sent.replace(/’/g, "'").split(/\s+/).filter(Boolean); }
 
+  /* 파닉스: 단어의 첫소리 글자 고르기 */
+  const PH_TEAMS = ['sh', 'ch', 'th', 'wh', 'ph'];
+  const PH_SAME = [['c', 'k', 'q'], ['f', 'ph'], ['w', 'wh'], ['s', 'c'], ['j', 'g']]; // 같은 소리가 날 수 있는 글자는 함께 보기로 내지 않음
+  const PH_NEAR = { b: ['d', 'p', 'v'], d: ['b', 't', 'g'], p: ['b', 'f', 't'], t: ['d', 'th', 'p'], f: ['v', 'p', 'th'], v: ['f', 'b', 'w'], m: ['n', 'b', 'w'], n: ['m', 'l', 'd'],
+    l: ['r', 'n', 'd'], r: ['l', 'w', 'n'], s: ['sh', 'z', 'th'], z: ['s', 'j', 'ch'], sh: ['s', 'ch', 'th'], ch: ['sh', 'j', 't'], th: ['t', 's', 'f'], j: ['ch', 'z', 'd'],
+    g: ['k', 'd', 'b'], k: ['g', 't', 'h'], c: ['g', 't', 'd'], q: ['g', 'p', 'd'], h: ['f', 'w', 'k'], w: ['v', 'r', 'y'], y: ['w', 'j', 'l'], wh: ['v', 'h', 'sh'], ph: ['p', 'b', 'v'],
+    a: ['e', 'i', 'o'], e: ['a', 'i', 'u'], i: ['e', 'a', 'o'], o: ['a', 'u', 'e'], u: ['o', 'a', 'i'], x: ['s', 'z', 'k'] };
+  const PH_ALL = 'b c d f g h j k l m n p r s t v w y z a e i o u sh ch th wh'.split(' ');
+  function phonicsOnset(word) {
+    const w = String(word || '');
+    if (!/^[a-z]{3,10}$/.test(w)) return null;
+    if (/^(kn|wr|gn|ps|hour|hon|ce|ci|cy|ge|gi|gy)/.test(w)) return null; // 소리 안 나는 글자 · 부드러운 c/g는 빼기
+    const t = PH_TEAMS.find(x => w.startsWith(x));
+    return t || w[0];
+  }
+  function phonicsOptions(ans, r) {
+    const same = new Set([ans]); PH_SAME.forEach(g => { if (g.includes(ans)) g.forEach(x => same.add(x)); });
+    const ok = x => !same.has(x) && !PH_SAME.some(g => g.includes(x) && g.some(y => same.has(y)));
+    const ds = [];
+    for (const x of shuffle(PH_NEAR[ans] || [], r)) if (ds.length < 3 && ok(x) && !ds.includes(x)) ds.push(x);
+    for (const x of shuffle(PH_ALL, r)) { if (ds.length >= 3) break; if (ok(x) && !ds.includes(x) && /[aeiou]/.test(x) === /^[aeiou]$/.test(ans)) ds.push(x); }
+    for (const x of shuffle(PH_ALL, r)) { if (ds.length >= 3) break; if (ok(x) && !ds.includes(x)) ds.push(x); }
+    return shuffle([ans, ...ds], r);
+  }
+
   function makeQ(type, unit, item, ctx, r) {
     const pool = ctx.pool;
     const base = { type, unit: unit.id, item, kind: ctx.kind };
@@ -179,6 +204,11 @@
       const opts = shuffle([item, ...ds], r).map(w => w.en);
       const prompt = type === 'pic' ? '그림에 알맞은 영어 단어를 고르세요.' : type === 'ko2en' ? '뜻에 알맞은 영어 단어를 고르세요.' : '잘 듣고 들리는 단어를 고르세요.';
       return { ...base, id, prompt, show: type === 'pic' ? item.e : type === 'ko2en' ? item.ko : '', speak: item.en, options: opts, answer: item.en, explain: `${item.en} = ${item.ko}` };
+    }
+    if (type === 'phonics') {
+      const on = phonicsOnset(item.en);
+      if (!on) return null;
+      return { ...base, id, prompt: '빈칸에 들어갈 첫소리 글자를 고르세요.', show: item.en.slice(on.length), blankLen: on.length, hint: `${item.e ? item.e + ' ' : ''}${item.ko}`, speak: item.en, options: phonicsOptions(on, r), answer: on, explain: `${on} + ${item.en.slice(on.length)} = ${item.en} (${item.ko})` };
     }
     if (type === 'en2ko') {
       const ds = pickDistractors(pool, item, 3, r, '');
@@ -224,10 +254,10 @@
     return null;
   }
 
-  // 세트마다 단어 2~3문제 + 문장(교과서 문형·응용 문장) 2~3문제
+  // 세트마다 단어 2~3문제 + 문장(교과서 문형·응용 문장) 2~3문제 + 파닉스 1문제
   const SET_PLANS = [
-    ['pic', 'blank', 'ko2en', 'order', 'listenSent'],
-    ['blank', 'listen', 'order', 'match', 'listenSent'],
+    ['pic', 'blank', 'phonics', 'ko2en', 'order', 'listenSent'],
+    ['blank', 'listen', 'phonics', 'order', 'match', 'listenSent'],
   ];
 
   function buildSet(UNITS, unitId, setIdx, seed) {
@@ -255,6 +285,7 @@
         for (const w of words) {
           if (used.has(w.en)) continue;
           if (type === 'pic' && !w.e) continue;
+          if (type === 'phonics' && !phonicsOnset(w.en)) continue;
           q = makeQ(type, unit, w, { ...ctx, pool: unit.words.length >= 6 ? unit.words : pool }, r);
           if (!q && unit.words.length < 6) q = makeQ(type, unit, w, { ...ctx, pool }, r);
           if (q) { used.add(w.en); break; }
@@ -370,7 +401,7 @@
     return true;
   }
 
-  root.AQ_LOGIC = { buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  root.AQ_LOGIC = { phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;

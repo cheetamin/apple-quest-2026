@@ -259,16 +259,16 @@
   function qtopHTML() {
     let tag, dots = '', label;
     if (Q.mode === 'set') {
-      const u = S.units[Q.unit]; const off = Q.setIdx * 5;
+      const u = S.units[Q.unit]; const N = Q.list.length, off = Q.setIdx * N;
       tag = `<span class="lesson">Lesson ${unitNo(Q.unit)}</span>`;
-      for (let k = 0; k < 10; k++) {
+      for (let k = 0; k < N * 2; k++) {
         let c = '';
         if (k < off) c = u && u.sets[0] ? 'ok' : '';
-        else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
+        else if (k >= off + N) c = u && u.sets[1] ? 'ok' : '';
         else { const r = Q.results[k - off]; c = r || (k - off === Q.i ? 'cur' : ''); }
         dots += `<i class="${c}"></i>`;
       }
-      label = `${Math.min(off + Q.i + 1, 10)} / 10`;
+      label = `${Math.min(off + Q.i + 1, N * 2)} / ${N * 2}`;
     } else {
       tag = Q.mode === 'boss' ? `<span class="lesson boss">Boss</span>` : `<span class="lesson review">Review</span>`;
       for (let k = 0; k < Q.list.length; k++) dots += `<i class="${Q.results[k] || (k === Q.i ? 'cur' : '')}"></i>`;
@@ -282,6 +282,7 @@
     switch (q.type) {
       case 'pic': return `<div class="qshow banner"><span class="pic">${q.show}</span></div>${opts(q.options)}`;
       case 'ko2en': return `<div class="qshow banner"><span class="ko">${esc(q.show)}</span></div>${opts(q.options)}`;
+      case 'phonics': return `<div class="qshow banner ph-q"><span class="ph-word"><b class="ph-blank">${'?'.repeat(q.blankLen)}</b>${esc(q.show)}</span><small class="ph-hint">${esc(q.hint)}</small></div>${opts(q.options)}`;
       case 'en2ko': return `<div class="qshow banner"><span class="sent">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="side-pic">${q.item.e}</span>` : ''}</div>${opts(q.options, true)}`;
       case 'listen': return `<div class="qshow banner">${listen}</div>${opts(q.options)}`;
       case 'listenSent': return `<div class="qshow banner">${listen}</div>${opts(q.options, false, true)}`;
@@ -544,7 +545,7 @@
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -556,7 +557,7 @@
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
   }
   function autoQ(unitId) {
@@ -646,15 +647,15 @@
   function stageTop() {
     let tag, dots = '', label;
     if (Q.mode === 'set') {
-      const u = S.units[Q.unit], off = Q.setIdx * 5;
+      const u = S.units[Q.unit], N = Q.list.length, off = Q.setIdx * N;
       tag = `Lesson ${unitNo(Q.unit)}`;
-      for (let k = 0; k < 10; k++) {
+      for (let k = 0; k < N * 2; k++) {
         let c = '';
-        if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + 5) c = u && u.sets[1] ? 'ok' : '';
+        if (k < off) c = u && u.sets[0] ? 'ok' : ''; else if (k >= off + N) c = u && u.sets[1] ? 'ok' : '';
         else { const r = Q.results[k - off]; c = r || (k - off === Q.i && Q.phase !== 'result' ? 'cur' : ''); }
         dots += `<i class="${c}"></i>`;
       }
-      label = `${Math.min(off + Q.i + 1, 10)}/10`;
+      label = `${Math.min(off + Q.i + 1, N * 2)}/${N * 2}`;
     } else {
       tag = Q.mode === 'boss' ? 'Boss' : 'Review';
       for (let k = 0; k < Q.list.length; k++) dots += `<i class="${Q.results[k] || (k === Q.i ? 'cur' : '')}"></i>`;
@@ -675,6 +676,7 @@
     switch (q.type) {
       case 'pic': banner = `<span class="s-pic">${q.show}</span>`; opts = L4(q.options); break;
       case 'ko2en': banner = `<span class="s-ko">${esc(q.show)}</span>`; opts = L4(q.options); break;
+      case 'phonics': banner = `<span class="s-ph"><span class="ph-word"><b class="ph-blank">${'?'.repeat(q.blankLen)}</b>${esc(q.show)}</span><small>${esc(q.hint)}</small></span>`; opts = L4(q.options); break;
       case 'en2ko': banner = `<span class="s-sent" style="font-size:48px">${esc(q.show)}</span>${q.item && q.item.e ? `<span class="s-side">${q.item.e}</span>` : ''}`; opts = L4(q.options, true); break;
       case 'listen': case 'listenSent': banner = listen; opts = L4(q.options); break;
       case 'ko2sent': banner = `<span class="s-ko" style="font-size:${q.show.length > 14 ? 34 : 42}px">${esc(q.show)}</span>`; opts = L4(q.options); break;
@@ -760,6 +762,7 @@
   }
   function renderUnits() {
     let html = `<div class="screen-title"><div><h2>단원 선택</h2><p>📚 ${COURSE.label} · <button class="linkish" data-act="course">교재 바꾸기</button></p></div></div>`;
+    html += `<div class="sem">시작하기 전에</div><div class="units"><button class="unit ph-unit" data-act="go" data-v="phonics"><span class="num">🔤<b>0</b></span><span style="min-width:0"><h3>Phonics · 파닉스 표</h3><p>글자를 누르면 소리와 입 모양을 볼 수 있어요</p></span><span class="st">▶</span></button></div>`;
     const groups = COURSE.key === 'cj4' ? [[1, '1학기'], [2, '2학기']] : [[0, `${COURSE.label} · ${COURSE.sub}`]];
     for (const [sem, gl] of groups) {
       html += `<div class="sem">${gl}</div><div class="units">`;
@@ -777,8 +780,8 @@
     const rec = S.units[id];
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3 class="en">Lesson ${u.no}. ${esc(u.title)}</h3><p class="sub">${u.ko} · 단어 ${u.words.length}개 · 핵심 문장 ${u.sentences.length}개</p>
       <div class="grid2"><button class="btn ghost" data-act="go" data-v="study" data-u="${id}">🎧 공부방<small>단어·문장 카드</small></button>
-      <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·듣기·빈칸</small></button>
-      <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>문장 듣기·순서·짝맞추기</small></button>
+      <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·빈칸·파닉스</small></button>
+      <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>듣기·순서·짝맞추기·파닉스</small></button>
       <button class="btn blue" data-act="review">🔁 복습 퀴즈<small>경험치 +${S.rules.expReview}</small></button></div>
       <p class="sub" style="margin-top:12px">${u.words.slice(0, 8).map(w => w.en).join(' · ')}${u.words.length > 8 ? ' …' : ''}</p>`);
   }
@@ -791,7 +794,7 @@
 
   function renderQuizHub() {
     const done = L.doneIds(S);
-    let html = `<div class="screen-title"><div><h2>퀴즈 도전</h2><p>5문제씩 나눠서 풀어요. 틀려도 경험치는 줄지 않아요.</p></div></div>`;
+    let html = `<div class="screen-title"><div><h2>퀴즈 도전</h2><p>6문제씩(파닉스 1문제 포함) 나눠서 풀어요. 틀려도 경험치는 줄지 않아요.</p></div></div>`;
     html += `<div class="glass" style="margin-bottom:10px;color:#fff"><div style="display:flex;gap:10px;align-items:center"><span style="font-size:34px">🔁</span><div style="flex:1"><b style="font-family:var(--f-display);font-size:17px;font-weight:400">복습 퀴즈</b><div style="font-size:12.5px;color:#c9d6f0">완료한 단원 + 틀린 단어 · 정답마다 +${S.rules.expReview} EXP</div></div><button class="btn blue" data-act="review" style="flex:0 0 auto">시작</button></div></div>`;
     html += `<div class="units">` + BOSSES.map(bossRowHTML).join('') + `</div><div class="sem">단원별 퀴즈</div><div class="units">`;
     for (const u of UNITS) {
@@ -886,6 +889,33 @@
       <button class="link" data-act="teacher" style="margin-top:8px">🔒 제작자 관리실</button>
       <button class="link" data-act="exit" style="margin-top:8px">🚪 나가기</button>
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
+  }
+
+  /* 파닉스 표 */
+  const PH = AQ_PHONICS; let phGroup = 'abc';
+  function renderPhonics() {
+    const g = PH.GROUPS.find(x => x.key === phGroup) || PH.GROUPS[0];
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="units" aria-label="뒤로">←</button><div><h2>파닉스 표</h2><p>글자를 누르면 소리를 듣고 입 모양을 따라 할 수 있어요</p></div></div>
+      <div class="v-tabs">${PH.GROUPS.map(x => `<button class="${x.key === g.key ? 'on' : ''}" data-act="phgroup" data-v="${x.key}">${x.name}</button>`).join('')}</div>
+      <div class="ph-grid ${g.key}">${g.items.map((it, k) => `<button class="ph-cell" data-act="phcell" data-v="${k}"><b>${esc(it.g)}</b><span class="e">${it.e}</span><small>${esc(it.word)}</small><i>${esc(it.ko)}</i></button>`).join('')}</div>
+      <p class="voice-note">${g.key === 'abc' ? '글자마다 이름(에이, 비…)과 소리(애, 브…)가 달라요. 단어 속에서는 "소리"로 읽어요!' : g.key === 'long' ? '모음 뒤에 e가 붙거나 모음 두 개가 짝꿍이 되면, 모음이 자기 이름 소리를 내요.' : '두 글자가 만나서 새로운 한 소리를 만들어요.'} 🔊 발음은 기기의 영어 음성으로 들려줘요.</p>`;
+  }
+  function phSay(it, slow) {
+    const name = it.g.length <= 3 && it.g.includes(' ') ? it.g.split(' ')[0] + '.' : '';
+    speak(`${name} ${it.word}. ${it.word}.`, slow ? 0.55 : 0.8);
+  }
+  function phonicsSheet(k) {
+    const g = PH.GROUPS.find(x => x.key === phGroup), it = g.items[k]; if (!it) return;
+    const m = PH.MOUTH[it.mouth];
+    const word = it.word, idx = g.key === 'long' && it.g.includes('_') ? -1 : word.indexOf(it.g.split(' ').pop().toLowerCase());
+    const wordHTML = idx >= 0 ? `${esc(word.slice(0, idx))}<em>${esc(word.slice(idx, idx + it.g.split(' ').pop().length))}</em>${esc(word.slice(idx + it.g.split(' ').pop().length))}` : esc(word).replace(/[aeiou](?=[^aeiou]e$)|e$/g, c => `<em>${c}</em>`);
+    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
+      <div class="ph-detail"><div class="ph-big">${esc(it.g)}</div><div class="ph-sound"><b>${esc(it.ipa)}</b><span>"${esc(it.ko)}" 소리</span></div></div>
+      <div class="ph-mouth">${PH.mouthSVG(it.mouth, !S.settings.reduceMotion)}<div><b>👄 ${m.name}</b><p>${esc(it.tip || m.tip)}</p>${it.tip ? `<p class="sub">${esc(m.tip)}</p>` : ''}</div></div>
+      <div class="ph-ex"><span class="e">${it.e}</span><span class="w">${wordHTML}</span></div>
+      <div class="grid2"><button class="btn" data-act="phsay" data-v="${k}">🔊 소리 듣기</button><button class="btn ghost" data-act="phsay" data-v="${k}" data-slow="1">🐢 천천히</button></div>
+      <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="phcell" data-v="${(k + g.items.length - 1) % g.items.length}">◀ 이전</button><button class="btn ghost" data-act="phcell" data-v="${(k + 1) % g.items.length}">다음 ▶</button></div>`);
+    if (!S.settings.quiet) phSay(it);
   }
 
   /* 꾸미기 상점 */
@@ -1107,6 +1137,9 @@
       toast('🔇 조용한 교실 모드 켜짐 · 듣기 문제는 읽기 문제로 나와요 (나의 성장 › 설정에서 끌 수 있어요)', 2600);
       renderPanel();
     },
+    phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
+    phcell: d => { AU.tap(); closeSheet(); phonicsSheet(+d.v); },
+    phsay: d => { const g = PH.GROUPS.find(x => x.key === phGroup); const it = g && g.items[+d.v]; if (it) phSay(it, !!d.slow); },
     vtab: d => { AU.tap(); vTab = d.v; renderVillage(); },
     vfeed: d => {
       const f = VIL.FOODS.find(x => x.key === d.v); if (!f) return;
