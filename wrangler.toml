@@ -14,3 +14,7 @@ database_id = "bddf3ecd-b2a0-4918-8cfa-cd85d2ad4424"
 binding = "DB_CONTEST"
 database_name = "apple_quest_contest"
 database_id = "2e20c4fe-4da5-4463-8a2a-ded000c9c8b0"
+
+# 공모전 체험판 'AI 선생님' — Cloudflare Workers AI (하루 무료 사용량, 키 필요 없음)
+[ai]
+binding = "AI"

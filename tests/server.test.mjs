@@ -160,3 +160,20 @@ test('AI 선생님 설명: 체험판 + 로그인한 학생만, 같은 질문은 
     assert.strictEqual(r.status, 429, '하루 한도'); assert.strictEqual(calls, 2);
   } finally { globalThis.fetch = realFetch; delete env.ANTHROPIC_API_KEY; delete env.AI_DAILY_LIMIT; }
 });
+
+test('AI 선생님: 키가 없으면 Cloudflare 무료 AI를 쓰고, 한도 초과 오류는 "내일 다시"로 안내', async () => {
+  const S2 = { school_code: 'S10-7777777', school_name: '체험초등학교', grade: 5, cls: 1 };
+  const tok = (await call('/contest/api/student/login', { ...S2, num: 1, nickname: '심사위원', pin: '1111' })).body.token;
+  const Q = { type: 'pic', prompt: '그림에 알맞은 영어 단어를 고르세요.', show: '🐶', options: ['dog', 'cat', 'pig', 'cow'], answer: 'dog', given: 'cat', explain: 'dog = 개' };
+  let model = '';
+  env.AI = { run: async (m, inp) => { model = m; assert.strictEqual(inp.messages[0].role, 'system'); return { response: '<think>생각</think>dog는 강아지예요! 🐶' }; } };
+  try {
+    let r = await call('/contest/api/ai/explain', Q, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.body.text, 'dog는 강아지예요! 🐶'); assert.ok(model.startsWith('@cf/'));
+    env.AI = { run: async () => { throw new Error('daily free allocation exceeded'); } };
+    r = await call('/contest/api/ai/explain', { ...Q, given: 'pig' }, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.status, 429);
+    r = await call('/contest/api/health');
+    assert.strictEqual(r.body.ai_provider, 'workers-ai');
+  } finally { delete env.AI; }
+});
