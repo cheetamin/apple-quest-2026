@@ -624,7 +624,7 @@
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
-        ${CONTEST ? '<button class="ai-chip" data-act="aihelp">🤖 AI에게 물어보기</button>' : ''}
+        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI에게 물어보기">${AI_ICON}<span class="ai-txt"><b>AI에게 물어보기</b><small>단어·문장·파닉스·문법</small></span><i class="ai-spk"></i></button>` : ''}
         ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -901,9 +901,17 @@
 
   /* ---------- AI 애플 도우미 (공모전 체험판) ---------- */
   const AIH = { log: [], busy: false };
+  // AI 사과 로봇 아이콘(안테나 달린 사과)
+  const AI_ICON = `<svg class="ai-ico" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="aiA" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffd8cc"/><stop offset=".4" stop-color="#ff5a4a"/><stop offset="1" stop-color="#b01a2a"/></radialGradient><radialGradient id="aiS" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#e8fbff"/><stop offset="1" stop-color="#8ad8ff"/></radialGradient></defs>
+    <path d="M32 14 L32 6" stroke="#3b2314" stroke-width="3" stroke-linecap="round"/><circle class="ai-ant" cx="32" cy="5" r="4" fill="#ffe14a" stroke="#3b2314" stroke-width="2"/>
+    <path d="M32 18 C18 10 6 22 9 38 C12 54 24 60 32 56 C40 60 52 54 55 38 C58 22 46 10 32 18Z" fill="url(#aiA)" stroke="#3b2314" stroke-width="3"/>
+    <path d="M36 15 Q46 6 52 14 Q44 18 36 15Z" fill="#6ec84a" stroke="#3b2314" stroke-width="2"/>
+    <rect x="15" y="28" width="34" height="18" rx="9" fill="url(#aiS)" stroke="#3b2314" stroke-width="2.5"/>
+    <circle class="ai-eye" cx="25" cy="37" r="3.4" fill="#2a3a8a"/><circle class="ai-eye" cx="39" cy="37" r="3.4" fill="#2a3a8a"/><circle cx="26.2" cy="35.8" r="1.1" fill="#fff"/><circle cx="40.2" cy="35.8" r="1.1" fill="#fff"/>
+    <path d="M28 49 Q32 52 36 49" stroke="#3b2314" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="24" rx="4" ry="6" fill="#fff" opacity=".55" transform="rotate(25 17 24)"/></svg>`;
   function aiFab() {
     let b = $('#aiFab');
-    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = '<span>🤖</span><b>AI 도우미</b>'; $('#screen').append(b); }
+    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미에게 물어보기'); $('#screen').append(b); }
     b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
   }
   function aiContext() {
@@ -1186,7 +1194,7 @@
   /* ---------- 이벤트 ---------- */
   const ACT = {
     go: d => { AU.tap(); if (d.v === 'study' && d.u) return go('study', +d.u); closeSheet(); go(d.v); },
-    pet: () => { if (CONTEST) { AU.tap(); setMood('greet'); aiHelp(); return; } AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
+    pet: () => { AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
     set: d => { AU.tap(); startSet(+d.u, +d.s); },
     review: () => { AU.tap(); startReview(); },
     boss: d => { AU.tap(); startBoss(+d.v); },

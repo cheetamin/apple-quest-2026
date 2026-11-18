@@ -1526,13 +1526,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-wait span { display: inline-block; animation: vPulse 1s infinite; }
 
 /* ===== AI 애플 도우미 (체험판) ===== */
-.ai-fab { position: absolute; right: 3%; top: 12.5%; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 8px 12px 8px 8px; border-radius: 30px; color: #fff; font-weight: 900; font-size: 13px;
-  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(160,120,255,.8), 0 4px 10px rgba(0,0,0,.35); animation: aiBob 2.4s ease-in-out infinite; }
-.ai-fab span { font-size: 22px; line-height: 1; }
-.ai-fab[hidden] { display: none; }
 @keyframes aiBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.ai-chip { position: absolute; right: 4%; top: 4%; z-index: 6; padding: 8px 16px; border-radius: 18px; font-size: 30px; font-weight: 900; color: #fff;
-  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 3px #fff, 0 0 16px rgba(160,120,255,.9); animation: aiBob 2.4s ease-in-out infinite; }
 .sheet.ai-sheet { max-height: 88%; display: flex; flex-direction: column; }
 .ai-head { display: flex; align-items: center; gap: 10px; text-align: left; margin-bottom: 6px; }
 .ai-head h3 { margin: 0; }
@@ -1560,3 +1554,27 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-form .btn { flex: 0 0 auto; padding: 0 14px; min-height: 42px; }
 .reduce .ai-fab, .reduce .ai-chip { animation: none; }
 @media (prefers-reduced-motion: reduce) { .ai-fab, .ai-chip { animation: none; } }
+
+/* AI 버튼 (예쁜 말풍선 버전) */
+.ai-chip { position: absolute; right: 3.5%; top: 3.5%; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 8px 20px 8px 10px; border-radius: 40px; text-align: left; color: #fff;
+  background: linear-gradient(135deg, #ff9ad5 0%, #b98cff 45%, #6f8cff 100%);
+  box-shadow: 0 0 0 4px #fff, 0 0 0 7px rgba(185,140,255,.55), 0 0 26px rgba(185,140,255,.95), 0 8px 14px rgba(40,20,90,.35); animation: aiBob 2.6s ease-in-out infinite; }
+.ai-chip::before { content: ''; position: absolute; inset: 4px 10px auto 10px; height: 42%; border-radius: 30px; background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0)); pointer-events: none; }
+.ai-chip .ai-ico { width: 66px; height: 66px; flex: 0 0 auto; filter: drop-shadow(0 3px 3px rgba(0,0,0,.25)); }
+.ai-chip .ai-txt { display: flex; flex-direction: column; line-height: 1.12; position: relative; }
+.ai-chip .ai-txt b { font-family: var(--f-display); font-weight: 400; font-size: 31px; white-space: nowrap; letter-spacing: .03em; text-shadow: 0 2px 0 rgba(70,30,140,.45); }
+.ai-chip .ai-txt small { font-size: 19px; white-space: nowrap; font-weight: 800; opacity: .95; }
+.ai-chip .ai-spk { position: absolute; left: 30px; bottom: -16px; width: 26px; height: 22px; background: #8f8cff; clip-path: polygon(0 0, 100% 0, 15% 100%); filter: drop-shadow(0 4px 0 #fff); }
+.ai-chip:active { transform: scale(.96); }
+.ai-fab { position: absolute; right: 3%; top: 12.5%; z-index: 30; display: flex; align-items: center; gap: 6px; padding: 5px 14px 5px 5px; border-radius: 30px; color: #fff; font-weight: 900; font-size: 13.5px;
+  background: linear-gradient(135deg, #ff9ad5 0%, #b98cff 45%, #6f8cff 100%); box-shadow: 0 0 0 2.5px #fff, 0 0 16px rgba(185,140,255,.9), 0 4px 10px rgba(0,0,0,.35); animation: aiBob 2.6s ease-in-out infinite; }
+.ai-fab .ai-ico { width: 34px; height: 34px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.ai-fab b { text-shadow: 0 1px 0 rgba(70,30,140,.5); }
+.ai-fab[hidden] { display: none; }
+.ai-ico .ai-ant { animation: aiBlink 1.6s ease-in-out infinite; }
+.ai-ico .ai-eye { animation: aiEye 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes aiBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes aiBlink { 0%, 100% { fill: #ffe14a; } 50% { fill: #fff; } }
+@keyframes aiEye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.15); } }
+.reduce .ai-chip, .reduce .ai-fab, .reduce .ai-ico * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .ai-chip, .ai-fab, .ai-ico * { animation: none !important; } }

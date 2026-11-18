@@ -1540,13 +1540,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-wait span { display: inline-block; animation: vPulse 1s infinite; }
 
 /* ===== AI 애플 도우미 (체험판) ===== */
-.ai-fab { position: absolute; right: 3%; top: 12.5%; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 8px 12px 8px 8px; border-radius: 30px; color: #fff; font-weight: 900; font-size: 13px;
-  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(160,120,255,.8), 0 4px 10px rgba(0,0,0,.35); animation: aiBob 2.4s ease-in-out infinite; }
-.ai-fab span { font-size: 22px; line-height: 1; }
-.ai-fab[hidden] { display: none; }
 @keyframes aiBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
-.ai-chip { position: absolute; right: 4%; top: 4%; z-index: 6; padding: 8px 16px; border-radius: 18px; font-size: 30px; font-weight: 900; color: #fff;
-  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 3px #fff, 0 0 16px rgba(160,120,255,.9); animation: aiBob 2.4s ease-in-out infinite; }
 .sheet.ai-sheet { max-height: 88%; display: flex; flex-direction: column; }
 .ai-head { display: flex; align-items: center; gap: 10px; text-align: left; margin-bottom: 6px; }
 .ai-head h3 { margin: 0; }
@@ -1574,6 +1568,30 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-form .btn { flex: 0 0 auto; padding: 0 14px; min-height: 42px; }
 .reduce .ai-fab, .reduce .ai-chip { animation: none; }
 @media (prefers-reduced-motion: reduce) { .ai-fab, .ai-chip { animation: none; } }
+
+/* AI 버튼 (예쁜 말풍선 버전) */
+.ai-chip { position: absolute; right: 3.5%; top: 3.5%; z-index: 6; display: flex; align-items: center; gap: 8px; padding: 8px 20px 8px 10px; border-radius: 40px; text-align: left; color: #fff;
+  background: linear-gradient(135deg, #ff9ad5 0%, #b98cff 45%, #6f8cff 100%);
+  box-shadow: 0 0 0 4px #fff, 0 0 0 7px rgba(185,140,255,.55), 0 0 26px rgba(185,140,255,.95), 0 8px 14px rgba(40,20,90,.35); animation: aiBob 2.6s ease-in-out infinite; }
+.ai-chip::before { content: ''; position: absolute; inset: 4px 10px auto 10px; height: 42%; border-radius: 30px; background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0)); pointer-events: none; }
+.ai-chip .ai-ico { width: 66px; height: 66px; flex: 0 0 auto; filter: drop-shadow(0 3px 3px rgba(0,0,0,.25)); }
+.ai-chip .ai-txt { display: flex; flex-direction: column; line-height: 1.12; position: relative; }
+.ai-chip .ai-txt b { font-family: var(--f-display); font-weight: 400; font-size: 31px; white-space: nowrap; letter-spacing: .03em; text-shadow: 0 2px 0 rgba(70,30,140,.45); }
+.ai-chip .ai-txt small { font-size: 19px; white-space: nowrap; font-weight: 800; opacity: .95; }
+.ai-chip .ai-spk { position: absolute; left: 30px; bottom: -16px; width: 26px; height: 22px; background: #8f8cff; clip-path: polygon(0 0, 100% 0, 15% 100%); filter: drop-shadow(0 4px 0 #fff); }
+.ai-chip:active { transform: scale(.96); }
+.ai-fab { position: absolute; right: 3%; top: 12.5%; z-index: 30; display: flex; align-items: center; gap: 6px; padding: 5px 14px 5px 5px; border-radius: 30px; color: #fff; font-weight: 900; font-size: 13.5px;
+  background: linear-gradient(135deg, #ff9ad5 0%, #b98cff 45%, #6f8cff 100%); box-shadow: 0 0 0 2.5px #fff, 0 0 16px rgba(185,140,255,.9), 0 4px 10px rgba(0,0,0,.35); animation: aiBob 2.6s ease-in-out infinite; }
+.ai-fab .ai-ico { width: 34px; height: 34px; filter: drop-shadow(0 2px 2px rgba(0,0,0,.25)); }
+.ai-fab b { text-shadow: 0 1px 0 rgba(70,30,140,.5); }
+.ai-fab[hidden] { display: none; }
+.ai-ico .ai-ant { animation: aiBlink 1.6s ease-in-out infinite; }
+.ai-ico .ai-eye { animation: aiEye 4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes aiBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+@keyframes aiBlink { 0%, 100% { fill: #ffe14a; } 50% { fill: #fff; } }
+@keyframes aiEye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.15); } }
+.reduce .ai-chip, .reduce .ai-fab, .reduce .ai-ico * { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .ai-chip, .ai-fab, .ai-ico * { animation: none !important; } }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -3575,7 +3593,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
-        ${CONTEST ? '<button class="ai-chip" data-act="aihelp">🤖 AI에게 물어보기</button>' : ''}
+        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI에게 물어보기">${AI_ICON}<span class="ai-txt"><b>AI에게 물어보기</b><small>단어·문장·파닉스·문법</small></span><i class="ai-spk"></i></button>` : ''}
         ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -3852,9 +3870,17 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 
   /* ---------- AI 애플 도우미 (공모전 체험판) ---------- */
   const AIH = { log: [], busy: false };
+  // AI 사과 로봇 아이콘(안테나 달린 사과)
+  const AI_ICON = `<svg class="ai-ico" viewBox="0 0 64 64" aria-hidden="true"><defs><radialGradient id="aiA" cx="35%" cy="30%" r="75%"><stop offset="0" stop-color="#ffd8cc"/><stop offset=".4" stop-color="#ff5a4a"/><stop offset="1" stop-color="#b01a2a"/></radialGradient><radialGradient id="aiS" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="#e8fbff"/><stop offset="1" stop-color="#8ad8ff"/></radialGradient></defs>
+    <path d="M32 14 L32 6" stroke="#3b2314" stroke-width="3" stroke-linecap="round"/><circle class="ai-ant" cx="32" cy="5" r="4" fill="#ffe14a" stroke="#3b2314" stroke-width="2"/>
+    <path d="M32 18 C18 10 6 22 9 38 C12 54 24 60 32 56 C40 60 52 54 55 38 C58 22 46 10 32 18Z" fill="url(#aiA)" stroke="#3b2314" stroke-width="3"/>
+    <path d="M36 15 Q46 6 52 14 Q44 18 36 15Z" fill="#6ec84a" stroke="#3b2314" stroke-width="2"/>
+    <rect x="15" y="28" width="34" height="18" rx="9" fill="url(#aiS)" stroke="#3b2314" stroke-width="2.5"/>
+    <circle class="ai-eye" cx="25" cy="37" r="3.4" fill="#2a3a8a"/><circle class="ai-eye" cx="39" cy="37" r="3.4" fill="#2a3a8a"/><circle cx="26.2" cy="35.8" r="1.1" fill="#fff"/><circle cx="40.2" cy="35.8" r="1.1" fill="#fff"/>
+    <path d="M28 49 Q32 52 36 49" stroke="#3b2314" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="24" rx="4" ry="6" fill="#fff" opacity=".55" transform="rotate(25 17 24)"/></svg>`;
   function aiFab() {
     let b = $('#aiFab');
-    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = '<span>🤖</span><b>AI 도우미</b>'; $('#screen').append(b); }
+    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미에게 물어보기'); $('#screen').append(b); }
     b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
   }
   function aiContext() {
@@ -4137,7 +4163,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   /* ---------- 이벤트 ---------- */
   const ACT = {
     go: d => { AU.tap(); if (d.v === 'study' && d.u) return go('study', +d.u); closeSheet(); go(d.v); },
-    pet: () => { if (CONTEST) { AU.tap(); setMood('greet'); aiHelp(); return; } AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
+    pet: () => { AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
     set: d => { AU.tap(); startSet(+d.u, +d.s); },
     review: () => { AU.tap(); startReview(); },
     boss: d => { AU.tap(); startBoss(+d.v); },
