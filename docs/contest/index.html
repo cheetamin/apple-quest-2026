@@ -12,7 +12,7 @@
 <meta name="theme-color" content="#0a1a36">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Black+Han+Sans&family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,600;0,700;0,800;1,700;1,800&family=Black+Han+Sans&family=Do+Hyeon&family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&display=swap">
 <style>/* Layout: 세로형 모바일 게임 셸 — 상단 자원바 / 진화 라인 + 홀로 카드 / 퀴즈 패널 / 하단 6메뉴. 한 가지 밤숲 판타지 룩으로 고정. */
 :root {
   --night: #0a1a36; --night-2: #12305a; --forest: #0f4a44;
@@ -1593,6 +1593,13 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 @keyframes aiEye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.15); } }
 .reduce .ai-chip, .reduce .ai-fab, .reduce .ai-ico * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .ai-chip, .ai-fab, .ai-ico * { animation: none !important; } }
+
+/* AI 도우미 버튼 글씨: 둥글고 예쁜 Jua */
+.ai-chip .ai-txt b, .ai-fab b { font-family: 'Jua', 'Do Hyeon', var(--f-display), sans-serif; font-weight: 400; letter-spacing: .02em; color: #fff;
+  text-shadow: 0 2px 0 #6a3ad0, 0 0 10px rgba(255,255,255,.55); -webkit-text-stroke: .5px rgba(90,40,180,.35); }
+.ai-chip .ai-txt b { font-size: 40px; }
+.ai-chip { padding: 8px 26px 8px 10px; }
+.ai-fab b { font-size: 16px; }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -3594,7 +3601,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
-        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI에게 물어보기">${AI_ICON}<span class="ai-txt"><b>AI에게 물어보기</b><small>단어·문장·파닉스·문법</small></span><i class="ai-spk"></i></button>` : ''}
+        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI 도우미">${AI_ICON}<span class="ai-txt"><b>AI 도우미</b></span><i class="ai-spk"></i></button>` : ''}
         ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -3881,7 +3888,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     <path d="M28 49 Q32 52 36 49" stroke="#3b2314" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="24" rx="4" ry="6" fill="#fff" opacity=".55" transform="rotate(25 17 24)"/></svg>`;
   function aiFab() {
     let b = $('#aiFab');
-    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미에게 물어보기'); $('#screen').append(b); }
+    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미'); $('#screen').append(b); }
     b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
   }
   function aiContext() {

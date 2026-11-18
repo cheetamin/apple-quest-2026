@@ -624,7 +624,7 @@
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
-        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI에게 물어보기">${AI_ICON}<span class="ai-txt"><b>AI에게 물어보기</b><small>단어·문장·파닉스·문법</small></span><i class="ai-spk"></i></button>` : ''}
+        ${CONTEST ? `<button class="ai-chip" data-act="aihelp" aria-label="AI 도우미">${AI_ICON}<span class="ai-txt"><b>AI 도우미</b></span><i class="ai-spk"></i></button>` : ''}
         ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -911,7 +911,7 @@
     <path d="M28 49 Q32 52 36 49" stroke="#3b2314" stroke-width="2.4" fill="none" stroke-linecap="round"/><ellipse cx="17" cy="24" rx="4" ry="6" fill="#fff" opacity=".55" transform="rotate(25 17 24)"/></svg>`;
   function aiFab() {
     let b = $('#aiFab');
-    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미에게 물어보기'); $('#screen').append(b); }
+    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미'); $('#screen').append(b); }
     b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
   }
   function aiContext() {

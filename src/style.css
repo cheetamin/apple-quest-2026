@@ -1578,3 +1578,10 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 @keyframes aiEye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.15); } }
 .reduce .ai-chip, .reduce .ai-fab, .reduce .ai-ico * { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .ai-chip, .ai-fab, .ai-ico * { animation: none !important; } }
+
+/* AI 도우미 버튼 글씨: 둥글고 예쁜 Jua */
+.ai-chip .ai-txt b, .ai-fab b { font-family: 'Jua', 'Do Hyeon', var(--f-display), sans-serif; font-weight: 400; letter-spacing: .02em; color: #fff;
+  text-shadow: 0 2px 0 #6a3ad0, 0 0 10px rgba(255,255,255,.55); -webkit-text-stroke: .5px rgba(90,40,180,.35); }
+.ai-chip .ai-txt b { font-size: 40px; }
+.ai-chip { padding: 8px 26px 8px 10px; }
+.ai-fab b { font-size: 16px; }
