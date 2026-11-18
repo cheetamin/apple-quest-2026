@@ -56,3 +56,8 @@ node --test tests/logic.test.js tests/server.test.mjs
 - 주소: https://cheetamin.github.io/apple-quest-2026/contest/ — `python3 build.py`가 같은 코드로 함께 만듦(`window.AQ_CONTEST=true`).
 - 학급 서버를 전혀 쓰지 않음(로그인 없이 이름만 정하면 시작, 기록은 그 기기에만 · 저장 키도 `aq-contest-v1`로 분리). 선생님 탭·제작자 관리실 대신 "체험 도우미"(사과 +1000, 단원 모두 완료, 진화, 배고픔·퇴화 상태 만들기, 초기화).
 - 출판사 교과서 기반 '천재(이) 4학년' 교재는 빠짐.
+
+## 공모전 체험판 · AI 애플 도우미
+- 체험판에서 캐릭터(풋애플·애플왕·애플대왕)를 누르거나, 홈의 "🤖 AI에게 물어보기" / 다른 화면 오른쪽 위 "🤖 AI 도우미"를 누르면 열림.
+- 버튼: 지금 문제 힌트(정답은 가려서)·방금 문제 설명, 이 카드 설명, 단원 단어 뜻, 단원 문장 뜻, 파닉스·문법 자주 묻는 질문(정확한 사실을 함께 줘서 틀린 설명 방지), 자유 질문 50자.
+- 서버 `/contest/api/ai/ask` · 기본은 Cloudflare Workers AI 무료(Qwen3 → Gemma 4 → Llama 순서), `ANTHROPIC_API_KEY`가 있으면 Claude. 하루 전체 200번(무료)·학생 1명 40번, 같은 질문은 저장해 둔 답 사용.

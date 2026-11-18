@@ -196,3 +196,14 @@ test('AI 도우미: 질문 종류·단원 정보를 보내고, 50자 넘는 글�
     assert.strictEqual((await call('/api/ai/ask', { kind: 'word', text: 'a' }, { Authorization: 'Bearer ' + tok })).status, 404, '원래 버전에는 없음');
   } finally { delete env.AI; delete env.AI_STUDENT_LIMIT; }
 });
+
+test('AI 도우미 힌트: AI가 보기 단어를 말해도 가려진다', async () => {
+  const S2 = { school_code: 'S10-7777777', school_name: '체험초등학교', grade: 5, cls: 1 };
+  const tok = (await call('/contest/api/student/login', { ...S2, num: 3, nickname: '힌트', pin: '3333' })).body.token;
+  env.AI = { run: async () => ({ response: '도서관은 하나니까 "is"가 맞을 거예요. are는 여럿일 때 써요.' }) };
+  try {
+    const r = await call('/contest/api/ai/ask', { kind: 'hint', text: '지금 문제 힌트 주세요', unit: { title: 'L11' }, current: { prompt: '빈칸', show: 'Where ____ the library?', options: ['is', 'are', 'am', 'do'] } }, { Authorization: 'Bearer ' + tok });
+    assert.ok(!/\bis\b|\bare\b/.test(r.body.text), r.body.text);
+    assert.ok(r.body.text.includes('○○'));
+  } finally { delete env.AI; }
+});

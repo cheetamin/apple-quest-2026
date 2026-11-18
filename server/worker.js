@@ -268,11 +268,12 @@ async function aiRun(env, system, user, maxTok = 360) { // 유료(Claude) 키가
   if (!text) return { err: fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502) };
   return { text, model };
 }
-async function aiCached(env, key, sid, system, user, maxTok) {
+async function aiCached(env, key, sid, system, user, maxTok, post) {
   const hit = await env.DB.prepare('SELECT text FROM ai_cache WHERE k=?').bind(key).first();
   if (hit) return json({ ok: true, text: hit.text, cached: true });
   const lim = await aiCount(env, sid); if (lim) return lim;
   const r = await aiRun(env, system, user, maxTok); if (r.err) return r.err;
+  if (post) r.text = post(r.text);
   await env.DB.prepare('INSERT OR REPLACE INTO ai_cache (k,text,created_at) VALUES (?,?,?)').bind(key, r.text, Date.now()).run();
   return json({ ok: true, text: r.text, model: r.model });
 }
@@ -317,8 +318,12 @@ async function aiAsk(env, req, b) {
   const fact = AI_FACTS[text] ? `\n[정확한 사실 — 이 내용을 바탕으로 쉽게 풀어 설명할 것] ${AI_FACTS[text]}` : '';
   const hintRule = hintOnly ? '\n[중요] 이건 힌트 요청이에요. 보기 중 어떤 것이 정답인지 절대 말하거나 따옴표로 짚지 말고, 아이가 스스로 고를 수 있게 생각할 점만 1~2문장으로 알려 주세요.' : '';
   const user = `[교재] ${ctx.grade} · ${ctx.title}\n[이 단원 단어] ${ctx.words || '(없음)'}\n[이 단원 문장] ${ctx.sentences || '(없음)'}${curTxt}\n[질문 종류] ${AI_KINDS[kind]}${hintOnly ? ' [힌트만]' : ''}${fact}\n[아이의 질문] <질문>${text}</질문>${hintRule}`;
-  const key = await sha256(JSON.stringify(['ask2', kind, text.toLowerCase(), kind === 'free' || kind === 'hint' || kind === 'card' ? ctx.title + curTxt : '']));
-  return aiCached(env, key, g.sid, AI_HELPER, user, 380);
+  const key = await sha256(JSON.stringify(['ask3', kind, text.toLowerCase(), kind === 'free' || kind === 'hint' || kind === 'card' ? ctx.title + curTxt : '']));
+  // 힌트에서는 보기(정답 후보)를 AI가 말해 버려도 가려서 정답이 드러나지 않게
+  const opts = hintOnly ? (Array.isArray(cur.options) ? cur.options : []).map(o => str(o, 60)).filter(Boolean) : [];
+  const esc = x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const mask = t => opts.reduce((acc, o) => o.length >= 2 ? acc.replace(new RegExp(`(^|[^A-Za-z])${esc(o)}(?=[^A-Za-z]|$)`, 'gi'), '$1○○') : acc.replace(new RegExp(`(["'“‘])${esc(o)}(["'”’])`, 'gi'), '$1○$2'), t);
+  return aiCached(env, key, g.sid, AI_HELPER, user, 380, hintOnly ? mask : null);
 }
 
 /* ---------------- 라우터 ---------------- */
