@@ -261,7 +261,9 @@ async function aiRun(env, system, user, maxTok = 360) { // 유료(Claude) 키가
     }
     if (!text) return { err: fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: lastErr.slice(0, 300) }) };
   }
-  text = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim().replace(/^["“”']+|["“”']+$/g, '')
+  text = String(text || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+  if (/^["“]/.test(text) && /["”]$/.test(text) && (text.match(/["“”]/g) || []).length === 2) text = text.slice(1, -1); // 답 전체를 감싼 따옴표만 벗김
+  text = text
     .replace(/\b\d{2,3}[- .]?\d{3,4}[- .]?\d{4}\b/g, '(비밀)').trim().slice(0, 800); // 혹시 나온 전화번호는 가림
   if (!text) return { err: fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502) };
   return { text, model };
@@ -282,6 +284,22 @@ async function aiExplain(env, req, b) {
   const user = `[문제 유형] ${q.type}\n[문제] ${q.prompt}\n[화면에 보인 것] ${q.show || '(소리로 들려준 문제)'}\n[보기] ${q.options.join(' / ') || '(없음)'}\n[정답] ${q.answer}\n[아이가 고른 답] ${q.given || '(모름)'}\n[참고] ${q.explain}`;
   return aiCached(env, key, g.sid, AI_SYSTEM, user, 320);
 }
+/* 자주 묻는 파닉스·문법 질문은 정확한 사실을 함께 줘서 틀린 설명을 막음 */
+const AI_FACTS = {
+  'sh 소리는 어떻게 내요?': 'sh는 입술을 앞으로 내밀고 "쉬~" 하고 내는 한 소리. 예: ship(배), fish(물고기), shoe(신발).',
+  'th 소리는 어떻게 내요?': 'th는 혀끝을 윗니와 아랫니 사이에 살짝 내밀고 바람을 내보내는 소리. three(셋), thank(고마워)는 바람만, this(이것), mother(엄마)는 목이 떨리게.',
+  '매직 e가 뭐예요?': '단어 끝의 e는 소리가 나지 않고, 앞의 모음이 자기 이름 소리(에이, 아이, 오우, 유)로 바뀌게 하는 글자. cap(모자)→cape(망토), kit→kite(연), hop→hope, cub→cube.',
+  'c는 언제 ㅋ, 언제 ㅅ 소리가 나요?': 'c 뒤에 e, i, y가 오면 보통 ㅅ 소리(city 도시, cinema 영화관, ice 얼음), 그 밖에는 ㅋ 소리(cat 고양이, cup 컵, cake 케이크).',
+  'ee와 ea는 어떻게 읽어요?': 'ee와 ea는 둘 다 보통 길게 "이~" 소리. bee(벌), see(보다), tea(차), eat(먹다). ea는 bread(빵)처럼 짧은 "에"가 될 때도 있음.',
+  'f와 p 소리는 뭐가 달라요?': 'p는 두 입술을 붙였다가 터뜨리는 소리(pig 돼지), f는 윗니를 아랫입술에 대고 바람을 내보내는 소리(fish 물고기). 한국어 ㅍ는 p에 가까움.',
+  'is와 are는 언제 써요?': '하나(한 명, 한 개)일 때와 he, she, it 뒤에는 is, 여럿일 때와 you, we, they 뒤에는 are, I 뒤에는 am. 예: The cat is cute. The cats are cute. I am happy.',
+  'a와 an은 뭐가 달라요?': '"하나의"라는 뜻. 뒤 단어가 모음 소리(a, e, i, o, u 소리)로 시작하면 an, 아니면 a. 예: a cat, a dog, an apple, an egg.',
+  '-ing(하고 있어요)는 어떻게 만들어요?': '지금 하고 있는 일은 am/is/are + 동작-ing. 예: I am reading.(나는 읽고 있어.) She is dancing. 끝이 e면 e를 빼고 -ing(dance→dancing).',
+  'do와 does는 언제 써요?': '물어볼 때 I, you, we, they는 Do, he, she, it(한 명·한 개)는 Does. 예: Do you like pizza? Does she like pizza? Does 뒤의 동작 단어에는 s를 붙이지 않음.',
+  '지난 일(과거)은 어떻게 말해요?': '이미 지난 일은 보통 동작 단어 끝에 -ed를 붙임: play→played, watch→watched. 모양이 바뀌는 단어도 있음: go→went, eat→ate, see→saw. 예: I played soccer yesterday.',
+  'can은 어떻게 써요?': '"~할 수 있다"는 can + 동작 단어. 못 하면 can\'t. 예: I can swim. I can\'t ski. 물어볼 때 Can you swim? - Yes, I can. / No, I can\'t.',
+};
+
 /* AI 도우미: 단어 뜻 · 문장 뜻 · 파닉스 · 문법 · 자유 질문(50자) */
 const AI_KINDS = { word: '단어 뜻', sentence: '문장 뜻', phonics: '파닉스', grammar: '문법', hint: '지금 문제 힌트', card: '공부 카드 설명', free: '자유 질문' };
 async function aiAsk(env, req, b) {
@@ -296,8 +314,10 @@ async function aiAsk(env, req, b) {
   const cur = b.current || {};
   const curTxt = cur && cur.prompt ? `\n[지금 문제] ${str(cur.prompt, 80)} / 화면: ${str(cur.show, 120) || '(소리 문제)'} / 보기: ${(Array.isArray(cur.options) ? cur.options : []).slice(0, 6).map(o => str(o, 60)).join(', ')}${cur.answer ? ' / 정답: ' + str(cur.answer, 120) : ''}` : '';
   const hintOnly = kind === 'hint' && !cur.answer;
-  const user = `[교재] ${ctx.grade} · ${ctx.title}\n[이 단원 단어] ${ctx.words || '(없음)'}\n[이 단원 문장] ${ctx.sentences || '(없음)'}${curTxt}\n[질문 종류] ${AI_KINDS[kind]}${hintOnly ? ' [힌트만]' : ''}\n[아이의 질문] <질문>${text}</질문>`;
-  const key = await sha256(JSON.stringify(['ask1', kind, text.toLowerCase(), kind === 'free' || kind === 'hint' || kind === 'card' ? ctx.title + curTxt : '']));
+  const fact = AI_FACTS[text] ? `\n[정확한 사실 — 이 내용을 바탕으로 쉽게 풀어 설명할 것] ${AI_FACTS[text]}` : '';
+  const hintRule = hintOnly ? '\n[중요] 이건 힌트 요청이에요. 보기 중 어떤 것이 정답인지 절대 말하거나 따옴표로 짚지 말고, 아이가 스스로 고를 수 있게 생각할 점만 1~2문장으로 알려 주세요.' : '';
+  const user = `[교재] ${ctx.grade} · ${ctx.title}\n[이 단원 단어] ${ctx.words || '(없음)'}\n[이 단원 문장] ${ctx.sentences || '(없음)'}${curTxt}\n[질문 종류] ${AI_KINDS[kind]}${hintOnly ? ' [힌트만]' : ''}${fact}\n[아이의 질문] <질문>${text}</질문>${hintRule}`;
+  const key = await sha256(JSON.stringify(['ask2', kind, text.toLowerCase(), kind === 'free' || kind === 'hint' || kind === 'card' ? ctx.title + curTxt : '']));
   return aiCached(env, key, g.sid, AI_HELPER, user, 380);
 }
 
