@@ -177,3 +177,22 @@ test('AI 선생님: 키가 없으면 Cloudflare 무료 AI를 쓰고, 한도 초�
     assert.strictEqual(r.body.ai_provider, 'workers-ai');
   } finally { delete env.AI; }
 });
+
+test('AI 도우미: 질문 종류·단원 정보를 보내고, 50자 넘는 글은 자르고, 학생별 하루 한도를 지킨다', async () => {
+  const S2 = { school_code: 'S10-7777777', school_name: '체험초등학교', grade: 5, cls: 1 };
+  const tok = (await call('/contest/api/student/login', { ...S2, num: 2, nickname: '질문왕', pin: '2222' })).body.token;
+  let seen = '';
+  env.AI = { run: async (m, inp) => { seen = inp.messages[1].content; assert.ok(inp.messages[0].content.includes('영어 공부에 관한 것만')); return { response: 'library는 도서관이에요. 📚' }; } };
+  env.AI_STUDENT_LIMIT = '2';
+  try {
+    const unit = { title: 'Where Is the Library?', words: [{ en: 'library', ko: '도서관' }], sentences: [{ en: 'Where is the library?', ko: '도서관은 어디에 있니?' }] };
+    let r = await call('/contest/api/ai/ask', { kind: 'word', text: 'library 뜻이 뭐예요?', unit, grade: '4학년' }, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.body.text, 'library는 도서관이에요. 📚');
+    assert.ok(seen.includes('[질문 종류] 단어 뜻') && seen.includes('library(도서관)'));
+    r = await call('/contest/api/ai/ask', { kind: 'hint', text: '힌트 주세요', unit, current: { prompt: '빈칸', show: 'Where ____ the library?', options: ['is', 'are'] } }, { Authorization: 'Bearer ' + tok });
+    assert.ok(seen.includes('[힌트만]'), '정답 없이 물으면 힌트만');
+    r = await call('/contest/api/ai/ask', { kind: 'free', text: 'x'.repeat(200), unit }, { Authorization: 'Bearer ' + tok });
+    assert.strictEqual(r.status, 429, '학생별 한도');
+    assert.strictEqual((await call('/api/ai/ask', { kind: 'word', text: 'a' }, { Authorization: 'Bearer ' + tok })).status, 404, '원래 버전에는 없음');
+  } finally { delete env.AI; delete env.AI_STUDENT_LIMIT; }
+});

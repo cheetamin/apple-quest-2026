@@ -1524,3 +1524,39 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-box { padding: 12px 14px; border-radius: 8px; background: #f4f0ff; box-shadow: inset 0 0 0 2px #c8b8ff; text-align: left; font-size: 15px; line-height: 1.65; }
 .ai-box p { margin: 0 0 6px; }
 .ai-wait span { display: inline-block; animation: vPulse 1s infinite; }
+
+/* ===== AI 애플 도우미 (체험판) ===== */
+.ai-fab { position: absolute; right: 3%; top: 12.5%; z-index: 30; display: flex; align-items: center; gap: 4px; padding: 8px 12px 8px 8px; border-radius: 30px; color: #fff; font-weight: 900; font-size: 13px;
+  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 2px #fff, 0 0 14px rgba(160,120,255,.8), 0 4px 10px rgba(0,0,0,.35); animation: aiBob 2.4s ease-in-out infinite; }
+.ai-fab span { font-size: 22px; line-height: 1; }
+.ai-fab[hidden] { display: none; }
+@keyframes aiBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+.ai-chip { position: absolute; right: 4%; top: 4%; z-index: 6; padding: 8px 16px; border-radius: 18px; font-size: 30px; font-weight: 900; color: #fff;
+  background: linear-gradient(180deg, #b8a0ff, #7a5ae8 55%, #4a2ab0); box-shadow: 0 0 0 3px #fff, 0 0 16px rgba(160,120,255,.9); animation: aiBob 2.4s ease-in-out infinite; }
+.sheet.ai-sheet { max-height: 88%; display: flex; flex-direction: column; }
+.ai-head { display: flex; align-items: center; gap: 10px; text-align: left; margin-bottom: 6px; }
+.ai-head h3 { margin: 0; }
+.ai-head .sub { margin: 2px 0 0; font-size: 12px; }
+.ai-ava { flex: 0 0 56px; width: 56px; height: 56px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #fff7e0, #ffd7a0); box-shadow: 0 0 0 3px #b8a0ff; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; padding: 4px; }
+.ai-ava img, .ai-ava svg { width: 100%; height: 100%; object-fit: contain; }
+.ai-log { flex: 1; min-height: 120px; max-height: 38vh; overflow-y: auto; padding: 8px; border-radius: 8px; background: #f4f0ff; box-shadow: inset 0 0 0 2px #d8ccff; display: flex; flex-direction: column; gap: 8px; text-align: left; }
+.ai-msg { display: flex; flex-direction: column; max-width: 88%; }
+.ai-msg p { margin: 0; padding: 9px 12px; border-radius: 14px; font-size: 14.5px; line-height: 1.6; }
+.ai-msg.bot { align-self: flex-start; }
+.ai-msg.bot p { background: #fff; box-shadow: 0 1px 3px rgba(60,40,140,.15); border-top-left-radius: 4px; }
+.ai-msg.bot.err p { background: #fff0f0; color: #a02020; }
+.ai-msg.me { align-self: flex-end; }
+.ai-msg.me p { background: linear-gradient(180deg, #9a7aff, #6a4ae0); color: #fff; border-top-right-radius: 4px; }
+.ai-say { align-self: flex-start; margin-top: 3px; font-size: 12px; font-weight: 800; color: #5a3ad0; padding: 2px 6px; }
+.ai-cats, .ai-sub { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ai-sub:empty { display: none; }
+.ai-sub { max-height: 104px; overflow-y: auto; padding: 6px; border-radius: 8px; background: #fbf8ff; }
+.ai-c { padding: 6px 10px; border-radius: 16px; font-size: 13px; font-weight: 800; color: #3a2a7a; background: #fff; box-shadow: inset 0 0 0 1.5px #b8a0ff; }
+.ai-c.long { font-weight: 700; font-size: 12.5px; text-align: left; }
+.ai-c.hot { color: #fff; background: linear-gradient(180deg, #ff9a6a, #e8503a); box-shadow: none; }
+.ai-c:active { transform: scale(.96); }
+.ai-form { display: flex; gap: 6px; margin-top: 8px; }
+.ai-form input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 10px; border: 2px solid #c8b8ff; font-size: 15px; }
+.ai-form .btn { flex: 0 0 auto; padding: 0 14px; min-height: 42px; }
+.reduce .ai-fab, .reduce .ai-chip { animation: none; }
+@media (prefers-reduced-motion: reduce) { .ai-fab, .ai-chip { animation: none; } }

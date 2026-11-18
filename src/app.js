@@ -560,6 +560,7 @@
   function render() {
     ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
+    if (CONTEST) aiFab();
   }
   function autoQ(unitId) {
     const u = unitById(unitId || currentUnit().id); const rec = S.units[u.id];
@@ -623,6 +624,7 @@
         <div class="aura"></div>
         <div class="mascot ${sleepy ? 'mood-sleepy' : ''}" id="mascot" data-act="pet">${SHOP.dressed(i, IMG[i], S.wear, st.name)}</div>
         ${sleepy ? '<span class="zz">z z</span>' : ''}${btn}
+        ${CONTEST ? '<button class="ai-chip" data-act="aihelp">🤖 AI에게 물어보기</button>' : ''}
         ${L.hungerNow(S, now()) < 30 ? `<button class="hungry-bubble" data-act="go" data-v="village">배고파요… 🍎<small>먹이 주러 가기</small></button>` : ''}
       </div>
       <div class="s-rib" style="${P(204, 634, 352, 670)}">특성</div>
@@ -897,6 +899,67 @@
       ${SESS ? '' : '<p class="voice-note">기록은 지금 이 기기의 브라우저에 저장돼요.</p>'}`;
   }
 
+  /* ---------- AI 애플 도우미 (공모전 체험판) ---------- */
+  const AIH = { log: [], busy: false };
+  function aiFab() {
+    let b = $('#aiFab');
+    if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = '<span>🤖</span><b>AI 도우미</b>'; $('#screen').append(b); }
+    b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
+  }
+  function aiContext() {
+    const u = view === 'study' && SD.unit ? unitById(SD.unit) : Q && Q.mode === 'set' ? unitById(Q.unit) : currentUnit();
+    const ctx = { grade: COURSE.label, unit: { title: `Lesson ${u.no}. ${u.title} (${u.ko})`, words: u.words.map(w => ({ en: w.en, ko: w.ko })), sentences: u.sentences.slice(0, 6).map(x => ({ en: x.en, ko: x.ko })) } };
+    if (Q && (view === 'home' || view === 'play') && Q.phase !== 'result') {
+      const q = Q.list[Q.i];
+      if (q) ctx.current = { prompt: q.prompt, show: q.type === 'phonics' ? '?' + q.show : (q.show || ''), options: q.options || q.tiles || [], answer: Q.phase === 'fb' ? (q.answer === 'match' ? q.explain : q.answer) : '' };
+    }
+    if (view === 'study') { const it = studyItems()[SD.i]; if (it) ctx.card = it; }
+    return ctx;
+  }
+  const AI_PRESET = {
+    phonics: ['sh 소리는 어떻게 내요?', 'th 소리는 어떻게 내요?', '매직 e가 뭐예요?', 'c는 언제 ㅋ, 언제 ㅅ 소리가 나요?', 'ee와 ea는 어떻게 읽어요?', 'f와 p 소리는 뭐가 달라요?'],
+    grammar: ['is와 are는 언제 써요?', 'a와 an은 뭐가 달라요?', '-ing(하고 있어요)는 어떻게 만들어요?', 'do와 does는 언제 써요?', '지난 일(과거)은 어떻게 말해요?', 'can은 어떻게 써요?'],
+  };
+  function aiSubChips(k) {
+    const c = aiContext();
+    if (k === 'word') return c.unit.words.map(w => `<button class="ai-c" data-act="aiq" data-k="word" data-q="${esc(w.en)} 뜻과 예문 알려 주세요">${esc(w.en)}</button>`).join('');
+    if (k === 'sentence') return c.unit.sentences.map(x => `<button class="ai-c long" data-act="aiq" data-k="sentence" data-q="${esc(x.en.slice(0, 40))} 무슨 뜻이에요?">${esc(x.en)}</button>`).join('');
+    return (AI_PRESET[k] || []).map(q => `<button class="ai-c long" data-act="aiq" data-k="${k}" data-q="${esc(q)}">${esc(q)}</button>`).join('');
+  }
+  function aiLogHTML() {
+    if (!AIH.log.length) return `<div class="ai-msg bot"><p>안녕! 나는 AI 애플 도우미야 🍎<br>단어 뜻, 문장 뜻, 파닉스, 문법… 영어에서 궁금한 걸 물어봐 줘요!</p></div>`;
+    return AIH.log.map((m, i) => m.me ? `<div class="ai-msg me"><p>${esc(m.text)}</p></div>` : `<div class="ai-msg bot ${m.err ? 'err' : ''}"><p>${esc(m.text).replace(/\n/g, '<br>')}</p>${m.err ? '' : `<button class="ai-say" data-act="aisay" data-v="${i}">🔊 영어 부분 듣기</button>`}</div>`).join('') + (AIH.busy ? '<div class="ai-msg bot"><p class="ai-wait">생각하는 중이에요<span>…</span></p></div>' : '');
+  }
+  function aiHelp() {
+    if (!SESS) { toast('🤖 AI 도우미는 로그인한 친구만 쓸 수 있어요.'); return; }
+    const c = aiContext();
+    const top = [];
+    if (c.current) top.push(`<button class="ai-c hot" data-act="aiq" data-k="hint" data-q="${c.current.answer ? '방금 문제 왜 이게 답이에요?' : '지금 문제 힌트 주세요'}">🧩 ${c.current.answer ? '방금 문제 설명' : '지금 문제 힌트'}</button>`);
+    if (c.card) top.push(`<button class="ai-c hot" data-act="aiq" data-k="card" data-q="${esc(c.card.en.slice(0, 40))} 설명해 주세요">📖 이 카드 설명</button>`);
+    openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
+      <div class="ai-head"><span class="ai-ava">${SHOP.dressed(S.stage, IMG[S.stage], S.wear, STAGES[S.stage].name)}</span><div><h3>🤖 AI 애플 도우미</h3><p class="sub">${esc(c.unit.title)} · 영어 공부 질문만 도와줘요</p></div></div>
+      <div class="ai-log" id="aiLog">${aiLogHTML()}</div>
+      <div class="ai-cats">${top.join('')}<button class="ai-c" data-act="aichips" data-v="word">🔤 단어 뜻</button><button class="ai-c" data-act="aichips" data-v="sentence">💬 문장 뜻</button><button class="ai-c" data-act="aichips" data-v="phonics">🅰️ 파닉스</button><button class="ai-c" data-act="aichips" data-v="grammar">📐 문법</button></div>
+      <div class="ai-sub"></div>
+      <form class="ai-form" id="aiForm"><input id="aiIn" maxlength="50" autocomplete="off" placeholder="궁금한 걸 짧게 적어요 (50자)" aria-label="AI에게 질문"><button class="btn" type="submit">보내기</button></form>
+      <p class="voice-note">AI가 만든 답이라 틀릴 수도 있어요. 이름·학교·전화번호 같은 내 정보는 적지 마세요.</p>`, 'ai-sheet');
+    const f = $('#aiForm'); if (f) f.addEventListener('submit', e => { e.preventDefault(); const v = $('#aiIn').value.trim(); if (v) { $('#aiIn').value = ''; aiAsk('free', v); } });
+    aiScroll();
+  }
+  function aiScroll() { const l = $('#aiLog'); if (l) l.scrollTop = l.scrollHeight; }
+  function aiRefresh() { const l = $('#aiLog'); if (l) { l.innerHTML = aiLogHTML(); aiScroll(); } }
+  async function aiAsk(kind, text) {
+    if (AIH.busy || !SESS) return;
+    if (/\d{2,3}[- ]?\d{3,4}[- ]?\d{4}/.test(text)) { toast('전화번호 같은 내 정보는 적지 않아요!'); return; }
+    const c = aiContext();
+    AIH.log.push({ me: true, text }); AIH.busy = true; aiRefresh();
+    const r = await api('/api/ai/ask', { kind, text, grade: c.grade, unit: c.unit, current: kind === 'hint' ? c.current : undefined }, { token: SESS.token, timeout: 25000 });
+    AIH.busy = false;
+    AIH.log.push(r.ok ? { text: r.text } : { text: r.error || 'AI 도우미와 연결이 안 돼요.', err: true });
+    if (AIH.log.length > 30) AIH.log.splice(0, AIH.log.length - 30);
+    aiRefresh();
+  }
+
   /* 파닉스 표 */
   const PH = AQ_PHONICS; let phGroup = 'abc';
   function renderPhonics() {
@@ -1123,7 +1186,7 @@
   /* ---------- 이벤트 ---------- */
   const ACT = {
     go: d => { AU.tap(); if (d.v === 'study' && d.u) return go('study', +d.u); closeSheet(); go(d.v); },
-    pet: () => { AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
+    pet: () => { if (CONTEST) { AU.tap(); setMood('greet'); aiHelp(); return; } AU.tap(); const m = PET[Math.floor(Math.random() * PET.length)]; setMood('greet'); const s = learnedSentences(); if (Math.random() < .5 && s.length) { const l = s[Math.floor(Math.random() * s.length)]; say(l.ko, l.en); speak(l.en); } else say(m); },
     set: d => { AU.tap(); startSet(+d.u, +d.s); },
     review: () => { AU.tap(); startReview(); },
     boss: d => { AU.tap(); startBoss(+d.v); },
@@ -1152,6 +1215,10 @@
       const box = $('.sheet .ai-box'); if (!box) return;
       box.innerHTML = r.ok ? `<p>${esc(r.text).replace(/\n/g, '<br>')}</p><p class="voice-note">AI가 만든 설명이에요. 이상한 점이 있으면 선생님께 물어보세요.</p>` : `<p>${esc(r.error || 'AI 선생님과 연결이 안 돼요.')}</p>`;
     },
+    aihelp: () => { AU.tap(); aiHelp(); },
+    aiq: (d, el) => { AU.tap(); aiAsk(d.k, el.dataset.q || el.textContent.trim()); },
+    aichips: d => { AU.tap(); const box = $('.ai-sub'); if (box) { box.innerHTML = aiSubChips(d.v); box.dataset.on = d.v; } },
+    aisay: d => { const m = AIH.log[+d.v]; if (!m) return; const en = (m.text.match(/[A-Za-z][A-Za-z'’,.!? -]*[A-Za-z.!?]/g) || []).filter(x => /[a-z]{2,}/i.test(x)).join('. '); if (en) speak(en); else toast('영어 부분이 없어요.'); },
     demo: d => {
       if (!CONTEST) return;
       const v = d.v; AU.tap();
