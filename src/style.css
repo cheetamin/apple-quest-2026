@@ -1600,5 +1600,5 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .t-guide .linkish { display: inline-block; margin-top: 6px; }
 .code-card { margin-top: 10px; padding: 14px; border-radius: 8px; text-align: center; color: #3a2300; background: linear-gradient(180deg, #fffbe6, #ffe9a8); box-shadow: inset 0 0 0 2.5px #ffd45c, 0 0 16px rgba(255,212,92,.45); }
 .code-card small { font-size: 13px; font-weight: 800; }
-.code-card > b { display: block; margin: 4px 0; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 40px; letter-spacing: .28em; color: #c2302a; }
+.code-card > b { display: block; margin: 4px 0; font-family: "Barlow", sans-serif; font-weight: 800; font-size: 36px; letter-spacing: .2em; color: #c2302a; }
 .code-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; }

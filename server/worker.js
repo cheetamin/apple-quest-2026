@@ -52,9 +52,11 @@ async function ensureClassCode(env, row) { // 승인된 반에 학급 코드(6�
   }
   return null;
 }
-const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8);
+const CODE_RE = /^[A-Z0-9]{4,8}$/; // 선생님이 정하는 코드: 영어 대문자·숫자 4~8자 (예: DH0401)
+async function codeTaken(env, c, exceptId = 0) { return !!(await env.DB.prepare("SELECT id FROM teachers WHERE class_code=? AND id<>? AND status<>'rejected'").bind(c, exceptId).first()); }
 async function classLookup(env, code) {
-  const c = normCode(code); if (c.length !== 6) return fail('학급 코드는 6자리예요.');
+  const c = normCode(code); if (!CODE_RE.test(c)) return fail('학급 코드는 영어·숫자 4~8자리예요.');
   const row = await env.DB.prepare("SELECT school_code,school_name,grade,cls,teacher_name FROM teachers WHERE class_code=? AND status='approved'").bind(c).first();
   if (!row) return fail('학급 코드를 찾을 수 없어요. 선생님께 다시 확인해 주세요.', 404);
   return json({ ok: true, ...row, class_code: c });
@@ -182,10 +184,14 @@ async function teacherRegister(env, b) {
   if (!teacher_name) return fail('선생님 성함을 적어 주세요.');
   const exists = await env.DB.prepare('SELECT status FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).first();
   if (exists && exists.status !== 'rejected') return fail(exists.status === 'approved' ? '이 반은 이미 등록되어 있어요.' : '이 반은 이미 승인을 기다리고 있어요.', 409);
+  const want = normCode(b.class_code);
+  if (b.class_code && !CODE_RE.test(want)) return fail('학급 코드는 영어·숫자 4~8자리로 정해 주세요. (예: DH0401)');
+  if (want && await codeTaken(env, want)) return fail(`학급 코드 ${want}는 이미 다른 반이 쓰고 있어요. 다른 코드로 정해 주세요.`, 409);
   if (exists) await env.DB.prepare('DELETE FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).run();
   const now = Date.now();
   await env.DB.prepare('INSERT INTO teachers (school_code,school_name,grade,cls,teacher_name,contact,pass_hash,status,export_key,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
     .bind(f.school_code, f.school_name, f.grade, f.cls, teacher_name, contact, await sha256(`aq-teacher|${f.school_code}|${pass}`), env.CONTEST ? 'approved' : 'pending', randKey(), now).run();
+  if (want) await env.DB.prepare('UPDATE teachers SET class_code=? WHERE school_code=? AND grade=? AND cls=?').bind(want, f.school_code, f.grade, f.cls).run(); // 승인되면 이 코드로 열림
   if (env.CONTEST) { // 공모전 체험판: 심사·시연용으로 바로 승인
     const row = await env.DB.prepare('SELECT * FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).first();
     return json({ ok: true, status: 'approved', approved: true, class_code: await ensureClassCode(env, row) });
@@ -396,6 +402,14 @@ async function route(req, env) {
     const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
     return json({ ok: true, students: await classStudents(env, t), export_key: t.export_key });
   }
+  if (p === '/api/teacher/set-code' && req.method === 'POST') { // 선생님이 학급 코드 바꾸기
+    const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
+    const c = normCode(body.class_code);
+    if (!CODE_RE.test(c)) return fail('학급 코드는 영어·숫자 4~8자리로 정해 주세요. (예: DH0401)');
+    if (await codeTaken(env, c, t.id)) return fail(`학급 코드 ${c}는 이미 다른 반이 쓰고 있어요.`, 409);
+    await env.DB.prepare('UPDATE teachers SET class_code=? WHERE id=?').bind(c, t.id).run();
+    return json({ ok: true, class_code: c });
+  }
   if (p === '/api/teacher/reset-pin' && req.method === 'POST') {
     const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
     await env.DB.prepare('UPDATE students SET pin_hash=NULL, fail_count=0, locked_until=0 WHERE id=? AND school_code=? AND grade=? AND cls=?').bind(int(body.id, 1, 1e12), t.school_code, t.grade, t.cls).run();
@@ -428,6 +442,7 @@ async function route(req, env) {
     if (p === '/api/admin/decide' && req.method === 'POST') {
       const st = body.approve ? 'approved' : 'rejected';
       await env.DB.prepare('UPDATE teachers SET status=?, decided_at=? WHERE id=?').bind(st, Date.now(), int(body.id, 1, 1e12)).run();
+      if (st === 'rejected') await env.DB.prepare('UPDATE teachers SET class_code=NULL WHERE id=?').bind(int(body.id, 1, 1e12)).run(); // 거절되면 코드 풀어 주기
       const row = await env.DB.prepare('SELECT * FROM teachers WHERE id=?').bind(int(body.id, 1, 1e12)).first();
       return json({ ok: true, status: st, class_code: st === 'approved' ? await ensureClassCode(env, row) : null });
     }

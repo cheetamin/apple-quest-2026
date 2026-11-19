@@ -63,6 +63,6 @@ node --test tests/logic.test.js tests/server.test.mjs
 - 서버 `/contest/api/ai/ask` · 기본은 Cloudflare Workers AI 무료(Qwen3 → Gemma 4 → Llama 순서), `ANTHROPIC_API_KEY`가 있으면 Claude. 하루 전체 200번(무료)·학생 1명 40번, 같은 질문은 저장해 둔 답 사용.
 
 ## 학급 코드 (두 버전 공통)
-- 선생님이 등록하고 승인되면(체험판은 바로) 6자리 **학급 코드**가 생김. 선생님 탭 맨 위에 표시 · 복사 버튼.
+- 선생님이 등록할 때 학급 코드를 직접 정할 수 있음(영어·숫자 4~8자리, 예: 대한초 4-1 → DH0401). 비워 두면 승인될 때 6자리 자동 생성. 선생님 화면에서 "코드 바꾸기" 가능(`POST /api/teacher/set-code`). 선생님 탭 맨 위에 표시 · 복사 버튼.
 - 학생 첫 화면: "👩‍🏫 선생님" 버튼(교사 등록·로그인으로), "학급 코드" 칸에 넣고 확인 → 학교·학년·반 자동 입력. 코드 없이 학교 검색으로 시작하는 것도 그대로 가능.
 - 선생님은 학급 코드 + 비밀번호로도 로그인. 서버: `GET /api/class?code=`, `teachers.class_code`(자동 추가 열).

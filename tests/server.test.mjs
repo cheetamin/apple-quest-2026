@@ -227,3 +227,22 @@ test('학급 코드: 승인되면 6자리 코드가 생기고, 학생은 코드�
   assert.match(r.body.class_code, /^[A-Z2-9]{6}$/, '체험판은 등록하자마자 코드');
   assert.strictEqual((await call('/api/class?code=' + r.body.class_code)).status, 404, '체험판 코드는 원래 서버에 없음');
 });
+
+test('학급 코드 직접 정하기: 등록할 때 DH0401처럼 정하고, 겹치면 거절, 나중에 바꾸기', async () => {
+  const D = { school_code: 'S10-6666666', school_name: '대한초등학교', grade: 4, cls: 1 };
+  assert.strictEqual((await call('/api/teacher/register', { ...D, password: 'daehan12', teacher_name: '대한', class_code: '대한' })).status, 400, '영어·숫자만');
+  let r = await call('/api/teacher/register', { ...D, password: 'daehan12', teacher_name: '대한', class_code: 'dh-0401' });
+  assert.strictEqual(r.body.status, 'pending');
+  assert.strictEqual((await call('/api/class?code=DH0401')).status, 404, '승인 전에는 안 열림');
+  const D2 = { ...D, cls: 2 };
+  assert.strictEqual((await call('/api/teacher/register', { ...D2, password: 'daehan12', teacher_name: '대한2', class_code: 'DH0401' })).status, 409, '이미 쓰는 코드');
+  const t = (await call('/api/admin/teachers', undefined, ADMIN)).body.teachers.find(x => x.school_name === '대한초등학교' && x.cls === 1);
+  r = await call('/api/admin/decide', { id: t.id, approve: true }, ADMIN);
+  assert.strictEqual(r.body.class_code, 'DH0401', '정한 코드 그대로');
+  assert.strictEqual((await call('/api/class?code=dh0401')).body.cls, 1);
+  const tok = (await call('/api/teacher/login', { class_code: 'DH0401', password: 'daehan12' })).body.token;
+  r = await call('/api/teacher/set-code', { class_code: 'DAEHAN41' }, { Authorization: 'Bearer ' + tok });
+  assert.strictEqual(r.body.class_code, 'DAEHAN41');
+  assert.strictEqual((await call('/api/class?code=DH0401')).status, 404);
+  assert.strictEqual((await call('/api/class?code=DAEHAN41')).body.school_name, '대한초등학교');
+});
