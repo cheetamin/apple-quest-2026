@@ -400,7 +400,8 @@ async function route(req, env) {
   if (p === '/api/class') return classLookup(env, url.searchParams.get('code'));
   if (p === '/api/teacher/students') {
     const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
-    return json({ ok: true, students: await classStudents(env, t), export_key: t.export_key });
+    await ensureClassCode(env, t); // 예전에 로그인해 둔 선생님도 코드가 보이게
+    return json({ ok: true, students: await classStudents(env, t), export_key: t.export_key, class_code: t.class_code });
   }
   if (p === '/api/teacher/set-code' && req.method === 'POST') { // 선생님이 학급 코드 바꾸기
     const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);

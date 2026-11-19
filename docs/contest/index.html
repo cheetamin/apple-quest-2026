@@ -4606,7 +4606,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     if (!TS) return;
     TERR = '불러오는 중…'; renderTeach();
     const r = await api('/api/teacher/students', undefined, { token: TS.token });
-    if (r.ok) { TLIST = r.students; TS.export_key = r.export_key || TS.export_key; lsSet(TSESS_KEY, TS); TERR = ''; }
+    if (r.ok) { TLIST = r.students; TS.export_key = r.export_key || TS.export_key; if (r.class_code) TS.class_code = r.class_code; lsSet(TSESS_KEY, TS); TERR = ''; }
     else if (r.status === 401) { TS = null; lsSet(TSESS_KEY, null); TERR = '다시 로그인해 주세요.'; }
     else TERR = r.error;
     if (view === 'tch') renderTeach();
@@ -4639,6 +4639,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     const accAvg = L2.length ? Math.round(L2.reduce((a, x) => a + (x.accuracy || 0), 0) / L2.length) : 0;
     const needReview = L2.filter(x => !x.lastStudy || now() - x.lastStudy > 7 * L.DAY).length;
     h += `<div class="glass tinfo"><b>🏫 ${esc(TS.school_name)} ${TS.grade}학년 ${TS.cls}반</b><span>${esc(TS.teacher_name || '')} 선생님</span></div>
+      ${!TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><p style="margin:6px 0 10px">아직 학급 코드가 없어요. 직접 정해 보세요! (예: 대한초 4학년 1반 → DH0401)</p><button class="btn" data-act="tsetcode">✏️ 학급 코드 만들기</button></div>` : ''}
       ${TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><b>${esc(TS.class_code)}</b><p>학생들은 첫 화면의 <b>학급 코드</b> 칸에 이 코드를 넣으면 학교·학년·반이 자동으로 채워져요. 선생님도 이 코드와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="tcopycode">코드 복사하기</button><button class="btn ghost" data-act="tsetcode">✏️ 코드 바꾸기</button></div></div>` : ''}
       <div class="stats" style="margin-top:10px"><div class="stat"><small>등록 학생</small><b>${L2.length}<em>명</em></b></div><div class="stat"><small>오늘 학습</small><b>${active}<em>명</em></b></div>
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
