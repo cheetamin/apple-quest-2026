@@ -1585,3 +1585,20 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .ai-chip .ai-txt b { font-size: 40px; }
 .ai-chip { padding: 8px 26px 8px 10px; }
 .ai-fab b { font-size: 16px; }
+
+/* ===== 학급 코드 · 선생님 입구 ===== */
+.who-row { display: flex; gap: 8px; margin: 2px 0 10px; }
+.who-row .who { flex: 1; padding: 9px 6px; border-radius: 10px; font-size: 14.5px; font-weight: 900; text-align: center; color: #5a3a1a; background: #fff6dc; box-shadow: inset 0 0 0 2px #f0d08a; }
+.who-row .who.on { color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); box-shadow: inset 0 0 0 2px #e8b84a, 0 2px 0 #c89a2a; }
+.who-row button.who { color: #fff; background: linear-gradient(180deg, #8ab8ff, #3a72d8); box-shadow: inset 0 0 0 2px #2a5ab0, 0 2px 0 #1a3a80; }
+.code-in { text-transform: uppercase; letter-spacing: .25em; font-weight: 900; font-family: 'Barlow', sans-serif; }
+.code-ok { margin: 4px 0 4px; font-size: 13px; line-height: 1.5; color: #5a6a8a; min-height: 0; }
+.code-ok:empty { display: none; }
+.code-ok.good { color: #1f7a3a; padding: 8px 10px; border-radius: 8px; background: #e8f8ec; box-shadow: inset 0 0 0 2px #9ae0a8; }
+.code-ok.bad { color: #c0302a; }
+.t-guide { color: #eef3ff; line-height: 1.6; font-size: 14px; margin-bottom: 10px; }
+.t-guide .linkish { display: inline-block; margin-top: 6px; }
+.code-card { margin-top: 10px; padding: 14px; border-radius: 8px; text-align: center; color: #3a2300; background: linear-gradient(180deg, #fffbe6, #ffe9a8); box-shadow: inset 0 0 0 2.5px #ffd45c, 0 0 16px rgba(255,212,92,.45); }
+.code-card small { font-size: 13px; font-weight: 800; }
+.code-card > b { display: block; margin: 4px 0; font-family: 'Barlow', sans-serif; font-weight: 800; font-size: 40px; letter-spacing: .28em; color: #c2302a; }
+.code-card p { margin: 0 0 10px; font-size: 13px; line-height: 1.55; }

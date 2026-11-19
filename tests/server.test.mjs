@@ -207,3 +207,23 @@ test('AI 도우미 힌트: AI가 보기 단어를 말해도 가려진다', async
     assert.ok(r.body.text.includes('○○'));
   } finally { delete env.AI; }
 });
+
+test('학급 코드: 승인되면 6자리 코드가 생기고, 학생은 코드로 반을 찾고, 선생님은 코드+비밀번호로 들어온다', async () => {
+  const C3 = { school_code: 'S10-5555555', school_name: '코드초등학교', grade: 3, cls: 2 };
+  let r = await call('/api/teacher/register', { ...C3, password: 'code1234', teacher_name: '코드' });
+  assert.strictEqual(r.body.status, 'pending');
+  const list = (await call('/api/admin/teachers', undefined, ADMIN)).body.teachers;
+  const t = list.find(x => x.school_name === '코드초등학교');
+  r = await call('/api/admin/decide', { id: t.id, approve: true }, ADMIN);
+  const code = r.body.class_code;
+  assert.match(code, /^[A-HJ-NP-Z2-9]{6}$/);
+  r = await call('/api/class?code=' + code.toLowerCase());
+  assert.strictEqual(r.body.school_name, '코드초등학교'); assert.strictEqual(r.body.grade, 3); assert.strictEqual(r.body.cls, 2);
+  assert.strictEqual((await call('/api/class?code=ZZZZZZ')).status, 404);
+  r = await call('/api/teacher/login', { class_code: code, password: 'code1234' });
+  assert.ok(r.body.token); assert.strictEqual(r.body.class_code, code);
+  assert.strictEqual((await call('/api/teacher/login', { class_code: code, password: 'wrong' })).status, 401);
+  r = await call('/contest/api/teacher/register', { ...C3, password: 'code1234', teacher_name: '체험' });
+  assert.match(r.body.class_code, /^[A-Z2-9]{6}$/, '체험판은 등록하자마자 코드');
+  assert.strictEqual((await call('/api/class?code=' + r.body.class_code)).status, 404, '체험판 코드는 원래 서버에 없음');
+});

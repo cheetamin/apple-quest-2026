@@ -1223,6 +1223,23 @@
       const box = $('.sheet .ai-box'); if (!box) return;
       box.innerHTML = r.ok ? `<p>${esc(r.text).replace(/\n/g, '<br>')}</p><p class="voice-note">AI가 만든 설명이에요. 이상한 점이 있으면 선생님께 물어보세요.</p>` : `<p>${esc(r.error || 'AI 선생님과 연결이 안 돼요.')}</p>`;
     },
+    tfromlogin: () => { AU.tap(); const ov = $('.loginov'); if (ov) ov.remove(); TV = 'reg'; TERR = ''; go('tch'); },
+    tbacklogin: () => { AU.tap(); if (SESS) { go('me'); return; } go('home'); loginScreen(loginScreen.after || afterGate); },
+    tcopycode: () => { if (TS && TS.class_code) copyText(TS.class_code, '학급 코드를 복사했어요!'); },
+    scode: async () => {
+      const inp = $('#s-code'), ok = $('#s-code-ok'); if (!inp) return;
+      const code = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); inp.value = code;
+      if (code.length !== 6) { ok.className = 'code-ok bad'; ok.textContent = '학급 코드는 6자리예요.'; return; }
+      ok.className = 'code-ok'; ok.textContent = '확인하는 중…';
+      const r = await api('/api/class?code=' + encodeURIComponent(code));
+      if (!r.ok) { ok.className = 'code-ok bad'; ok.textContent = r.error || '학급 코드를 찾을 수 없어요.'; AU.bad(); return; }
+      const sp = $('#sp-s'); sp.dataset.code = r.school_code; sp.dataset.name = r.school_name;
+      const q = $('#sp-s-q'); if (q) q.value = r.school_name;
+      const sel = sp.querySelector('.sp-sel'); if (sel) sel.innerHTML = `✅ <b>${esc(r.school_name)}</b>`;
+      const sg = $('#s-g'), sc = $('#s-c'); if (sg) sg.value = String(r.grade); if (sc) sc.value = String(r.cls);
+      ok.className = 'code-ok good'; ok.innerHTML = `✅ <b>${esc(r.school_name)} ${r.grade}학년 ${r.cls}반</b>${r.teacher_name ? ` · ${esc(r.teacher_name)} 선생님 반` : ''}<br><small>이제 번호·닉네임·비밀번호만 적으면 돼요!</small>`;
+      AU.good && AU.good(); const n = $('#s-n'); if (n) n.focus();
+    },
     aihelp: () => { AU.tap(); aiHelp(); },
     aiq: (d, el) => { AU.tap(); aiAsk(d.k, el.dataset.q || el.textContent.trim()); },
     aichips: d => { AU.tap(); const box = $('.ai-sub'); if (box) { box.innerHTML = aiSubChips(d.v); box.dataset.on = d.v; } },
@@ -1526,7 +1543,11 @@
       <img class="login-logo" src="${AQ_LOGO}" alt="">
       <h3>모험을 시작해요!</h3>
       <p class="sub">처음이면 새 모험이 시작되고, 전에 했다면 <b>어느 기기에서든</b> 이어서 할 수 있어요.</p>
-      <label class="lb">우리 학교</label>${schoolPickerHTML('sp-s')}
+      <div class="who-row"><span class="who on">🎒 학생</span><button type="button" class="who" data-act="tfromlogin">👩‍🏫 선생님이에요</button></div>
+      <label class="lb" for="s-code">학급 코드 <small>(선생님께 받은 6자리 · 있으면 학교·반이 자동으로 채워져요)</small></label>
+      <div class="sp-row"><input class="field code-in" id="s-code" maxlength="7" placeholder="예: AB12CD" autocomplete="off" autocapitalize="characters"><button type="button" class="btn sp-go" data-act="scode">확인</button></div>
+      <p class="code-ok" id="s-code-ok"></p>
+      <label class="lb">우리 학교 <small>(학급 코드가 없으면 직접 골라요)</small></label>${schoolPickerHTML('sp-s')}
       ${classSelectHTML('s', true)}
       <label class="lb" for="s-nick">닉네임 <small>(진짜 이름 대신 별명도 좋아요)</small></label>
       <input class="field" id="s-nick" maxlength="10" placeholder="예: 사과용사" value="${esc(S.name || '')}">
@@ -1582,11 +1603,14 @@
     if (view === 'tch') renderTeach();
   }
   function renderTeach() {
-    let h = `<div class="screen-title"><button class="back" data-act="go" data-v="me" aria-label="뒤로">←</button><div><h2>선생님 탭</h2><p>우리 반 아이들의 학습 현황을 확인해요</p></div></div>`;
+    let h = `<div class="screen-title"><button class="back" ${SESS ? 'data-act="go" data-v="me"' : 'data-act="tbacklogin"'} aria-label="뒤로">←</button><div><h2>선생님 탭</h2><p>${SESS ? '우리 반 아이들의 학습 현황을 확인해요' : '선생님 등록 · 로그인'}</p></div></div>`;
+    if (!SESS && !TS) h += `<div class="glass t-guide">👩‍🏫 <b>처음이신가요?</b> "처음 등록하기"로 우리 반을 등록하면 ${CONTEST ? '바로 승인되고' : '제작자 승인 후'} <b>학급 코드</b>가 생겨요. 학생들은 첫 화면에 이 코드만 넣으면 우리 반으로 들어와요.<br><button class="linkish" data-act="tbacklogin">← 학생으로 시작하기</button></div>`;
     if (!API) { main.innerHTML = h + `<div class="glass" style="color:#eef3ff;line-height:1.6">학급 서버가 연결되면 사용할 수 있어요.<br><small style="color:#a9bce0">제작자가 서버 주소를 설정하면 열려요.</small></div>`; return; }
     if (!TS) {
       h += `<div class="tabs"><button class="${TV === 'login' ? 'on' : ''}" data-act="ttab" data-v="login">로그인</button><button class="${TV === 'reg' ? 'on' : ''}" data-act="ttab" data-v="reg">처음 등록하기</button></div>
         <form class="glass tform" id="${TV === 'login' ? 'tlogin' : 'treg'}" autocomplete="off">
+          ${TV === 'login' ? `<label class="lb" for="t-code">학급 코드 <small>(있으면 학교·반 대신 코드로 들어와요)</small></label><input class="field code-in" id="t-code" maxlength="7" placeholder="예: AB12CD" autocomplete="off" autocapitalize="characters">
+          <p class="login-note" style="margin:2px 0 6px">또는 학교·학년·반으로</p>` : ''}
           <label class="lb">학교</label>${schoolPickerHTML('sp-t')}
           ${classSelectHTML('t', false)}
           ${TV === 'reg' ? `<label class="lb" for="t-name">선생님 성함</label><input class="field" id="t-name" maxlength="20" placeholder="예: 김사과">
@@ -1594,7 +1618,7 @@
           <label class="lb" for="t-pw">선생님 비밀번호 ${TV === 'reg' ? '<small>(6자 이상, 새로 정해요)</small>' : ''}</label><input class="field" id="t-pw" type="password" maxlength="40">
           <p class="login-err" id="t-err">${esc(TERR)}</p>
           <button class="btn" type="submit">${TV === 'login' ? '들어가기' : '등록 요청 보내기'}</button>
-          <p class="login-note">${TV === 'reg' ? '등록 요청을 보내면 제작자가 확인한 뒤 승인해요. 승인되면 같은 학교·학년·반과 비밀번호로 들어올 수 있어요. 다른 반 학생 정보는 볼 수 없어요.' : '아직 등록하지 않았다면 "처음 등록하기"를 눌러 주세요.'}</p>
+          <p class="login-note">${TV === 'reg' ? (CONTEST ? '체험판은 등록하면 바로 승인되고 학급 코드가 만들어져요.' : '등록 요청을 보내면 제작자가 확인한 뒤 승인해요. 승인되면 학급 코드가 생기고, 같은 학교·학년·반(또는 학급 코드)과 비밀번호로 들어올 수 있어요.') + ' 다른 반 학생 정보는 볼 수 없어요.' : '아직 등록하지 않았다면 "처음 등록하기"를 눌러 주세요.'}</p>
         </form>`;
       main.innerHTML = h; return;
     }
@@ -1604,6 +1628,7 @@
     const accAvg = L2.length ? Math.round(L2.reduce((a, x) => a + (x.accuracy || 0), 0) / L2.length) : 0;
     const needReview = L2.filter(x => !x.lastStudy || now() - x.lastStudy > 7 * L.DAY).length;
     h += `<div class="glass tinfo"><b>🏫 ${esc(TS.school_name)} ${TS.grade}학년 ${TS.cls}반</b><span>${esc(TS.teacher_name || '')} 선생님</span></div>
+      ${TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><b>${esc(TS.class_code)}</b><p>학생들은 첫 화면의 <b>학급 코드</b> 칸에 이 코드를 넣으면 학교·학년·반이 자동으로 채워져요. 선생님도 이 코드와 비밀번호로 로그인할 수 있어요.</p><button class="btn" data-act="tcopycode">코드 복사하기</button></div>` : ''}
       <div class="stats" style="margin-top:10px"><div class="stat"><small>등록 학생</small><b>${L2.length}<em>명</em></b></div><div class="stat"><small>오늘 학습</small><b>${active}<em>명</em></b></div>
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
       ${TERR ? `<p class="sv-note">${esc(TERR)}</p>` : ''}
@@ -1621,20 +1646,22 @@
       <div class="row-btns"><button class="btn danger" data-act="tdelall">학년 말: 우리 반 기록 모두 지우기</button></div>
       <div class="row-btns"><button class="btn ghost" data-act="tlogout">로그아웃</button></div>`;
     main.innerHTML = h;
+    if (!renderTeach.shown) { main.scrollTop = 0; window.scrollTo(0, 0); renderTeach.shown = true; }
   }
   async function teacherSubmit(form) {
     const reg = form.id === 'treg', box = form.querySelector('.sp'), err = form.querySelector('#t-err'), btn = form.querySelector('[type=submit]');
-    const body = { school_code: box.dataset.code, school_name: box.dataset.name, grade: +$('#t-g').value, cls: +$('#t-c').value, password: $('#t-pw').value };
-    if (!body.school_code) { err.textContent = '학교를 검색해서 목록에서 골라 주세요.'; return; }
+    const tcode = !reg && $('#t-code') ? $('#t-code').value.toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+    const body = tcode ? { class_code: tcode, password: $('#t-pw').value } : { school_code: box.dataset.code, school_name: box.dataset.name, grade: +$('#t-g').value, cls: +$('#t-c').value, password: $('#t-pw').value };
+    if (!tcode && !body.school_code) { err.textContent = '학급 코드를 넣거나, 학교를 검색해서 목록에서 골라 주세요.'; return; }
     if (reg) { body.teacher_name = $('#t-name').value.trim(); body.contact = $('#t-contact').value.trim(); }
     btn.disabled = true; err.textContent = '';
     const r = await api(reg ? '/api/teacher/register' : '/api/teacher/login', body);
     btn.disabled = false;
     if (!r.ok) { err.textContent = r.error; return; }
-    const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls });
-    if (reg && r.status === 'approved') { const lr = await api('/api/teacher/login', { school_code: body.school_code, school_name: body.school_name, grade: body.grade, cls: body.cls, password: body.password }); if (lr.ok) { toast('✅ 체험판이라 바로 승인됐어요!'); TS = { token: lr.token, school_name: lr.school_name, grade: lr.grade, cls: lr.cls, teacher_name: lr.teacher_name, export_key: lr.export_key }; lsSet(TSESS_KEY, TS); TERR = ''; loadTeach(); return; } }
-    if (reg) { TV = 'login'; TERR = ''; renderTeach(); openSheet(`<h3>등록 요청을 보냈어요</h3><p class="sub">${esc(body.school_name)} ${body.grade}학년 ${body.cls}반<br>제작자가 확인하고 승인하면 같은 정보와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="closeSheet">확인</button></div>`); return; }
-    TS = { token: r.token, school_name: r.school_name, grade: r.grade, cls: r.cls, teacher_name: r.teacher_name, export_key: r.export_key };
+    if (!tcode) { const last = lsGet(LAST_SCHOOL) || {}; lsSet(LAST_SCHOOL, { ...last, code: body.school_code, name: body.school_name, grade: body.grade, cls: body.cls }); }
+    if (reg && r.approved) { const lr = await api('/api/teacher/login', { school_code: body.school_code, school_name: body.school_name, grade: body.grade, cls: body.cls, password: body.password }); if (lr.ok) { toast('✅ 체험판이라 바로 승인됐어요!'); TS = { token: lr.token, school_name: lr.school_name, grade: lr.grade, cls: lr.cls, teacher_name: lr.teacher_name, export_key: lr.export_key, class_code: lr.class_code }; lsSet(TSESS_KEY, TS); TERR = ''; loadTeach(); return; } }
+    if (reg) { TV = 'login'; TERR = ''; renderTeach(); openSheet(`<h3>등록 요청을 보냈어요</h3><p class="sub">${esc(body.school_name)} ${body.grade}학년 ${body.cls}반<br>제작자가 확인하고 승인하면 같은 정보와 비밀번호로 로그인할 수 있어요. 로그인하면 우리 반 <b>학급 코드</b>가 보여요.</p><p class="sub">학생들은 승인을 기다리지 않고 지금 바로 시작해도 돼요. 기록은 승인 뒤 선생님 화면에 모두 보여요.</p><div class="row-btns"><button class="btn" data-act="closeSheet">확인</button></div>`); return; }
+    TS = { token: r.token, school_name: r.school_name, grade: r.grade, cls: r.cls, teacher_name: r.teacher_name, export_key: r.export_key, class_code: r.class_code };
     lsSet(TSESS_KEY, TS); TERR = ''; loadTeach();
   }
 

@@ -42,6 +42,23 @@ const enc = new TextEncoder();
 const hex = buf => [...new Uint8Array(buf)].map(b => b.toString(16).padStart(2, '0')).join('');
 async function sha256(s) { return hex(await crypto.subtle.digest('SHA-256', enc.encode(s))); }
 async function hashPin(pin, salt) { return sha256(`aq-pin|${salt}|${pin}`); }
+const CODE_ABC = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 헷갈리는 0/O, 1/I 제외
+function newCode() { const a = new Uint8Array(6); crypto.getRandomValues(a); return Array.from(a, x => CODE_ABC[x % CODE_ABC.length]).join(''); }
+async function ensureClassCode(env, row) { // 승인된 반에 학급 코드(6자리) 만들어 주기
+  if (!row || row.status !== 'approved' || row.class_code) return row && row.class_code;
+  for (let i = 0; i < 6; i++) {
+    const c = newCode();
+    try { const r = await env.DB.prepare('UPDATE teachers SET class_code=? WHERE id=? AND class_code IS NULL').bind(c, row.id).run(); if (r) { row.class_code = c; return c; } } catch (e) { /* 겹치면 다시 */ }
+  }
+  return null;
+}
+const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
+async function classLookup(env, code) {
+  const c = normCode(code); if (c.length !== 6) return fail('학급 코드는 6자리예요.');
+  const row = await env.DB.prepare("SELECT school_code,school_name,grade,cls,teacher_name FROM teachers WHERE class_code=? AND status='approved'").bind(c).first();
+  if (!row) return fail('학급 코드를 찾을 수 없어요. 선생님께 다시 확인해 주세요.', 404);
+  return json({ ok: true, ...row, class_code: c });
+}
 function randKey(n = 24) { const a = new Uint8Array(n); crypto.getRandomValues(a); return hex(a); }
 const b64u = s => btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 const unb64u = s => atob(s.replace(/-/g, '+').replace(/_/g, '/'));
@@ -74,6 +91,8 @@ async function ensureSchema(env) {
   const k = env.CONTEST ? 'contest' : 'main';
   if (schemaReady.has(k)) return;
   for (const q of SCHEMA.concat(env.CONTEST ? AI_SCHEMA : [])) await env.DB.prepare(q).run();
+  try { await env.DB.prepare('ALTER TABLE teachers ADD COLUMN class_code TEXT').run(); } catch (e) { /* 이미 있음 */ }
+  await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS teachers_code ON teachers(class_code)').run();
   schemaReady.add(k);
 }
 async function isAdmin(env, req) {
@@ -167,14 +186,23 @@ async function teacherRegister(env, b) {
   const now = Date.now();
   await env.DB.prepare('INSERT INTO teachers (school_code,school_name,grade,cls,teacher_name,contact,pass_hash,status,export_key,created_at) VALUES (?,?,?,?,?,?,?,?,?,?)')
     .bind(f.school_code, f.school_name, f.grade, f.cls, teacher_name, contact, await sha256(`aq-teacher|${f.school_code}|${pass}`), env.CONTEST ? 'approved' : 'pending', randKey(), now).run();
-  if (env.CONTEST) return json({ ok: true, status: 'approved' }); // 공모전 체험판: 심사·시연용으로 바로 승인
+  if (env.CONTEST) { // 공모전 체험판: 심사·시연용으로 바로 승인
+    const row = await env.DB.prepare('SELECT * FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).first();
+    return json({ ok: true, status: 'approved', approved: true, class_code: await ensureClassCode(env, row) });
+  }
   const mailed = await notify(env, `[애플왕] 선생님 등록 승인 요청 — ${f.school_name} ${f.grade}학년 ${f.cls}반`,
     `새 선생님 등록 요청이 들어왔어요.\n\n학교: ${f.school_name}\n학년·반: ${f.grade}학년 ${f.cls}반\n선생님: ${teacher_name}\n연락처: ${contact || '(없음)'}\n\n게임 → 나의 성장 → 제작자 관리실에서 승인하거나 거절해 주세요.`);
   return json({ ok: true, status: 'pending', mailed });
 }
 async function teacherLogin(env, b) {
-  const f = readClassFields({ ...b, num: 1 }); if (!f) return fail('학교, 학년, 반을 모두 골라 주세요.');
-  const row = await env.DB.prepare('SELECT * FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).first();
+  let row;
+  if (b.class_code) { // 학급 코드 + 비밀번호로도 들어올 수 있음
+    row = await env.DB.prepare('SELECT * FROM teachers WHERE class_code=?').bind(normCode(b.class_code)).first();
+    if (!row) return fail('학급 코드를 찾을 수 없어요.', 404);
+  } else {
+    const f = readClassFields({ ...b, num: 1 }); if (!f) return fail('학교, 학년, 반을 모두 골라 주세요.');
+    row = await env.DB.prepare('SELECT * FROM teachers WHERE school_code=? AND grade=? AND cls=?').bind(f.school_code, f.grade, f.cls).first();
+  }
   if (!row) return fail('등록되지 않은 반이에요. 먼저 선생님 등록을 해 주세요.', 404);
   const now = Date.now();
   if (row.locked_until > now) return fail('비밀번호를 여러 번 틀려서 잠시 잠겼어요. 10분 뒤에 다시 해 주세요.', 429);
@@ -186,7 +214,8 @@ async function teacherLogin(env, b) {
   if (row.status === 'pending') return fail('아직 제작자 승인을 기다리고 있어요. 승인되면 들어올 수 있어요.', 403);
   if (row.status === 'rejected') return fail('등록이 승인되지 않았어요. 제작자에게 문의해 주세요.', 403);
   await env.DB.prepare('UPDATE teachers SET fail_count=0 WHERE id=?').bind(row.id).run();
-  return json({ ok: true, token: await makeToken(env, 't', row.id), school_name: row.school_name, grade: row.grade, cls: row.cls, teacher_name: row.teacher_name, export_key: row.export_key });
+  await ensureClassCode(env, row);
+  return json({ ok: true, token: await makeToken(env, 't', row.id), school_code: row.school_code, school_name: row.school_name, grade: row.grade, cls: row.cls, teacher_name: row.teacher_name, export_key: row.export_key, class_code: row.class_code });
 }
 async function teacherRow(env, req) {
   const id = await readToken(env, bearer(req), 't'); if (!id) return null;
@@ -362,6 +391,7 @@ async function route(req, env) {
 
   if (p === '/api/teacher/register' && req.method === 'POST') return teacherRegister(env, body);
   if (p === '/api/teacher/login' && req.method === 'POST') return teacherLogin(env, body);
+  if (p === '/api/class') return classLookup(env, url.searchParams.get('code'));
   if (p === '/api/teacher/students') {
     const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
     return json({ ok: true, students: await classStudents(env, t), export_key: t.export_key });
@@ -391,18 +421,19 @@ async function route(req, env) {
     if (!(await isAdmin(env, req))) return fail('제작자 비밀번호가 달라요.', 401);
     if (p === '/api/admin/check') return json({ ok: true });
     if (p === '/api/admin/teachers') {
-      const { results } = await env.DB.prepare('SELECT id,school_name,grade,cls,teacher_name,contact,status,created_at,decided_at FROM teachers ORDER BY status=\'pending\' DESC, created_at DESC LIMIT 300').all();
+      const { results } = await env.DB.prepare('SELECT id,school_name,grade,cls,teacher_name,contact,status,class_code,created_at,decided_at FROM teachers ORDER BY status=\'pending\' DESC, created_at DESC LIMIT 300').all();
       const counts = await env.DB.prepare('SELECT COUNT(*) AS n FROM students').first();
       return json({ ok: true, teachers: results, students: counts.n });
     }
     if (p === '/api/admin/decide' && req.method === 'POST') {
       const st = body.approve ? 'approved' : 'rejected';
       await env.DB.prepare('UPDATE teachers SET status=?, decided_at=? WHERE id=?').bind(st, Date.now(), int(body.id, 1, 1e12)).run();
-      return json({ ok: true, status: st });
+      const row = await env.DB.prepare('SELECT * FROM teachers WHERE id=?').bind(int(body.id, 1, 1e12)).first();
+      return json({ ok: true, status: st, class_code: st === 'approved' ? await ensureClassCode(env, row) : null });
     }
     if (p === '/api/admin/backup') { // 전체 백업(JSON): 학생 기록·선생님·만족도 — 비밀번호 해시는 제외
       const st = await env.DB.prepare('SELECT id,school_code,school_name,grade,cls,num,nickname,state,summary,created_at,updated_at FROM students ORDER BY school_name,grade,cls,num').all();
-      const te = await env.DB.prepare('SELECT id,school_code,school_name,grade,cls,teacher_name,contact,status,created_at,decided_at FROM teachers ORDER BY school_name,grade,cls').all();
+      const te = await env.DB.prepare('SELECT id,school_code,school_name,grade,cls,teacher_name,contact,status,class_code,created_at,decided_at FROM teachers ORDER BY school_name,grade,cls').all();
       const sv = await env.DB.prepare('SELECT * FROM surveys ORDER BY id').all();
       return json({ ok: true, exported_at: Date.now(), students: st.results.map(r => ({ ...r, state: r.state ? JSON.parse(r.state) : null, summary: r.summary ? JSON.parse(r.summary) : null })), teachers: te.results, surveys: sv.results });
     }
