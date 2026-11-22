@@ -546,7 +546,7 @@
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', lessons: 'units', lact: 'units', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', lessons: 'units', lchap: 'units', lact: 'units', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -558,7 +558,7 @@
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, lessons: renderLessons, lact: renderLact, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, lessons: renderLessons, lchap: renderLchap, lact: renderLact, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
     if (CONTEST) aiFab();
   }
@@ -754,7 +754,7 @@
     const LBL = { open: '학습 가능', studying: '공부 중', done: '완료', review: '복습 필요', locked: '아직 안 열림' };
     const rec = S.units[u.id]; const pct = rec ? rec.sets.filter(Boolean).length * 50 : 0;
     return `<button class="unit ${st === 'locked' ? 'locked' : ''}" data-act="unit" data-v="${u.id}">
-      <span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
+      <span class="num">${u.icon}<b>${u.no}</b></span><span style="min-width:0"><h3>${esc(u.title)}</h3><p>${u.ko}${lessonFor(u.id) ? ` <em class="l-tag">📅 차시 복습 ${lessonCount(u.id)}</em>` : ''}</p><div class="bar"><i style="width:${pct}%"></i></div></span>
       <span class="st ${st}">${LBL[st]}</span></button>`;
   }
   function bossRowHTML(b) {
@@ -771,8 +771,6 @@
       html += `<div class="sem">${gl}</div><div class="units">`;
       for (const u of UNITS.filter(x => !sem || x.sem === sem)) {
         html += unitRowHTML(u);
-        if (lessonFor(u.id)) { const LP = lessonFor(u.id), all = LP.chapters.flatMap(c => c.acts), dn = all.filter(a => L.activityDone(S, u.id, a.id)).length;
-          html += `<button class="unit l9-unit" data-act="lessons" data-v="${u.id}"><span class="num">📅</span><span style="min-width:0"><h3>Lesson ${u.no} 차시별 복습</h3><p>챈트 · 말하기 · 읽기·쓰기 · 역할극 · 🤖 AI 짝꿍 (${dn}/${all.length})</p></span><span class="st">▶</span></button>`; }
         const b = BOSSES.find(x => x.afterUnit === u.id); if (b) html += bossRowHTML(b);
       }
       html += `</div>`;
@@ -788,7 +786,7 @@
       <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·빈칸·파닉스</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>듣기·순서·짝맞추기·파닉스</small></button>
       <button class="btn blue" data-act="review">🔁 복습 퀴즈<small>경험치 +${S.rules.expReview}</small></button></div>
-      ${lessonFor(id) ? `<button class="btn lesson-btn" data-act="lessons" data-v="${id}">📅 차시별 복습<small>1~4차시 · 활동 ${lessonFor(id).chapters.reduce((a, c) => a + c.acts.length, 0)}개 · 🤖 AI 짝꿍</small></button>` : ''}
+      ${lessonFor(id) ? lessonSheetHTML(id) : ''}
       <p class="sub" style="margin-top:12px">${u.words.slice(0, 8).map(w => w.en).join(' · ')}${u.words.length > 8 ? ' …' : ''}</p>`);
   }
   function bossSheet(id) {
@@ -915,7 +913,7 @@
   function aiFab() {
     let b = $('#aiFab');
     if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미'); $('#screen').append(b); }
-    b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch' || view === 'lessons' || view === 'lact';
+    b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch' || view === 'lessons' || view === 'lchap' || view === 'lact';
   }
   function aiContext() {
     const u = view === 'study' && SD.unit ? unitById(SD.unit) : Q && Q.mode === 'set' ? unitById(Q.unit) : currentUnit();
@@ -973,7 +971,32 @@
 
   /* ---------- 차시별 복습 (공모전 체험판 · 천재(이) Lesson 9) ---------- */
   const LSN = window.AQ_LESSONS || { LESSONS: {} };
-  let LU = 9, LACT = null, sayTok = 0;
+  let LU = 9, LCH = 1, LACT = null, sayTok = 0;
+  const lessonCount = uid => { const lp = lessonFor(uid), all = lp.chapters.flatMap(c => c.acts); return `${all.filter(a => L.activityDone(S, uid, a.id)).length}/${all.length}`; };
+  const chDone = (uid, ch) => ch.acts.filter(a => L.activityDone(S, uid, a.id)).length;
+  function lessonSheetHTML(id) {
+    const lp = lessonFor(id);
+    return `<div class="l-sheet"><div class="l-sheet-h"><b>📅 차시별 복습</b><small>차시를 누르면 활동을 차례대로 안내해 줘요</small></div>
+      <div class="l-sheet-g">${lp.chapters.map(ch => { const dn = chDone(id, ch), all = ch.acts.length, full = dn === all;
+        return `<button class="l-sc-btn ${full ? 'done' : dn ? 'ing' : ''}" data-act="lchap" data-u="${id}" data-c="${ch.no}"><span class="no">${ch.no}차시</span><span class="ic">${ch.icon}</span><b>${esc(ch.name)}</b><small>${full ? '완료 🌟' : `${dn}/${all} 활동`}</small><i class="pg"><i style="width:${Math.round(dn / all * 100)}%"></i></i></button>`; }).join('')}</div>
+      <button class="linkish l-all" data-act="lessons" data-v="${id}">전체 차시 한눈에 보기 ›</button></div>`;
+  }
+  /* 차시 안내: 활동을 순서대로 */
+  function renderLchap() {
+    const LP = lessonFor(LU); if (!LP) { go('units'); return; }
+    const ch = LP.chapters.find(c => c.no === LCH) || LP.chapters[0]; LCH = ch.no;
+    const u = unitById(LU), dn = chDone(LU, ch), nextIdx = ch.acts.findIndex(a => !L.activityDone(S, LU, a.id)), full = nextIdx < 0, nx = full ? null : ch.acts[nextIdx];
+    const later = LP.chapters.find(c => c.no === ch.no + 1);
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="units" aria-label="뒤로">←</button><div><h2>${ch.icon} ${ch.no}차시 · ${esc(ch.name)}</h2><p>Lesson ${u.no} ${esc(LP.title)}</p></div></div>
+      <div class="l-tabs">${LP.chapters.map(c => `<button class="l-tab ${c.no === ch.no ? 'on' : ''} ${chDone(LU, c) === c.acts.length ? 'done' : ''}" data-act="lchap" data-u="${LU}" data-c="${c.no}">${c.no}차시${chDone(LU, c) === c.acts.length ? ' ✓' : ''}</button>`).join('')}</div>
+      <div class="glass l-guide"><p class="l-guide-t">${full ? '🌟 이 차시를 모두 끝냈어요! 다시 해도 좋아요.' : dn ? `👍 잘하고 있어요! 이제 <b>${nextIdx + 1}번 활동</b>을 할 차례예요.` : `오늘은 이 순서로 복습해요. 위에서부터 하나씩!`}</p>
+        <ol class="l-steps">${ch.acts.map((a, k) => { const ok = L.activityDone(S, LU, a.id), now_ = k === nextIdx, ai = a.type.startsWith('ai');
+          return `<li class="${ok ? 'ok' : ''} ${now_ ? 'now' : ''}"><button data-act="lstart" data-c="${ch.no}" data-v="${a.id}"><span class="dot">${ok ? '✓' : k + 1}</span><span class="tx"><b>${ACT_ICON[a.type] || ''} ${esc(a.title)}${ai ? ' <em class="ai-mini">AI</em>' : ''}</b><small>${esc(a.desc || '')}</small></span>${now_ ? '<span class="go">지금!</span>' : ok ? '<span class="re">다시</span>' : ''}</button></li>`; }).join('')}</ol>
+        ${nx ? `<button class="btn l-cta" data-act="lstart" data-c="${ch.no}" data-v="${nx.id}">▶ ${nextIdx + 1}번 활동 시작<small>${esc(nx.title)}</small></button>`
+          : later ? `<button class="btn l-cta" data-act="lnextch">▶ ${later.no}차시로 가기<small>${later.icon} ${esc(later.name)}</small></button>`
+          : `<button class="btn l-cta" data-act="go" data-v="units">🏆 4차시까지 모두 끝! 단원 목록으로</button>`}
+        <p class="voice-note">활동마다 경험치 +${S.rules.expReview} · 한 차시를 다 끝내면 🍎 +5 보너스</p></div>`;
+  }
   function lessonFor(uid) { const lp = LSN.LESSONS[uid]; return CONTEST && COURSE.key === 'cj4' && lp && lp.course === 'cj4' ? lp : null; }
   function stopSay() { sayTok++; if (window.speechSynthesis) speechSynthesis.cancel(); }
   function sayP(text, rate = .85) { // 끝날 때까지 기다리는 발음
@@ -991,7 +1014,7 @@
     const u = unitById(LU), all = LP.chapters.flatMap(c => c.acts), dn = all.filter(a => L.activityDone(S, LU, a.id)).length;
     main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="units" aria-label="뒤로">←</button><div><h2>Lesson ${u.no} 차시별 복습</h2><p>${esc(LP.title)} · ${esc(LP.ko)}</p></div></div>
       <div class="glass l-goal"><b>🎯 이번 단원 목표</b><p>${esc(LP.goal)}</p><div class="l-prog"><i style="width:${Math.round(dn / all.length * 100)}%"></i></div><small>${dn} / ${all.length} 활동 완료 · 활동마다 경험치 +${S.rules.expReview} · 한 차시를 다 끝내면 🍎 +5</small></div>
-      ${LP.chapters.map(ch => { const cd = ch.acts.every(a => L.activityDone(S, LU, a.id)); return `<div class="l-ch ${cd ? 'done' : ''}"><div class="l-ch-h"><span class="l-no">${ch.no}차시</span><b>${ch.icon} ${esc(ch.name)}</b>${cd ? '<em>완료 🌟</em>' : ''}</div>
+      ${LP.chapters.map(ch => { const cd = ch.acts.every(a => L.activityDone(S, LU, a.id)); return `<div class="l-ch ${cd ? 'done' : ''}"><button class="l-ch-h" data-act="lchap" data-u="${LU}" data-c="${ch.no}"><span class="l-no">${ch.no}차시</span><b>${ch.icon} ${esc(ch.name)}</b>${cd ? '<em>완료 🌟</em>' : '<em class="go">순서대로 하기 ›</em>'}</button>
         <div class="l-acts">${ch.acts.map((a, k) => { const ok = L.activityDone(S, LU, a.id), ai = a.type.startsWith('ai'); return `<button class="l-act ${ok ? 'ok' : ''} ${ai ? 'ai' : ''}" data-act="lstart" data-c="${ch.no}" data-v="${a.id}"><span class="ic">${ACT_ICON[a.type] || '⭐'}</span><span class="tx"><b>${k + 1}. ${esc(a.title)}</b><small>${esc(a.desc || '')}</small></span><span class="st">${ok ? '✅' : '▶'}</span></button>`; }).join('')}</div></div>`; }).join('')}`;
   }
   function startAct(chNo, actId) {
@@ -1018,15 +1041,25 @@
       const nx = nextActInfo();
       main.innerHTML = lHead() + `<div class="glass l-result"><div class="big">🎉</div><h3>활동 완료!</h3>${msg ? `<p>${msg}</p>` : ''}
         <p class="gain">${r.gain ? `⭐ 경험치 +${r.gain} · 🍎 +1` : '오늘은 이미 경험치를 받았어요. 복습 최고! 👍'}</p>${r.chapterDone ? `<p class="bonus">🌟 ${LACT.ch.no}차시를 모두 끝냈어요! 🍎 +5 보너스</p>` : ''}
-        <div class="row-btns">${nx ? `<button class="btn" data-act="lnext">다음 활동 ▶<small>${esc(nx.a.title)}</small></button>` : ''}<button class="btn ghost" data-act="lback">차시 목록</button></div></div>`;
+        ${l_after(nx)}</div>`;
       updateHUD(); return;
     }
     const f = { chant: rChant, order: rOrder, choice: rChoice, match: rMatch, speak: rSpeak, read: rRead, spell: rSpell, write: rWrite, aitalk: rTalk, aiwrite: rWriteAI, script: rScript }[a.type];
     main.innerHTML = lHead(LACT.steps ? `· ${Math.min(LACT.i + 1, LACT.steps.length)}/${LACT.steps.length}` : '') + f();
     afterRender();
   }
-  function nextActInfo() { const LP = lessonFor(LU), flat = LP.chapters.flatMap(c => c.acts.map(a => ({ c, a }))); const k = flat.findIndex(x => x.a.id === LACT.a.id); return flat[k + 1] || null; }
-  function nextAct() { const nx = nextActInfo(); if (nx) startAct(nx.c.no, nx.a.id); else go('lessons'); }
+  function nextActInfo() { // 같은 차시에서 아직 안 한 다음 활동 (차례대로)
+    const ch = LACT.ch, k = ch.acts.findIndex(a => a.id === LACT.a.id);
+    const a = ch.acts.slice(k + 1).find(x => !L.activityDone(S, LU, x.id)) || ch.acts.slice(0, k).find(x => !L.activityDone(S, LU, x.id));
+    return a ? { c: ch, a, k: ch.acts.indexOf(a) } : null;
+  }
+  function nextAct() { const nx = nextActInfo(); if (nx) startAct(nx.c.no, nx.a.id); else { LCH = LACT.ch.no; go('lchap'); } }
+  function l_after(nx) {
+    const LP = lessonFor(LU), ch = LACT.ch, later = LP.chapters.find(c => c.no === ch.no + 1), n = ch.acts.length, dn = chDone(LU, ch);
+    const steps = `<div class="l-mini">${ch.acts.map((a, k) => `<i class="${L.activityDone(S, LU, a.id) ? 'ok' : ''} ${nx && nx.a.id === a.id ? 'now' : ''}">${k + 1}</i>`).join('<b></b>')}</div><p class="voice-note">${ch.no}차시 ${dn}/${n} 활동 완료</p>`;
+    if (nx) return steps + `<div class="row-btns"><button class="btn" data-act="lnext">${nx.k + 1}번 활동으로 ▶<small>${esc(nx.a.title)}</small></button><button class="btn ghost" data-act="lback">차시 안내</button></div>`;
+    return steps + `<div class="row-btns">${later ? `<button class="btn" data-act="lnextch">${later.no}차시로 ▶<small>${later.icon} ${esc(later.name)}</small></button>` : `<button class="btn" data-act="go" data-v="units">🏆 단원 목록으로</button>`}<button class="btn ghost" data-act="lback">차시 안내</button></div>`;
+  }
   let afterRender = () => {};
   const opt = (o, k, cls = '') => `<button class="l-opt ${cls}" data-act="lpick" data-v="${k}">${esc(o)}</button>`;
   const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === lines[0][0] ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
@@ -1535,9 +1568,11 @@
       TS.ai_off = r.ai_off; lsSet(TSESS_KEY, TS); toast(r.ai_off ? '🤖 우리 반 AI 기능을 껐어요.' : '🤖 우리 반 AI 기능을 켰어요!'); renderTeach();
     },
     lessons: d => { AU.tap(); closeSheet(); LU = +d.v; go('lessons'); },
+    lchap: d => { AU.tap(); closeSheet(); stopSay(); LU = +d.u; LCH = +d.c; go('lchap'); },
+    lnextch: () => { AU.tap(); stopSay(); LCH++; go('lchap'); },
     lstart: d => { AU.tap(); startAct(+d.c, d.v); },
     lnext: () => { AU.tap(); nextAct(); },
-    lback: () => { AU.tap(); stopSay(); go('lessons'); },
+    lback: () => { AU.tap(); stopSay(); if (LACT) LCH = LACT.ch.no; go('lchap'); },
     lpick: (d, el) => { lPick(+d.v, el); },
     lsay: d => { sayP(d.t, d.slow ? .6 : .85); },
     lgo: () => { lStep(); },

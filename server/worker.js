@@ -8,7 +8,7 @@
  *   NOTIFY_EMAIL     (선택, 비밀) 알림 받을 제작자 메일 주소
  *   (AI 선생님) 기본은 Cloudflare Workers AI 무료 사용량(바인딩 AI, 키 필요 없음). ANTHROPIC_API_KEY(비밀)를 넣으면 Claude로 바뀜
  *   AI_CF_MODEL (선택) Workers AI 모델을 직접 정할 때 (기본: qwen3-30b → gemma-4 → llama-3.1-8b 순서로 시도)
- *   AI_DAILY_LIMIT   (선택) AI 하루 최대 횟수(무료 200 · Claude 300) · AI_STUDENT_LIMIT (선택) 학생 1명 하루 최대(기본 40) · AI_MODEL (선택, 기본 claude-haiku-5-5)
+ *   AI_DAILY_LIMIT   (선택) AI 하루 최대 횟수(무료 700 — Workers AI 무료 1만 뉴런 안 · Claude 300) · AI_STUDENT_LIMIT (선택) 학생 1명 하루 최대(기본 120) · AI_MODEL (선택, 기본 claude-haiku-5-5)
  * 바인딩: DB = D1 데이터베이스(원래 버전), DB_CONTEST = 공모전 체험판 전용 D1 (/contest/api/... 주소)
  */
 const MAX_STATE = 200000;           // 학생 기록 JSON 최대 크기(바이트)
@@ -270,7 +270,7 @@ async function aiGuard(env, req) { // 체험판 · 로그인 · 하루 한도(�
   return { sid };
 }
 async function aiCount(env, sid) {
-  const day = kstDay(), limit = Number(env.AI_DAILY_LIMIT) || (env.ANTHROPIC_API_KEY ? 300 : 200), per = Number(env.AI_STUDENT_LIMIT) || 40;
+  const day = kstDay(), limit = Number(env.AI_DAILY_LIMIT) || (env.ANTHROPIC_API_KEY ? 300 : 700), per = Number(env.AI_STUDENT_LIMIT) || 120;
   const u = await env.DB.prepare('SELECT n FROM ai_usage WHERE day=?').bind(day).first();
   if (u && u.n >= limit) return fail('오늘은 AI 선생님이 너무 많이 설명해서 쉬고 있어요. 내일 다시 물어봐 주세요!', 429);
   const us = await env.DB.prepare('SELECT n FROM ai_usage WHERE day=?').bind(day + ':s' + sid).first();
