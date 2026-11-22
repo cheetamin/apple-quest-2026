@@ -546,7 +546,7 @@
 
   /* ---------- 화면들 ---------- */
   let view = 'home', viewArg = null;
-  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', boss: 'units', teacher: 'me', tch: 'me' };
+  const NAVMAP = { home: 'home', play: 'quiz', units: 'units', study: 'study', quiz: 'quiz', dex: 'dex', me: 'me', forest: 'home', shop: 'me', village: 'home', phonics: 'units', lessons: 'units', lact: 'units', boss: 'units', teacher: 'me', tch: 'me' };
   function go(v, arg) {
     if (Q && Q.mode === 'boss' && v !== 'boss') Q = null;
     if (Q && Q.phase === 'result' && v !== 'play' && v !== 'home') Q = null;
@@ -558,7 +558,7 @@
     render(); main.scrollTop = 0;
   }
   function render() {
-    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
+    ({ home: renderHome, play: renderHome, units: renderUnits, study: renderStudy, quiz: renderQuizHub, dex: renderDex, me: renderMe, forest: renderForest, shop: renderShop, village: renderVillage, phonics: renderPhonics, lessons: renderLessons, lact: renderLact, boss: renderBoss, teacher: renderTeacher, tch: renderTeach }[view] || renderHome)();
     updateHUD();
     if (CONTEST) aiFab();
   }
@@ -771,6 +771,8 @@
       html += `<div class="sem">${gl}</div><div class="units">`;
       for (const u of UNITS.filter(x => !sem || x.sem === sem)) {
         html += unitRowHTML(u);
+        if (lessonFor(u.id)) { const LP = lessonFor(u.id), all = LP.chapters.flatMap(c => c.acts), dn = all.filter(a => L.activityDone(S, u.id, a.id)).length;
+          html += `<button class="unit l9-unit" data-act="lessons" data-v="${u.id}"><span class="num">📅</span><span style="min-width:0"><h3>Lesson ${u.no} 차시별 복습</h3><p>챈트 · 말하기 · 읽기·쓰기 · 역할극 · 🤖 AI 짝꿍 (${dn}/${all.length})</p></span><span class="st">▶</span></button>`; }
         const b = BOSSES.find(x => x.afterUnit === u.id); if (b) html += bossRowHTML(b);
       }
       html += `</div>`;
@@ -786,6 +788,7 @@
       <button class="btn" data-act="set" data-u="${id}" data-s="0">⚔️ 세트 1 ${rec && rec.sets[0] ? '✅' : ''}<small>그림·뜻·빈칸·파닉스</small></button>
       <button class="btn" data-act="set" data-u="${id}" data-s="1">⚔️ 세트 2 ${rec && rec.sets[1] ? '✅' : ''}<small>듣기·순서·짝맞추기·파닉스</small></button>
       <button class="btn blue" data-act="review">🔁 복습 퀴즈<small>경험치 +${S.rules.expReview}</small></button></div>
+      ${lessonFor(id) ? `<button class="btn lesson-btn" data-act="lessons" data-v="${id}">📅 차시별 복습<small>1~4차시 · 활동 ${lessonFor(id).chapters.reduce((a, c) => a + c.acts.length, 0)}개 · 🤖 AI 짝꿍</small></button>` : ''}
       <p class="sub" style="margin-top:12px">${u.words.slice(0, 8).map(w => w.en).join(' · ')}${u.words.length > 8 ? ' …' : ''}</p>`);
   }
   function bossSheet(id) {
@@ -912,7 +915,7 @@
   function aiFab() {
     let b = $('#aiFab');
     if (!b) { b = document.createElement('button'); b.id = 'aiFab'; b.className = 'ai-fab'; b.dataset.act = 'aihelp'; b.innerHTML = AI_ICON + '<b>AI 도우미</b>'; b.setAttribute('aria-label', 'AI 도우미'); $('#screen').append(b); }
-    b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch';
+    b.hidden = view === 'home' || view === 'play' || view === 'teacher' || view === 'tch' || view === 'lessons' || view === 'lact';
   }
   function aiContext() {
     const u = view === 'study' && SD.unit ? unitById(SD.unit) : Q && Q.mode === 'set' ? unitById(Q.unit) : currentUnit();
@@ -967,6 +970,292 @@
     if (AIH.log.length > 30) AIH.log.splice(0, AIH.log.length - 30);
     aiRefresh();
   }
+
+  /* ---------- 차시별 복습 (공모전 체험판 · 천재(이) Lesson 9) ---------- */
+  const LSN = window.AQ_LESSONS || { LESSONS: {} };
+  let LU = 9, LACT = null, sayTok = 0;
+  function lessonFor(uid) { const lp = LSN.LESSONS[uid]; return CONTEST && COURSE.key === 'cj4' && lp && lp.course === 'cj4' ? lp : null; }
+  function stopSay() { sayTok++; if (window.speechSynthesis) speechSynthesis.cancel(); }
+  function sayP(text, rate = .85) { // 끝날 때까지 기다리는 발음
+    return new Promise(res => {
+      if (S.settings.quiet || !TTS.ok) return setTimeout(res, 500);
+      const u = new SpeechSynthesisUtterance(String(text).replace(/’/g, "'").replace(/_{2,}/g, 'blank')); u.lang = 'en-US'; u.rate = rate; if (TTS.voice) u.voice = TTS.voice;
+      u.onend = u.onerror = () => res(); speechSynthesis.speak(u); setTimeout(res, 9000);
+    });
+  }
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const shuf = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } return b; };
+  const ACT_ICON = { chant: '🎵', order: '🔢', choice: '👆', match: '🔗', speak: '🎙️', read: '📖', spell: '⌨️', write: '✏️', aitalk: '🤖', aiwrite: '🤖', script: '🎭' };
+  function renderLessons() {
+    const LP = lessonFor(LU); if (!LP) { go('units'); return; }
+    const u = unitById(LU), all = LP.chapters.flatMap(c => c.acts), dn = all.filter(a => L.activityDone(S, LU, a.id)).length;
+    main.innerHTML = `<div class="screen-title"><button class="back" data-act="go" data-v="units" aria-label="뒤로">←</button><div><h2>Lesson ${u.no} 차시별 복습</h2><p>${esc(LP.title)} · ${esc(LP.ko)}</p></div></div>
+      <div class="glass l-goal"><b>🎯 이번 단원 목표</b><p>${esc(LP.goal)}</p><div class="l-prog"><i style="width:${Math.round(dn / all.length * 100)}%"></i></div><small>${dn} / ${all.length} 활동 완료 · 활동마다 경험치 +${S.rules.expReview} · 한 차시를 다 끝내면 🍎 +5</small></div>
+      ${LP.chapters.map(ch => { const cd = ch.acts.every(a => L.activityDone(S, LU, a.id)); return `<div class="l-ch ${cd ? 'done' : ''}"><div class="l-ch-h"><span class="l-no">${ch.no}차시</span><b>${ch.icon} ${esc(ch.name)}</b>${cd ? '<em>완료 🌟</em>' : ''}</div>
+        <div class="l-acts">${ch.acts.map((a, k) => { const ok = L.activityDone(S, LU, a.id), ai = a.type.startsWith('ai'); return `<button class="l-act ${ok ? 'ok' : ''} ${ai ? 'ai' : ''}" data-act="lstart" data-c="${ch.no}" data-v="${a.id}"><span class="ic">${ACT_ICON[a.type] || '⭐'}</span><span class="tx"><b>${k + 1}. ${esc(a.title)}</b><small>${esc(a.desc || '')}</small></span><span class="st">${ok ? '✅' : '▶'}</span></button>`; }).join('')}</div></div>`; }).join('')}`;
+  }
+  function startAct(chNo, actId) {
+    const LP = lessonFor(LU), ch = LP.chapters.find(c => c.no === chNo), a = ch.acts.find(x => x.id === actId);
+    LACT = { ch, a, i: 0, ok: 0, n: 0, done: false, st: {} };
+    if (a.type === 'choice') LACT.steps = a.gen === 'listenDays' ? shuf(LSN.DAYS).slice(0, a.n || 5).map(d => ({ speak: d, ko: LSN.DAYS_KO[d], options: shuf([d, ...shuf(LSN.DAYS.filter(x => x !== d)).slice(0, 3)]), answer: d })) : a.steps.map(x => ({ ...x, options: shuf(x.options) }));
+    if (a.type === 'order') LACT.pool = shuf(a.items), LACT.got = [];
+    if (a.type === 'match') LACT.left = shuf(a.pairs.map(p => p[0])), LACT.right = shuf(a.pairs.map(p => p[1])), LACT.got = [], LACT.sel = null;
+    if (a.type === 'spell' || a.type === 'speak') LACT.items = shuf(a.words || a.sentences).slice(0, a.type === 'spell' ? 5 : 5);
+    if (a.type === 'aitalk') LACT.log = [{ me: false, text: a.starter[0], ko: a.starter[1] }], LACT.sent = 0;
+    if (a.type === 'script') LACT.role = null;
+    go('lact');
+    if (a.type === 'aitalk') sayP(a.starter[0]);
+    if (a.type === 'choice' && LACT.steps[0] && LACT.steps[0].speak && !S.settings.quiet) setTimeout(() => sayP(LACT.steps[0].speak), 300);
+  }
+  function lHead(extra = '') { const { a, ch } = LACT; return `<div class="screen-title"><button class="back" data-act="lback" aria-label="뒤로">←</button><div><h2>${ACT_ICON[a.type] || ''} ${esc(a.title)}</h2><p>${ch.no}차시 · ${esc(ch.name)} ${extra}</p></div></div>`; }
+  function lDone(msg) { LACT.done = true; renderLact(msg); }
+  function renderLact(msg) {
+    if (!LACT) { go('lessons'); return; }
+    const { a } = LACT;
+    if (LACT.done) {
+      const r = LACT.result || (LACT.result = L.completeActivity(S, LU, a.id, LACT.ch.acts.map(x => x.id), now()));
+      if (!LACT.saved) { LACT.saved = true; save(); cloudFlush(); AU.fanfare(); }
+      const nx = nextActInfo();
+      main.innerHTML = lHead() + `<div class="glass l-result"><div class="big">🎉</div><h3>활동 완료!</h3>${msg ? `<p>${msg}</p>` : ''}
+        <p class="gain">${r.gain ? `⭐ 경험치 +${r.gain} · 🍎 +1` : '오늘은 이미 경험치를 받았어요. 복습 최고! 👍'}</p>${r.chapterDone ? `<p class="bonus">🌟 ${LACT.ch.no}차시를 모두 끝냈어요! 🍎 +5 보너스</p>` : ''}
+        <div class="row-btns">${nx ? `<button class="btn" data-act="lnext">다음 활동 ▶<small>${esc(nx.a.title)}</small></button>` : ''}<button class="btn ghost" data-act="lback">차시 목록</button></div></div>`;
+      updateHUD(); return;
+    }
+    const f = { chant: rChant, order: rOrder, choice: rChoice, match: rMatch, speak: rSpeak, read: rRead, spell: rSpell, write: rWrite, aitalk: rTalk, aiwrite: rWriteAI, script: rScript }[a.type];
+    main.innerHTML = lHead(LACT.steps ? `· ${Math.min(LACT.i + 1, LACT.steps.length)}/${LACT.steps.length}` : '') + f();
+    afterRender();
+  }
+  function nextActInfo() { const LP = lessonFor(LU), flat = LP.chapters.flatMap(c => c.acts.map(a => ({ c, a }))); const k = flat.findIndex(x => x.a.id === LACT.a.id); return flat[k + 1] || null; }
+  function nextAct() { const nx = nextActInfo(); if (nx) startAct(nx.c.no, nx.a.id); else go('lessons'); }
+  let afterRender = () => {};
+  const opt = (o, k, cls = '') => `<button class="l-opt ${cls}" data-act="lpick" data-v="${k}">${esc(o)}</button>`;
+  const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === 'A' || who === 'Jun' ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
+
+  /* 1) 챈트 */
+  function rChant() {
+    const { a } = LACT;
+    afterRender = () => {};
+    return `<div class="glass l-chant"><p class="sub">한 줄씩 듣고 크게 따라 불러요. 줄을 누르면 그 줄만 들을 수 있어요.</p>
+      ${a.lines.map(([en, ko], k) => `<button class="l-line ${LACT.st.cur === k ? 'cur' : ''} ${LACT.st.max >= k ? 'sung' : ''}" data-act="lsay" data-t="${esc(en)}"><b>${esc(en)}</b><small>${esc(ko)}</small></button>`).join('')}
+      <div class="row-btns"><button class="btn" id="chantGo">${LACT.st.playing ? '⏸ 멈추기' : '▶ 따라 부르기 (듣고 → 따라 하기)'}</button></div>
+      <button class="btn ghost" data-act="lgo" ${LACT.st.max >= a.lines.length - 1 || S.settings.quiet ? '' : 'disabled'}>✅ 다 불렀어요</button>
+      ${S.settings.quiet ? '<p class="voice-note">조용한 교실 모드라 소리가 나지 않아요. 가사를 보며 작게 불러 보고 ✅를 눌러요.</p>' : ''}</div>`;
+  }
+  async function chantPlay() {
+    const { a } = LACT; if (LACT.st.playing) { LACT.st.playing = false; stopSay(); renderLact(); return; }
+    LACT.st.playing = true; const tok = ++sayTok;
+    for (let k = 0; k < a.lines.length; k++) {
+      if (tok !== sayTok || !LACT || view !== 'lact') return;
+      LACT.st.cur = k; renderLact(); await sayP(a.lines[k][0], .8);
+      if (tok !== sayTok) return; await wait(1600 + a.lines[k][0].length * 45); // 따라 부를 시간
+      LACT.st.max = Math.max(LACT.st.max ?? -1, k);
+    }
+    LACT.st.playing = false; LACT.st.cur = null; renderLact(); toast('👏 잘 불렀어요! ✅ 다 불렀어요를 눌러요');
+  }
+
+  /* 2) 순서 맞추기 */
+  function rOrder() {
+    afterRender = () => {};
+    return `<div class="glass l-order"><p class="sub">${esc(LACT.a.desc)}</p><div class="l-slots">${LACT.a.items.map((_, k) => `<span class="l-slot ${LACT.got[k] ? 'ok' : ''}">${LACT.got[k] ? esc(LACT.got[k]) : k + 1}</span>`).join('')}</div>
+      <div class="l-opts">${LACT.pool.map((o, k) => LACT.got.includes(o) ? '' : opt(o, k)).join('')}</div></div>`;
+  }
+  /* 3) 고르기 (듣기·대화·시간표·대본) */
+  function rChoice() {
+    const st = LACT.steps[LACT.i], a = LACT.a;
+    afterRender = () => {};
+    let top = '';
+    if (st.speak) top = S.settings.quiet ? `<div class="l-big">${esc(st.ko)}</div><p class="sub">조용한 교실 모드: 우리말을 보고 골라요</p>` : `<button class="l-spk" data-act="lsay" data-t="${esc(st.speak)}">🔊</button><p class="sub">잘 듣고 알맞은 요일 카드를 골라요 · 🔊를 누르면 다시 들려요</p>`;
+    if (st.cal) top = `<div class="l-cal"><i>TODAY</i><b>${esc(st.cal)}</b><small>${esc(LSN.DAYS_KO[st.cal] || '')}</small></div>`;
+    if (a.table) top = `<table class="l-tt"><tr>${a.table.map(r => `<th>${r[0].slice(0, 3)}</th>`).join('')}</tr><tr>${a.table.map(r => `<td>${esc(r[1])}<small>${esc(r[2])}</small></td>`).join('')}</tr></table><p class="l-q">${esc(st.q)}</p><p class="sub">${esc(st.ko)}</p>`;
+    if (st.lines) top += bubbles(st.lines) + (S.settings.quiet ? '' : `<button class="btn ghost sm" data-act="lsay" data-t="${esc(st.lines.map(l => l[1]).join(' '))}">🔊 대화 듣기</button>`);
+    return `<div class="glass l-choice">${top}<div class="l-opts g2">${st.options.map((o, k) => opt(o, k)).join('')}</div></div>`;
+  }
+  /* 4) 짝 맞추기 */
+  function rMatch() {
+    afterRender = () => {};
+    const col = (arr, side) => arr.map((o, k) => { const done = LACT.got.some(g => g[side] === o); return `<button class="l-opt ${done ? 'ok' : ''} ${LACT.sel && LACT.sel.side === side && LACT.sel.v === o ? 'sel' : ''}" data-act="lpick" data-v="${side * 100 + k}" ${done ? 'disabled' : ''}>${esc(o)}</button>`; }).join('');
+    return `<div class="glass l-match"><p class="sub">왼쪽 줄임말을 누르고, 알맞은 요일을 오른쪽에서 눌러요.</p><div class="l-mcols"><div>${col(LACT.left, 0)}</div><div>${col(LACT.right, 1)}</div></div></div>`;
+  }
+  function lPick(v, el) {
+    const { a } = LACT; if (LACT.lock) return;
+    if (a.type === 'order') {
+      const o = LACT.pool[v], need = a.items[LACT.got.length];
+      if (o === need) { LACT.got.push(o); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.items.length) return lDone('일요일부터 토요일까지 완벽해요! Sunday → Saturday'); renderLact(); }
+      else { AU.bad(); el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 400); toast(`${LACT.got.length + 1}번째는 ${LSN.DAYS_KO[need]}이에요!`, 1400); }
+      return;
+    }
+    if (a.type === 'match') {
+      const side = v >= 100 ? 1 : 0, k = v % 100, val = side ? LACT.right[k] : LACT.left[k];
+      if (!LACT.sel || LACT.sel.side === side) { LACT.sel = { side, v: val }; renderLact(); return; }
+      const l = side ? LACT.sel.v : val, r = side ? val : LACT.sel.v; LACT.sel = null;
+      if (a.pairs.some(p => p[0] === l && p[1] === r)) { LACT.got.push([l, r]); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.pairs.length) return lDone('줄임말 짝을 모두 찾았어요!'); }
+      else { AU.bad(); toast('다시 찾아봐요!', 1000); }
+      renderLact(); return;
+    }
+    if (a.type === 'choice') {
+      const st = LACT.steps[LACT.i], o = st.options[v], ok = o === st.answer; LACT.n++; if (ok) LACT.ok++;
+      LACT.lock = true; el.classList.add(ok ? 'ok' : 'bad');
+      if (!ok) { AU.bad(); const right = [...document.querySelectorAll('.l-opt')].find(b => b.textContent === st.answer); if (right) right.classList.add('ok'); } else { AU.good ? AU.good() : AU.tap(); }
+      setTimeout(() => { LACT.lock = false; LACT.i++; if (LACT.i >= LACT.steps.length) return lDone(`${LACT.steps.length}문제 중 ${LACT.ok}개 맞혔어요!`); renderLact(); const nx = LACT.steps[LACT.i]; if (nx.speak && !S.settings.quiet) sayP(nx.speak); }, ok ? 650 : 1300);
+      return;
+    }
+    if (a.type === 'read') {
+      const q = a.qs[LACT.i], ok = (v === 1) === q[1]; LACT.n++; if (ok) LACT.ok++; LACT.lock = true;
+      el.classList.add(ok ? 'ok' : 'bad'); ok ? (AU.good ? AU.good() : AU.tap()) : AU.bad();
+      const ex = $('#rdEx'); if (ex) ex.innerHTML = `${ok ? '⭕ 맞아요!' : '❌ 아쉬워요!'} ${esc(q[2])}`;
+      setTimeout(() => { LACT.lock = false; LACT.i++; if (LACT.i >= a.qs.length) return lDone(`${a.qs.length}문제 중 ${LACT.ok}개 맞혔어요!`); renderLact(); }, 1500);
+    }
+  }
+  /* 5) 따라 말하기 (음성 인식, 안 되면 스스로 확인) */
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  function listenOnce() {
+    return new Promise(res => {
+      if (!SR) return res(null);
+      const r = new SR(); r.lang = 'en-US'; r.interimResults = false; r.maxAlternatives = 3;
+      let got = null; r.onresult = e => { got = [...e.results[0]].map(x => x.transcript); }; r.onerror = () => res(got); r.onend = () => res(got);
+      try { r.start(); } catch (e) { res(null); }
+      setTimeout(() => { try { r.stop(); } catch (e) {} }, 6000);
+    });
+  }
+  const norm = t => String(t || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+  function speechScore(target, alts) { const tw = norm(target).split(' '); let best = 0; for (const a of alts || []) { const w = norm(a).split(' '); best = Math.max(best, tw.filter(x => w.includes(x)).length / tw.length); } return best; }
+  function rSpeak() {
+    const it = LACT.items[LACT.i];
+    afterRender = () => {};
+    return `<div class="glass l-speak"><div class="l-card"><b>${esc(it[0])}</b><small>${esc(it[1])}</small></div>
+      <div class="row-btns"><button class="btn ghost" data-act="lsay" data-t="${esc(it[0])}">🔊 듣기</button><button class="btn ghost" data-act="lsay" data-t="${esc(it[0])}" data-slow="1">🐢 천천히</button></div>
+      ${SR ? `<button class="btn mic" id="micGo">🎙️ 눌러서 말하기</button>` : ''}<p class="l-heard" id="heard">${LACT.st.heard || ''}</p>
+      <button class="btn ${SR ? 'ghost' : ''}" data-act="lgo">${SR ? '건너뛰기 · 말해 봤어요 ▶' : '✅ 말해 봤어요 ▶'}</button>
+      <p class="voice-note">${LACT.i + 1} / ${LACT.items.length}${SR ? '' : ' · 이 브라우저는 음성 인식이 안 돼서 스스로 확인해요'}</p></div>`;
+  }
+  async function micGo() {
+    const it = LACT.items[LACT.i], b = $('#micGo'); if (!b) return;
+    b.disabled = true; b.textContent = '🎙️ 듣고 있어요… 말해 보세요!';
+    const alts = await listenOnce(); const sc = speechScore(it[0], alts);
+    if (!alts) { LACT.st.heard = '🎙️ 잘 안 들렸어요. 다시 해 보거나 "말해 봤어요"를 눌러요.'; }
+    else if (sc >= .7) { LACT.ok++; AU.good ? AU.good() : AU.tap(); LACT.st.heard = `✅ 훌륭해요! "${esc(alts[0])}"`; renderLact(); await wait(900); return lStep(); }
+    else LACT.st.heard = `🙂 "${esc(alts[0])}"(으)로 들렸어요. 한 번 더 또박또박!`;
+    renderLact();
+  }
+  /* 6) 읽기 + OX */
+  function rRead() {
+    const { a } = LACT, q = a.qs[LACT.i];
+    afterRender = () => {};
+    return `<div class="glass l-read"><div class="l-passage">${a.passage.map(([en, ko]) => `<p><button class="lk" data-act="lsay" data-t="${esc(en)}">🔊</button><b>${esc(en)}</b><small class="${LACT.st.ko ? '' : 'hid'}">${esc(ko)}</small></p>`).join('')}</div>
+      <button class="linkish" id="koT">${LACT.st.ko ? '해석 숨기기' : '해석 보기'}</button>
+      <p class="l-q">Q${LACT.i + 1}. ${esc(q[0])}</p><div class="l-opts g2">${opt('⭕ 맞아요', 1, 'o')}${opt('❌ 틀려요', 0, 'x')}</div><p class="l-ex" id="rdEx"></p></div>`;
+  }
+  /* 7) 철자 쓰기 · 8) 문장 완성 */
+  function rSpell() {
+    const it = LACT.items[LACT.i], hint = it[0].slice(0, LACT.st.h || 0);
+    afterRender = () => { const i = $('#spIn'); if (i) i.focus(); };
+    return `<div class="glass l-spell"><div class="l-big">${esc(it[1])}</div><p class="sub">영어로 써 보세요 (첫 글자는 대문자!)</p>
+      <form id="spForm" class="l-form"><input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="${hint ? esc(hint) + '…' : 'Monday'}"><button class="btn" type="submit">확인</button></form>
+      <p class="l-heard" id="heard">${LACT.st.msg || ''}</p><button class="linkish" id="spHint">💡 힌트 (글자 하나씩)</button><p class="voice-note">${LACT.i + 1} / ${LACT.items.length}</p></div>`;
+  }
+  function rWrite() {
+    const it = LACT.a.items[LACT.i];
+    afterRender = () => { const i = $('#spIn'); if (i) i.focus(); };
+    return `<div class="glass l-spell"><p class="sub">${esc(it[0])}</p><div class="l-frame">${esc(it[1]).replace('____', '<input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12">')}</div>
+      <form id="spForm" class="l-form"><button class="btn" type="submit">확인</button></form><p class="l-heard" id="heard">${LACT.st.msg || ''}</p><p class="voice-note">${LACT.i + 1} / ${LACT.a.items.length}</p></div>`;
+  }
+  function checkTyped() {
+    const { a } = LACT, isSpell = a.type === 'spell', it = isSpell ? LACT.items[LACT.i] : a.items[LACT.i], ans = isSpell ? it[0] : it[2];
+    const v = ($('#spIn').value || '').trim().replace(/[.!]$/, '');
+    if (!v) return;
+    if (v.toLowerCase() === ans.toLowerCase()) {
+      LACT.ok++; AU.good ? AU.good() : AU.tap(); LACT.st = {};
+      const capNote = isSpell && v !== ans ? ` (요일은 대문자로 시작해요: ${ans})` : '';
+      toast(`⭕ 정답! ${esc(ans)}${capNote}`, 1300); sayP(isSpell ? ans : it[1].replace('____', ans));
+      LACT.i++; const total = isSpell ? LACT.items.length : a.items.length;
+      if (LACT.i >= total) return lDone(isSpell ? '요일 철자를 모두 썼어요!' : '문장을 모두 완성했어요!');
+      renderLact();
+    } else { AU.bad(); LACT.st.msg = `🙂 다시 써 볼까요? ${isSpell ? '' : '(힌트: ' + esc(ans[0]) + '…)'}`; LACT.st.h = Math.min((LACT.st.h || 0) + 1, ans.length - 1); renderLact(); }
+  }
+  /* 9) AI 대화 짝꿍 · 역할극 */
+  function rTalk() {
+    const { a } = LACT, left = a.turns - LACT.sent;
+    afterRender = () => { const l = $('#tkLog'); if (l) l.scrollTop = l.scrollHeight; };
+    return `<div class="glass l-talk"><div class="ai-log" id="tkLog">${LACT.log.map(m => m.me ? `<div class="ai-msg me"><p>${esc(m.text)}</p></div>` : `<div class="ai-msg bot ${m.err ? 'err' : ''}"><p><b class="en">${esc(m.text)}</b>${m.ko ? `<small class="ko">${esc(m.ko)}</small>` : ''}</p>${m.err ? '' : `<button class="ai-say" data-act="lsay" data-t="${esc(m.text)}">🔊 듣기</button>`}</div>`).join('')}${LACT.busy ? '<div class="ai-msg bot"><p class="ai-wait">생각하는 중이에요<span>…</span></p></div>' : ''}</div>
+      ${LACT.end ? `<button class="btn" data-act="lgo">✅ 대화 끝! 완료하기</button>` : `<div class="ai-cats">${a.hints.map(h => `<button class="ai-c" data-act="lhint" data-t="${esc(h)}">${esc(h)}</button>`).join('')}</div>
+      <form id="tkForm" class="ai-form"><input id="tkIn" maxlength="60" autocomplete="off" placeholder="영어로 대답해요 (모르면 한국어도 OK)">${SR ? '<button type="button" class="btn ghost" id="tkMic" aria-label="말해서 입력">🎙️</button>' : ''}<button class="btn" type="submit">보내기</button></form>
+      <p class="voice-note">남은 대답 ${left}번 · 아래 문장을 눌러서 써도 돼요${LACT.fail ? ' · <button class="linkish" data-act="lgo">AI 없이 완료하기</button>' : ''}</p>`}</div>`;
+  }
+  async function talkSend(text) {
+    if (LACT.busy || !text) return;
+    if (/\d{2,3}[- ]?\d{3,4}[- ]?\d{4}/.test(text)) { toast('전화번호 같은 내 정보는 적지 않아요!'); return; }
+    if (!SESS) { toast('🤖 AI 짝꿍은 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
+    const { a } = LACT; LACT.sent++; const last = LACT.sent >= a.turns;
+    LACT.log.push({ me: true, text }); LACT.busy = true; renderLact();
+    const r = await api('/api/ai/talk', { scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
+    LACT.busy = false;
+    if (r.ok) { LACT.log.push({ text: r.en, ko: r.ko }); sayP(r.en); if (last) LACT.end = true; }
+    else { LACT.log.push({ text: r.error || 'AI 짝꿍과 연결이 안 돼요.', err: true }); LACT.fail = true; LACT.sent--; }
+    renderLact();
+  }
+  /* 10) AI 쓰기 도우미 */
+  function rWriteAI() {
+    const { a } = LACT;
+    afterRender = () => {};
+    return `<div class="glass l-aiw"><p class="l-q">✏️ ${esc(a.task)}</p><div class="ai-cats">${a.frames.map(f => `<button class="ai-c" data-act="lframe" data-t="${esc(f)}">${esc(f)}</button>`).join('')}</div>
+      <textarea id="awIn" maxlength="200" rows="4" placeholder="예: Today is Monday. I have art class today.">${esc(LACT.st.text || '')}</textarea>
+      <div class="row-btns"><button class="btn" id="awGo" ${LACT.busy ? 'disabled' : ''}>${LACT.busy ? '🤖 읽는 중…' : '🤖 AI에게 보여 주기'}</button></div>
+      ${LACT.st.fb ? `<div class="ai-box aw-fb">${esc(LACT.st.fb).replace(/\n/g, '<br>')}</div><p class="voice-note">AI가 만든 도움말이라 틀릴 수도 있어요.</p>` : ''}
+      ${LACT.st.fb || LACT.fail ? `<button class="btn ${LACT.st.fb ? '' : 'ghost'}" data-act="lgo">✅ 완료하기</button>` : ''}</div>`;
+  }
+  async function writeSend() {
+    const v = ($('#awIn').value || '').trim(); LACT.st.text = v;
+    if (v.split(/\s+/).length < 3) { toast('영어로 2~3문장 써 볼까요?'); return; }
+    if (!SESS) { toast('🤖 AI 쓰기 도우미는 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
+    LACT.busy = true; renderLact();
+    const r = await api('/api/ai/write', { text: v }, { token: SESS.token, timeout: 25000 });
+    LACT.busy = false; if (r.ok) LACT.st.fb = r.text; else { toast(r.error || 'AI 도우미와 연결이 안 돼요.', 2600); LACT.fail = true; }
+    renderLact();
+  }
+  /* 11) 역할극 대본 */
+  function rScript() {
+    const { a } = LACT;
+    afterRender = () => { const c = $('.l-sline.cur'); if (c) c.scrollIntoView({ block: 'center', behavior: 'smooth' }); };
+    if (!LACT.role) return `<div class="glass l-script"><p class="sub">누구 역할을 해 볼까요? 다른 역할은 친구(기기 목소리)가 읽어 줘요.</p><div class="l-opts g2">${a.roles.map(r => `<button class="l-opt" data-act="lrole" data-v="${r}">🎭 ${r}</button>`).join('')}</div></div>`;
+    const k = LACT.i, line = a.lines[k];
+    return `<div class="glass l-script"><p class="sub">나는 <b>${esc(LACT.role)}</b> · 내 차례가 되면 크게 읽고 ▶를 눌러요</p>
+      <div class="l-sc">${a.lines.map(([who, en, ko], j) => `<div class="l-sline ${who === LACT.role ? 'me' : ''} ${j === k ? 'cur' : ''} ${j < k ? 'past' : ''}"><i>${esc(who)}</i><b>${esc(en)}</b><small>${esc(ko)}</small></div>`).join('')}</div>
+      ${k < a.lines.length ? (line[0] === LACT.role ? `<button class="btn" data-act="lgo">🗣️ 읽었어요 ▶</button>` : `<button class="btn ghost" data-act="lgo">▶ 친구 대사 듣기</button>`) : ''}</div>`;
+  }
+  async function scriptStep() {
+    const { a } = LACT; const line = a.lines[LACT.i];
+    if (!line) return lDone(`${LACT.role} 역할을 멋지게 해냈어요! 🎭`);
+    if (line[0] !== LACT.role) { await sayP(line[1], .85); }
+    LACT.i++;
+    if (LACT.i >= a.lines.length) return lDone(`${LACT.role} 역할을 멋지게 해냈어요! 🎭`);
+    renderLact();
+    const nx = a.lines[LACT.i]; if (nx && nx[0] !== LACT.role && !S.settings.quiet) { await wait(300); if (LACT && LACT.a.type === 'script' && LACT.i < a.lines.length && a.lines[LACT.i][0] !== LACT.role) scriptStep(); }
+  }
+  function lStep() { // 활동마다 '다음/완료' 버튼
+    if (!LACT) return; const { a } = LACT;
+    if (a.type === 'chant' || a.type === 'aitalk' || a.type === 'aiwrite') return lDone(a.type === 'chant' ? '챈트를 끝까지 불렀어요! 🎵' : a.type === 'aitalk' ? 'AI 친구와 영어로 대화했어요! 🤖' : '영어 글을 쓰고 다듬었어요! ✏️');
+    if (a.type === 'speak') { LACT.st = {}; LACT.i++; if (LACT.i >= LACT.items.length) return lDone('다섯 문장을 모두 말해 봤어요! 🎙️'); return renderLact(); }
+    if (a.type === 'script') return scriptStep();
+  }
+  document.addEventListener('click', e => { // 차시 활동 화면 전용 버튼
+    if (view !== 'lact' || !LACT) return;
+    const t = e.target.closest('#chantGo, #micGo, #koT, #spHint, #awGo, #tkMic, [data-act=lhint], [data-act=lframe], [data-act=lrole]'); if (!t) return;
+    e.preventDefault(); e.stopPropagation();
+    if (t.id === 'chantGo') chantPlay();
+    else if (t.id === 'micGo') micGo();
+    else if (t.id === 'koT') { LACT.st.ko = !LACT.st.ko; renderLact(); }
+    else if (t.id === 'spHint') { const it = LACT.items[LACT.i]; LACT.st.h = Math.min((LACT.st.h || 0) + 1, it[0].length - 1); renderLact(); }
+    else if (t.id === 'awGo') writeSend();
+    else if (t.id === 'tkMic') { t.disabled = true; t.textContent = '👂'; listenOnce().then(al => { const i = $('#tkIn'); if (al && i) i.value = al[0]; t.disabled = false; t.textContent = '🎙️'; }); }
+    else if (t.dataset.act === 'lhint') { const i = $('#tkIn'); if (i) { i.value = t.dataset.t; i.focus(); } }
+    else if (t.dataset.act === 'lframe') { const i = $('#awIn'); if (i) { i.value = (i.value ? i.value.trim() + ' ' : '') + t.dataset.t; i.focus(); } }
+    else if (t.dataset.act === 'lrole') { AU.tap(); LACT.role = t.dataset.v; LACT.i = 0; renderLact(); if (LACT.a.lines[0][0] !== LACT.role) setTimeout(scriptStep, 400); }
+  }, true);
+  document.addEventListener('submit', e => {
+    if (view !== 'lact' || !LACT) return;
+    if (e.target.id === 'spForm') { e.preventDefault(); e.stopPropagation(); checkTyped(); }
+    if (e.target.id === 'tkForm') { e.preventDefault(); e.stopPropagation(); const i = $('#tkIn'); const v = i.value.trim(); i.value = ''; talkSend(v); }
+  }, true);
 
   /* 파닉스 표 */
   const PH = AQ_PHONICS; let phGroup = 'abc';
@@ -1225,6 +1514,19 @@
     },
     tfromlogin: () => { AU.tap(); const ov = $('.loginov'); if (ov) ov.remove(); TV = 'reg'; TERR = ''; go('tch'); },
     tbacklogin: () => { AU.tap(); if (SESS) { go('me'); return; } go('home'); loginScreen(loginScreen.after || afterGate); },
+    tai: async () => {
+      AU.tap(); const off = !TS.ai_off;
+      const r = await api('/api/teacher/ai', { off }, { token: TS.token });
+      if (!r.ok) { toast(r.error || '바꾸지 못했어요.'); return; }
+      TS.ai_off = r.ai_off; lsSet(TSESS_KEY, TS); toast(r.ai_off ? '🤖 우리 반 AI 기능을 껐어요.' : '🤖 우리 반 AI 기능을 켰어요!'); renderTeach();
+    },
+    lessons: d => { AU.tap(); closeSheet(); LU = +d.v; go('lessons'); },
+    lstart: d => { AU.tap(); startAct(+d.c, d.v); },
+    lnext: () => { AU.tap(); nextAct(); },
+    lback: () => { AU.tap(); stopSay(); go('lessons'); },
+    lpick: (d, el) => { lPick(+d.v, el); },
+    lsay: d => { sayP(d.t, d.slow ? .6 : .85); },
+    lgo: () => { lStep(); },
     tsetcode: () => {
       AU.tap();
       openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>✏️ 학급 코드 바꾸기</h3>
@@ -1612,7 +1914,7 @@
     if (!TS) return;
     TERR = '불러오는 중…'; renderTeach();
     const r = await api('/api/teacher/students', undefined, { token: TS.token });
-    if (r.ok) { TLIST = r.students; TS.export_key = r.export_key || TS.export_key; if (r.class_code) TS.class_code = r.class_code; lsSet(TSESS_KEY, TS); TERR = ''; }
+    if (r.ok) { TLIST = r.students; TS.export_key = r.export_key || TS.export_key; if (r.class_code) TS.class_code = r.class_code; TS.ai_off = !!r.ai_off; lsSet(TSESS_KEY, TS); TERR = ''; }
     else if (r.status === 401) { TS = null; lsSet(TSESS_KEY, null); TERR = '다시 로그인해 주세요.'; }
     else TERR = r.error;
     if (view === 'tch') renderTeach();
@@ -1647,6 +1949,7 @@
     h += `<div class="glass tinfo"><b>🏫 ${esc(TS.school_name)} ${TS.grade}학년 ${TS.cls}반</b><span>${esc(TS.teacher_name || '')} 선생님</span></div>
       ${!TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><p style="margin:6px 0 10px">아직 학급 코드가 없어요. 직접 정해 보세요! (예: 대한초 4학년 1반 → DH0401)</p><button class="btn" data-act="tsetcode">✏️ 학급 코드 만들기</button></div>` : ''}
       ${TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><b>${esc(TS.class_code)}</b><p>학생들은 첫 화면의 <b>학급 코드</b> 칸에 이 코드를 넣으면 학교·학년·반이 자동으로 채워져요. 선생님도 이 코드와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="tcopycode">코드 복사하기</button><button class="btn ghost" data-act="tsetcode">✏️ 코드 바꾸기</button></div></div>` : ''}
+      ${CONTEST ? `<div class="glass ai-switch"><span>🤖 우리 반 AI 기능 <small>(AI 선생님 · 도우미 · 대화 짝꿍 · 쓰기 도우미)</small></span><button class="sw-btn ${TS.ai_off ? 'off' : 'on'}" data-act="tai">${TS.ai_off ? '꺼짐' : '켜짐'}</button></div>` : ''}
       <div class="stats" style="margin-top:10px"><div class="stat"><small>등록 학생</small><b>${L2.length}<em>명</em></b></div><div class="stat"><small>오늘 학습</small><b>${active}<em>명</em></b></div>
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
       ${TERR ? `<p class="sv-note">${esc(TERR)}</p>` : ''}

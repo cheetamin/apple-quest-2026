@@ -227,3 +227,19 @@ test('세트 통과 기준은 문제 수에 비례 (5문제 중 3 → 6문제 �
   assert.strictEqual(L.completeSet(s, 1, 0, 4, 6, T0).passed, true);
   assert.strictEqual(L.completeSet(s, 2, 0, 3, 5, T0).passed, true);
 });
+
+test('차시 활동: 하루 한 번 경험치, 차시를 모두 끝내면 사과 +5 한 번', () => {
+  const s = L.newState(D.DEFAULT_RULES);
+  const ch = ['chant', 'order', 'listen', 'short'];
+  let r = L.completeActivity(s, 9, 'chant', ch, T0);
+  assert.strictEqual(r.gain, D.DEFAULT_RULES.expReview); assert.ok(r.first); assert.ok(!r.chapterDone);
+  r = L.completeActivity(s, 9, 'chant', ch, T0 + 1000);
+  assert.strictEqual(r.gain, 0, '같은 날 또 하면 경험치 없음'); assert.ok(!r.first);
+  for (const a of ['order', 'listen']) L.completeActivity(s, 9, a, ch, T0);
+  const before = s.coins;
+  r = L.completeActivity(s, 9, 'short', ch, T0);
+  assert.ok(r.chapterDone); assert.strictEqual(s.coins - before, 1 + 5);
+  r = L.completeActivity(s, 9, 'short', ch, day(1));
+  assert.ok(!r.chapterDone, '차시 보너스는 한 번'); assert.strictEqual(r.gain, D.DEFAULT_RULES.expReview, '다음 날은 다시 경험치');
+  assert.ok(L.activityDone(s, 9, 'order')); assert.ok(!L.activityDone(s, 9, 'speak'));
+});

@@ -246,3 +246,29 @@ test('학급 코드 직접 정하기: 등록할 때 DH0401처럼 정하고, 겹�
   assert.strictEqual((await call('/api/class?code=DH0401')).status, 404);
   assert.strictEqual((await call('/api/class?code=DAEHAN41')).body.school_name, '대한초등학교');
 });
+
+test('AI 대화 짝꿍·쓰기 도우미 + 선생님의 우리 반 AI 끄기', async () => {
+  const C = { school_code: 'S10-8888888', school_name: '짝꿍초등학교', grade: 4, cls: 9 };
+  const tr = await call('/contest/api/teacher/register', { ...C, password: 'pair1234', teacher_name: '짝꿍' });
+  const ttok = (await call('/contest/api/teacher/login', { ...C, password: 'pair1234' })).body.token;
+  const stok = (await call('/contest/api/student/login', { ...C, num: 1, nickname: '짝', pin: '1111' })).body.token;
+  let sys = '', usr = '';
+  env.AI = { run: async (m, inp) => { sys = inp.messages[0].content; usr = inp.messages[1].content; return { response: sys.includes('쓰기 도우미') ? '👍 잘한 점: 좋아요\n✏️ 고쳐 볼 곳: 없어요! 완벽해요.\n✨ 다듬은 글: Today is Monday.' : 'EN: Great! I have art class today.\nKO: 잘했어요! 👍' }; } };
+  try {
+    let r = await call('/contest/api/ai/talk', { scenario: 'roleplay', text: "It's Thursday.", history: [{ me: false, text: "Hi! I'm Jun. What day is it today?" }] }, { Authorization: 'Bearer ' + stok });
+    assert.strictEqual(r.body.en, 'Great! I have art class today.'); assert.strictEqual(r.body.ko, '잘했어요! 👍');
+    assert.ok(sys.includes('준(Jun)') && usr.includes("It's Thursday."));
+    r = await call('/contest/api/ai/talk', { scenario: 'day', text: 'Bye', last: true }, { Authorization: 'Bearer ' + stok });
+    assert.ok(usr.includes('[마무리]'));
+    r = await call('/contest/api/ai/write', { text: 'today is monday. i have art class today' }, { Authorization: 'Bearer ' + stok });
+    assert.ok(r.body.text.includes('다듬은 글'));
+    r = await call('/contest/api/teacher/ai', { off: true }, { Authorization: 'Bearer ' + ttok });
+    assert.strictEqual(r.body.ai_off, true);
+    r = await call('/contest/api/ai/talk', { scenario: 'day', text: 'Hi' }, { Authorization: 'Bearer ' + stok });
+    assert.strictEqual(r.status, 403); assert.ok(r.body.ai_off);
+    assert.strictEqual((await call('/contest/api/teacher/students', undefined, { Authorization: 'Bearer ' + ttok })).body.ai_off, true);
+    await call('/contest/api/teacher/ai', { off: false }, { Authorization: 'Bearer ' + ttok });
+    assert.strictEqual((await call('/contest/api/ai/talk', { scenario: 'day', text: 'Hi' }, { Authorization: 'Bearer ' + stok })).status, 200);
+    assert.strictEqual((await call('/api/ai/talk', { scenario: 'day', text: 'Hi' }, { Authorization: 'Bearer ' + stok })).status, 404, '원래 버전에는 없음');
+  } finally { delete env.AI; }
+});

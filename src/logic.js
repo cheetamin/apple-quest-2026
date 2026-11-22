@@ -346,6 +346,21 @@
     return given === q.answer;
   }
 
+  /* 차시별 복습 활동 (공모전 체험판 · 천재(이) Lesson 9 등) */
+  // 활동을 끝내면: 그날 처음이면 경험치(복습 점수) + 사과 1, 처음 끝낸 활동은 기록, 한 차시를 모두 끝내면 사과 +5 보너스(한 번)
+  function completeActivity(s, unitId, actId, chapterActIds, now) {
+    s.lessonDone = s.lessonDone || {};
+    const k = `${unitId}:${actId}`, first = !s.lessonDone[k];
+    s.lessonDone[k] = now;
+    const gain = award(s, `L${unitId}:${actId}`, 'review', now);
+    markStudy(s, now, 'basic');
+    let chapterDone = false;
+    const ck = `${unitId}:ch:${chapterActIds.join(',')}`;
+    if (!s.lessonDone[ck] && chapterActIds.every(a => s.lessonDone[`${unitId}:${a}`])) { s.lessonDone[ck] = now; s.coins = (s.coins || 0) + 5; chapterDone = true; }
+    return { gain, first, chapterDone };
+  }
+  const activityDone = (s, unitId, actId) => !!(s.lessonDone && s.lessonDone[`${unitId}:${actId}`]);
+
   /* 먹이 · 집 · 마을 */
   const HUNGER_PER_DAY = 20;
   function hungerNow(s, now) { // 배부름 0~100: 평일 하루 지날 때마다 20씩 줄어듦(주말은 그대로)
@@ -401,7 +416,7 @@
     return true;
   }
 
-  root.AQ_LOGIC = { phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  root.AQ_LOGIC = { completeActivity, activityDone, phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;
