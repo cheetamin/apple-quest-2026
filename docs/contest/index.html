@@ -1726,6 +1726,14 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .sw-btn.on { background: linear-gradient(180deg, #5ae08a, #2a9a5a); }
 .sw-btn.off { background: linear-gradient(180deg, #9aa4b8, #5a6478); }
 .reduce .l-line, .reduce .l-opt { animation: none !important; transition: none !important; }
+
+.l-pic { margin: 2px auto 8px; text-align: center; }
+.l-pic b { display: block; font-size: 64px; line-height: 1.15; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+.l-pic small { display: inline-block; margin-top: 2px; padding: 3px 12px; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); }
+.l-big.sm { font-size: 22px; margin: 6px auto; }
+.l-slots.sent { display: flex; flex-wrap: wrap; justify-content: center; }
+.l-slots.sent .l-slot { min-width: 54px; padding: 8px 10px; font-family: 'Barlow', sans-serif; font-size: 15px; }
+.l-tt-t { margin: 0 0 4px; font-size: 13px; font-weight: 800; color: #ffe27a; text-align: center; }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -2691,101 +2699,810 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
-<script>/* 차시별 복습 활동 — 공모전 체험판의 '천재(이) 4학년' 단원에 붙는 4차시 15개 활동
-   (챈트·대화·읽기 글·역할극 대본은 단원 단어·문장으로 새로 지은 것으로, 교과서 원문을 옮기지 않았어요) */
+<script>/* 차시별 복습 활동 — 공모전 체험판의 '천재(이) 4학년' 단원마다 붙는 4차시 15개 활동
+   교과서의 단원 낱말과 핵심 문형만 쓰고, 챈트·대화·읽기 글·역할극 대본·인물은 모두 새로 지었어요(교과서 원문을 옮기지 않음). */
 (function (root) {
   'use strict';
   const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   const DAYS_KO = { Sunday: '일요일', Monday: '월요일', Tuesday: '화요일', Wednesday: '수요일', Thursday: '목요일', Friday: '금요일', Saturday: '토요일' };
-  const L9 = {
-    unit: 9, course: 'cj4',
-    title: 'What Day Is It Today?', ko: '오늘 무슨 요일이야?',
-    goal: '요일을 묻고 답하며, 오늘 있는 수업을 말할 수 있어요.',
-    chapters: [
-      { no: 1, name: '챈트·단어', icon: '🎵', acts: [
-        { id: 'chant', type: 'chant', title: '요일 챈트 따라 부르기', desc: '박자에 맞춰 요일을 신나게 불러요', lines: [
-          ['Sunday, Monday, Tuesday!', '일요일, 월요일, 화요일!'],
-          ['Wednesday, Thursday, Friday!', '수요일, 목요일, 금요일!'],
-          ['Saturday, Saturday, it\'s a fun day!', '토요일, 토요일, 신나는 날!'],
-          ['What day is it today?', '오늘 무슨 요일이야?'],
-          ['It\'s Friday! It\'s Friday!', '금요일이야! 금요일이야!'],
-          ['I have art class today!', '나는 오늘 미술 수업이 있어!'],
-          ['Let\'s go home! Sure!', '집에 가자! 좋아!'],
+
+  /* 단원 하나를 4차시 15개 활동으로 짜는 틀 */
+  function mk(u, d) {
+    const id = Object.assign({ match: 'match', situ: 'situ' }, d.ids || {});
+    return {
+      unit: u, course: 'cj4', title: d.title, ko: d.ko, goal: d.goal,
+      chapters: [
+        { no: 1, name: '챈트·단어', icon: '🎵', acts: [
+          { id: 'chant', type: 'chant', title: d.chantTitle || '단원 챈트 따라 부르기', desc: '박자에 맞춰 신나게 따라 불러요', lines: d.chant },
+          Object.assign({ id: 'order', type: 'order', title: '낱말 카드로 문장 만들기', desc: '낱말 카드를 순서대로 눌러 문장을 만들어요', sents: d.order }, d.orderAct || {}),
+          { id: 'listen', type: 'choice', title: '듣고 낱말 고르기', desc: '들려주는 낱말 카드를 골라요', gen: 'listen', words: d.words, n: 5 },
+          Object.assign({ id: id.match, type: 'match', title: '낱말 뜻 짝 맞추기', desc: '영어 낱말과 우리말 뜻을 이어요', how: '왼쪽 영어 낱말을 누르고, 알맞은 뜻을 오른쪽에서 눌러요.', pairs: d.words.slice(0, 7).map(w => [w[0], w[1]]) }, d.matchAct || {}),
         ] },
-        { id: 'order', type: 'order', title: '요일 순서 맞추기', desc: '일요일부터 토요일까지 차례대로 눌러요', items: DAYS },
-        { id: 'listen', type: 'choice', title: '듣고 요일 고르기', desc: '들려주는 요일 카드를 골라요', gen: 'listenDays', n: 5 },
-        { id: 'short', type: 'match', title: '줄임말 짝 맞추기', desc: '달력에 쓰는 줄임말과 요일을 이어요', pairs: DAYS.map(d => [d.slice(0, 3), d]) },
-      ] },
-      { no: 2, name: '듣고 말하기', icon: '🗣️', acts: [
-        { id: 'dialog', type: 'choice', title: '대화 듣고 고르기', desc: '달력을 보고 대화의 빈칸을 채워요', steps: [
-          { cal: 'Wednesday', lines: [['A', 'What day is it today?'], ['B', 'It\'s ____.']], options: ['Wednesday', 'Monday', 'Friday', 'Sunday'], answer: 'Wednesday' },
-          { cal: 'Monday', lines: [['A', 'What ____ is it today?'], ['B', 'It\'s Monday.']], options: ['day', 'home', 'art', 'class'], answer: 'day' },
-          { cal: 'Saturday', lines: [['A', 'What day is it today?'], ['B', 'It\'s ____.']], options: ['Saturday', 'Sunday', 'Thursday', 'Tuesday'], answer: 'Saturday' },
-          { cal: 'Friday', lines: [['A', 'Let\'s go home.'], ['B', '____.']], options: ['Sure', 'Monday', 'Today', 'Art'], answer: 'Sure' },
+        { no: 2, name: '듣고 말하기', icon: '🗣️', acts: [
+          { id: 'dialog', type: 'choice', title: '대화 빈칸 고르기', desc: '그림을 보고 대화의 빈칸을 채워요', steps: d.dialog },
+          { id: 'speak', type: 'speak', title: '따라 말하기', desc: '마이크에 대고 또박또박 말해 봐요', sentences: d.speak },
+          Object.assign({ id: id.situ, type: 'choice' }, d.situ),
+          { id: 'partner', type: 'aitalk', title: 'AI 대화 짝꿍', desc: d.partner.desc, scenario: 'partner', starter: d.partner.starter, turns: 4, hints: d.partner.hints },
         ] },
-        { id: 'speak', type: 'speak', title: '따라 말하기', desc: '마이크에 대고 또박또박 말해 봐요', sentences: [
-          ['What day is it today?', '오늘 무슨 요일이야?'], ['It\'s Monday.', '월요일이야.'], ['It\'s Thursday.', '목요일이야.'],
-          ['I have art class today.', '나는 오늘 미술 수업이 있어.'], ['Let\'s go home.', '집에 가자.'],
+        { no: 3, name: '읽기·쓰기', icon: '✏️', acts: [
+          { id: 'read', type: 'read', title: d.read.title, desc: '글을 읽고 맞으면 O, 틀리면 X', passage: d.read.passage, qs: d.read.qs },
+          Object.assign({ id: 'spell', type: 'spell', title: '낱말 철자 쓰기', desc: '우리말을 보고 영어로 써요', words: (d.spell || d.words).map(w => [w[0], w[1]]) }, d.spellAct || {}),
+          { id: 'sentence', type: 'write', title: '문장 완성하기', desc: '빈칸에 알맞은 낱말을 써서 문장을 완성해요', items: d.write },
+          { id: 'aiwrite', type: 'aiwrite', title: 'AI 쓰기 도우미', desc: '글을 쓰면 AI가 칭찬하고 다듬어 줘요', task: d.aiwrite.task, frames: d.aiwrite.frames },
         ] },
-        { id: 'timetable', type: 'choice', title: '시간표 보고 답하기', desc: '민지의 시간표를 보고 질문에 답해요',
-          table: [['Monday', 'English', '영어'], ['Tuesday', 'art', '미술'], ['Wednesday', 'music', '음악'], ['Thursday', 'P.E.', '체육'], ['Friday', 'science', '과학']],
-          steps: [
-            { q: 'It\'s Tuesday. What class do I have today?', ko: '화요일이에요. 오늘은 무슨 수업이 있나요?', options: ['art', 'music', 'P.E.', 'English'], answer: 'art' },
-            { q: 'I have music class today. What day is it today?', ko: '오늘 음악 수업이 있어요. 오늘은 무슨 요일인가요?', options: ['Wednesday', 'Monday', 'Friday', 'Tuesday'], answer: 'Wednesday' },
-            { q: 'It\'s Thursday. What class do I have today?', ko: '목요일이에요. 오늘은 무슨 수업이 있나요?', options: ['P.E.', 'science', 'art', 'English'], answer: 'P.E.' },
-            { q: 'I have science class today. What day is it today?', ko: '오늘 과학 수업이 있어요. 오늘은 무슨 요일인가요?', options: ['Friday', 'Thursday', 'Sunday', 'Wednesday'], answer: 'Friday' },
-          ] },
-        { id: 'partner', type: 'aitalk', title: 'AI 대화 짝꿍', desc: 'AI 친구와 요일을 묻고 답해요', scenario: 'day', starter: ['Hi! I\'m Apple. What day is it today?', '안녕! 나는 애플이야. 오늘 무슨 요일이야?'], turns: 4,
-          hints: ['It\'s Monday.', 'It\'s Friday.', 'I have art class today.', 'What day is it today?', 'Sure!'] },
-      ] },
-      { no: 3, name: '읽기·쓰기', icon: '✏️', acts: [
-        { id: 'read', type: 'read', title: '민지의 일기 읽기', desc: '글을 읽고 맞으면 O, 틀리면 X', passage: [
-          ['Hi, I\'m Minji.', '안녕, 나는 민지야.'],
-          ['Today is Wednesday.', '오늘은 수요일이야.'],
-          ['I have art class today. I like art!', '나는 오늘 미술 수업이 있어. 나는 미술이 좋아!'],
-          ['On Friday, I have music class.', '금요일에는 음악 수업이 있어.'],
-          ['On Sunday, I stay home with my family.', '일요일에는 가족과 집에 있어.'],
-        ], qs: [
-          ['Today is Monday.', false, '오늘은 수요일(Wednesday)이에요.'],
-          ['Minji has art class today.', true, '"I have art class today."라고 했어요.'],
-          ['Minji has music class on Friday.', true, '"On Friday, I have music class."라고 했어요.'],
-          ['Minji goes to school on Sunday.', false, '일요일에는 가족과 집에 있어요(stay home).'],
+        { no: 4, name: '역할극', icon: '🎭', acts: [
+          { id: 'script', type: 'script', title: '역할극 대본 읽기', desc: '역할을 골라 친구(기기 목소리)와 대화해요', roles: d.script.roles, lines: d.script.lines },
+          { id: 'scriptfill', type: 'choice', title: '대본 빈칸 채우기', desc: '역할극 대본의 빈칸에 알맞은 말을 골라요', steps: d.scriptfill },
+          { id: 'roleplay', type: 'aitalk', title: 'AI 친구와 역할극', desc: d.roleplay.desc, scenario: 'roleplay', starter: d.roleplay.starter, turns: 5, hints: d.roleplay.hints },
         ] },
-        { id: 'spell', type: 'spell', title: '요일 철자 쓰기', desc: '우리말을 보고 요일을 영어로 써요', words: DAYS.map(d => [d, DAYS_KO[d]]) },
-        { id: 'sentence', type: 'write', title: '문장 완성하기', desc: '빈칸에 알맞은 낱말을 써서 문장을 완성해요', items: [
-          ['오늘 무슨 요일이야?', 'What ____ is it today?', 'day'],
-          ['금요일이야.', 'It\'s ____.', 'Friday'],
-          ['나는 오늘 미술 수업이 있어.', 'I have ____ class today.', 'art'],
-          ['집에 가자.', 'Let\'s go ____.', 'home'],
-          ['오늘은 화요일이야.', 'Today is ____.', 'Tuesday'],
-        ] },
-        { id: 'aiwrite', type: 'aiwrite', title: 'AI 쓰기 도우미', desc: '오늘을 소개하는 글을 쓰면 AI가 다듬어 줘요',
-          task: '오늘이 무슨 요일인지, 오늘 어떤 수업이 있는지 영어로 2~3문장 써 봐요.', frames: ['Today is ____.', 'It\'s ____.', 'I have ____ class today.', 'I like ____.'] },
-      ] },
-      { no: 4, name: '역할극', icon: '🎭', acts: [
-        { id: 'script', type: 'script', title: '역할극 대본 읽기', desc: '역할을 골라 친구(AI 목소리)와 대화해요', roles: ['Minji', 'Jun'], lines: [
-          ['Jun', 'Hi, Minji!', '안녕, 민지야!'],
-          ['Minji', 'Hi, Jun! What day is it today?', '안녕, 준아! 오늘 무슨 요일이야?'],
-          ['Jun', 'It\'s Thursday.', '목요일이야.'],
-          ['Minji', 'Oh, I have art class today!', '아, 나 오늘 미술 수업 있어!'],
-          ['Jun', 'Me, too! I like art.', '나도! 나는 미술이 좋아.'],
-          ['Minji', 'Let\'s go to art class.', '미술 수업에 가자.'],
-          ['Jun', 'Sure!', '좋아!'],
-          ['Minji', 'Class is over. Let\'s go home.', '수업이 끝났다. 집에 가자.'],
-          ['Jun', 'Sure. Bye, Minji!', '좋아. 안녕, 민지야!'],
-        ] },
-        { id: 'scriptfill', type: 'choice', title: '대본 빈칸 채우기', desc: '역할극 대본의 빈칸에 알맞은 말을 골라요', steps: [
-          { lines: [['Minji', 'Hi, Jun! What ____ is it today?'], ['Jun', 'It\'s Thursday.']], options: ['day', 'class', 'home', 'art'], answer: 'day' },
-          { lines: [['Jun', 'It\'s ____.'], ['Minji', 'Oh, I have art class today!']], options: ['Thursday', 'Sure', 'home', 'today'], answer: 'Thursday' },
-          { lines: [['Minji', 'Oh, I have ____ class today!'], ['Jun', 'Me, too! I like art.']], options: ['art', 'day', 'home', 'Sunday'], answer: 'art' },
-          { lines: [['Minji', 'Class is over. Let\'s go ____.'], ['Jun', 'Sure. Bye, Minji!']], options: ['home', 'art', 'day', 'Friday'], answer: 'home' },
-        ] },
-        { id: 'roleplay', type: 'aitalk', title: 'AI 친구와 역할극', desc: 'AI 친구 준과 학교 장면을 연기해요', scenario: 'roleplay', starter: ['Hi! I\'m Jun. What day is it today?', '안녕! 나는 준이야. 오늘 무슨 요일이야?'], turns: 5,
-          hints: ['It\'s Thursday.', 'I have art class today.', 'Me, too!', 'Let\'s go home.', 'Sure!'] },
-      ] },
+      ],
+    };
+  }
+  const T = (q, ko, options, answer, extra) => Object.assign({ q, ko, options, answer }, extra || {});
+  const D = (pic, picKo, lines, options, answer) => ({ pic, picKo, lines, options, answer });
+  const F = (lines, options, answer, extra) => Object.assign({ lines, options, answer }, extra || {});
+
+  const LESSONS = {};
+
+  /* ===== Lesson 1 What's Your Name? ===== */
+  LESSONS[1] = mk(1, {
+    title: 'What\'s Your Name?', ko: '네 이름은 뭐니?', goal: '때에 맞게 인사하고, 이름을 묻고 답하며 친구를 소개할 수 있어요.',
+    words: [['morning', '아침'], ['afternoon', '오후'], ['evening', '저녁'], ['night', '밤'], ['name', '이름'], ['friend', '친구'], ['together', '함께']],
+    chant: [
+      ['Good morning! Good morning!', '(아침 인사) 안녕! 안녕!'],
+      ['Good afternoon! Good evening!', '(오후 인사) 안녕! (저녁 인사) 안녕!'],
+      ['Hello, hello! What\'s your name?', '안녕, 안녕! 네 이름은 뭐니?'],
+      ['My name is Jun. My name is Jun.', '내 이름은 준이야. 내 이름은 준이야.'],
+      ['This is my friend, Mia!', '이 아이는 내 친구 미아야!'],
+      ['Nice to meet you! Nice to meet you, too!', '만나서 반가워! 나도 만나서 반가워!'],
+      ['Let\'s play together!', '우리 함께 놀자!'],
     ],
-  };
-  const LESSONS = { 9: L9 };
+    order: [['What\'s your name?', '네 이름은 뭐니?'], ['My name is Mia.', '내 이름은 미아야.'], ['This is my friend, Jun.', '이 아이는 내 친구 준이야.']],
+    dialog: [
+      D('🌅', '아침 8시', [['A', 'Good ____.'], ['B', 'Good morning.']], ['morning', 'afternoon', 'evening', 'night'], 'morning'),
+      D('🏷️', '이름표: Sora', [['A', 'What\'s your name?'], ['B', 'My ____ is Sora.']], ['name', 'friend', 'morning', 'play'], 'name'),
+      D('🧑‍🤝‍🧑', '친구를 소개해요', [['A', 'This is my ____, Leo.'], ['B', 'Nice to meet you, Leo.']], ['friend', 'name', 'evening', 'okay'], 'friend'),
+      D('🤝', '처음 만났어요', [['A', 'Nice to meet you.'], ['B', 'Nice to meet you, ____.']], ['too', 'name', 'good', 'here'], 'too'),
+    ],
+    speak: [['What\'s your name?', '네 이름은 뭐니?'], ['My name is Jun.', '내 이름은 준이야.'], ['Nice to meet you.', '만나서 반가워.'], ['Good afternoon.', '(오후 인사) 안녕.'], ['This is my friend, Mia.', '이 아이는 내 친구 미아야.']],
+    situ: { title: '시각 보고 인사 고르기', desc: '그림 속 시각에 알맞은 인사를 골라요', steps: [
+      T('It\'s 7 in the morning. What do you say?', '아침 7시예요. 어떻게 인사할까요?', ['Good morning.', 'Good afternoon.', 'Good evening.', 'Good night.'], 'Good morning.', { pic: '🌅', picKo: '아침 7시' }),
+      T('It\'s 2 in the afternoon. What do you say?', '오후 2시예요. 어떻게 인사할까요?', ['Good afternoon.', 'Good morning.', 'Good evening.', 'Good night.'], 'Good afternoon.', { pic: '☀️', picKo: '오후 2시' }),
+      T('It\'s 7 in the evening. What do you say?', '저녁 7시예요. 어떻게 인사할까요?', ['Good evening.', 'Good morning.', 'Good afternoon.', 'Nice to meet you.'], 'Good evening.', { pic: '🌆', picKo: '저녁 7시' }),
+      T('It\'s 10 at night. Time to sleep! What do you say?', '밤 10시, 잘 시간이에요. 어떻게 인사할까요?', ['Good night.', 'Good morning.', 'Good afternoon.', 'Let\'s play together.'], 'Good night.', { pic: '🌙', picKo: '밤 10시' }),
+    ] },
+    partner: { desc: 'AI 친구와 인사하고 이름을 묻고 답해요 (영어 이름도 OK)', starter: ['Hello! I\'m Apple. What\'s your name?', '안녕! 나는 애플이야. 네 이름은 뭐니?'],
+      hints: ['My name is Mia.', 'Nice to meet you.', 'Good morning.', 'This is my friend, Jun.', 'Let\'s play together.'] },
+    read: { title: '소라의 새 친구', passage: [
+      ['Good morning! My name is Sora.', '(아침 인사) 안녕! 내 이름은 소라야.'],
+      ['This is my friend, Leo.', '이 아이는 내 친구 레오야.'],
+      ['Leo is new at school.', '레오는 학교에 새로 왔어.'],
+      ['We say, "Nice to meet you!"', '우리는 "만나서 반가워!"라고 말해.'],
+      ['In the afternoon, we play together.', '오후에 우리는 함께 놀아.'],
+    ], qs: [
+      ['Her name is Sora.', true, '"My name is Sora."라고 했어요.'],
+      ['Leo is Sora\'s teacher.', false, '레오는 소라의 친구(friend)예요.'],
+      ['Leo is new at school.', true, '"Leo is new at school."이라고 했어요.'],
+      ['They play together in the morning.', false, '오후(afternoon)에 함께 놀아요.'],
+    ] },
+    write: [
+      ['네 이름은 뭐니?', 'What\'s your ____?', 'name'],
+      ['(아침 인사) 안녕.', 'Good ____.', 'morning'],
+      ['이 아이는 내 친구 준이야.', 'This is my ____, Jun.', 'friend'],
+      ['나도 만나서 반가워.', 'Nice to meet you, ____.', 'too'],
+      ['(저녁 인사) 안녕.', 'Good ____.', 'evening'],
+    ],
+    aiwrite: { task: '나와 친구를 소개하는 글을 영어로 2~3문장 써 봐요. (영어 이름을 써도 좋아요)', frames: ['Hello.', 'My name is ____.', 'This is my friend, ____.', 'Nice to meet you.'] },
+    script: { roles: ['Mia', 'Jun'], lines: [
+      ['Jun', 'Good morning, Mia!', '(아침 인사) 안녕, 미아야!'],
+      ['Mia', 'Good morning, Jun!', '(아침 인사) 안녕, 준아!'],
+      ['Jun', 'Mia, this is my friend, Leo.', '미아야, 이 아이는 내 친구 레오야.'],
+      ['Leo', 'Hi! My name is Leo.', '안녕! 내 이름은 레오야.'],
+      ['Mia', 'Hi, Leo. Nice to meet you.', '안녕, 레오야. 만나서 반가워.'],
+      ['Leo', 'Nice to meet you, too.', '나도 만나서 반가워.'],
+      ['Jun', 'Let\'s play together!', '우리 함께 놀자!'],
+      ['Mia', 'Okay!', '좋아!'],
+    ] },
+    scriptfill: [
+      F([['Jun', 'Mia, this is my ____, Leo.']], ['friend', 'name', 'morning', 'okay'], 'friend'),
+      F([['Leo', 'Hi! My ____ is Leo.']], ['name', 'friend', 'evening', 'play'], 'name'),
+      F([['Mia', 'Hi, Leo. Nice to ____ you.']], ['meet', 'play', 'name', 'good'], 'meet'),
+      F([['Jun', 'Let\'s play ____!'], ['Mia', 'Okay!']], ['together', 'morning', 'name', 'too'], 'together'),
+    ],
+    roleplay: { desc: '놀이터에서 처음 만난 친구 레오와 인사해요', starter: ['Good afternoon! I\'m Leo. What\'s your name?', '(오후 인사) 안녕! 나는 레오야. 네 이름은 뭐니?'],
+      hints: ['My name is Mia.', 'Nice to meet you.', 'Good afternoon.', 'This is my friend, Jun.', 'Let\'s play together.'] },
+  });
+
+  /* ===== Lesson 2 Don't Push, Please! ===== */
+  LESSONS[2] = mk(2, {
+    title: 'Don\'t Push, Please!', ko: '밀지 마세요!', goal: '하지 말아야 할 행동을 말하고, 사과하거나 대답할 수 있어요.',
+    words: [['push', '밀다'], ['eat', '먹다'], ['touch', '만지다'], ['enter', '들어가다'], ['talk', '이야기하다'], ['run', '뛰다'], ['careful', '조심하는']],
+    chant: [
+      ['Don\'t push! Don\'t push! Don\'t push, please!', '밀지 마! 밀지 마! 밀지 마세요!'],
+      ['Don\'t run! Don\'t run! Don\'t run, please!', '뛰지 마! 뛰지 마! 뛰지 마세요!'],
+      ['Don\'t touch! Don\'t touch! Don\'t touch, please!', '만지지 마! 만지지 마! 만지지 마세요!'],
+      ['Shh! Don\'t talk in the library!', '쉿! 도서관에서 이야기하지 마!'],
+      ['Oh, I\'m sorry! Oh, I\'m sorry!', '아, 미안해! 아, 미안해!'],
+      ['Be careful! Okay, okay!', '조심해! 알았어, 알았어!'],
+    ],
+    order: [['Don\'t push, please!', '밀지 마세요!'], ['Oh, I\'m sorry.', '아, 죄송해요.'], ['Don\'t eat here, please!', '여기에서 먹지 마세요!']],
+    dialog: [
+      D('⛔🚪', '들어가지 마시오', [['A', 'Don\'t ____, please!'], ['B', 'Okay.']], ['enter', 'eat', 'talk', 'push'], 'enter'),
+      D('🐠', '수족관 물고기', [['A', 'Don\'t ____ the fish, please!'], ['B', 'Oh, I\'m sorry.']], ['touch', 'eat', 'run', 'enter'], 'touch'),
+      D('🤫📚', '조용한 도서관', [['A', 'Don\'t talk, please!'], ['B', 'Oh, I\'m ____.']], ['sorry', 'okay', 'careful', 'please'], 'sorry'),
+      D('⚠️', '미끄러운 바닥', [['A', 'Be ____!'], ['B', 'Okay. Thank you.']], ['careful', 'sorry', 'push', 'enter'], 'careful'),
+    ],
+    speak: [['Don\'t push, please!', '밀지 마세요!'], ['Don\'t touch, please!', '만지지 마세요!'], ['Don\'t run, please!', '뛰지 마세요!'], ['Oh, I\'m sorry.', '아, 죄송해요.'], ['Be careful!', '조심하세요!']],
+    situ: { title: '표지판 보고 말하기', desc: '표지판 그림에 알맞은 말을 골라요', steps: [
+      T('What does the sign say?', '표지판은 무슨 뜻일까요?', ['Don\'t eat, please!', 'Don\'t run, please!', 'Don\'t talk, please!', 'Don\'t push, please!'], 'Don\'t eat, please!', { pic: '🚫🍔', picKo: '음식 금지' }),
+      T('What does the sign say?', '표지판은 무슨 뜻일까요?', ['Don\'t run, please!', 'Don\'t eat, please!', 'Don\'t enter, please!', 'Don\'t touch, please!'], 'Don\'t run, please!', { pic: '🚫🏃', picKo: '뛰기 금지' }),
+      T('What does the sign say?', '표지판은 무슨 뜻일까요?', ['Don\'t touch, please!', 'Don\'t talk, please!', 'Don\'t push, please!', 'Don\'t run, please!'], 'Don\'t touch, please!', { pic: '🚫✋', picKo: '손대기 금지' }),
+      T('What does the sign say?', '표지판은 무슨 뜻일까요?', ['Don\'t talk, please!', 'Don\'t enter, please!', 'Don\'t eat, please!', 'Don\'t touch, please!'], 'Don\'t talk, please!', { pic: '🤫', picKo: '조용히' }),
+    ] },
+    partner: { desc: 'AI 친구와 박물관 규칙을 말해요', starter: ['Hi! I\'m Apple. Look, a big lion! Don\'t touch, please!', '안녕! 나는 애플이야. 봐, 큰 사자야! 만지지 마!'],
+      hints: ['Okay.', 'Oh, I\'m sorry.', 'Don\'t push, please!', 'Don\'t run, please!', 'Be careful!'] },
+    read: { title: '물고기 박물관 안내문', passage: [
+      ['Welcome to the Fish Museum!', '물고기 박물관에 온 것을 환영해요!'],
+      ['Don\'t touch the fish, please.', '물고기를 만지지 마세요.'],
+      ['Don\'t eat here, please.', '여기에서 먹지 마세요.'],
+      ['Don\'t run, please. Be careful!', '뛰지 마세요. 조심하세요!'],
+      ['You can talk and take pictures.', '이야기하고 사진을 찍어도 돼요.'],
+    ], qs: [
+      ['You can touch the fish.', false, '"Don\'t touch the fish."라고 했어요.'],
+      ['Don\'t run in the museum.', true, '"Don\'t run, please."라고 했어요.'],
+      ['You can eat here.', false, '"Don\'t eat here."라고 했어요.'],
+      ['You can talk in the museum.', true, '"You can talk"라고 했어요.'],
+    ] },
+    spell: [['push', '밀다'], ['eat', '먹다'], ['touch', '만지다'], ['enter', '들어가다'], ['talk', '이야기하다'], ['run', '뛰다']],
+    write: [
+      ['밀지 마세요!', 'Don\'t ____, please!', 'push'],
+      ['만지지 마세요!', 'Don\'t ____, please!', 'touch'],
+      ['아, 죄송해요.', 'Oh, I\'m ____.', 'sorry'],
+      ['조심하세요!', 'Be ____!', 'careful'],
+      ['들어가지 마세요!', 'Don\'t ____, please!', 'enter'],
+    ],
+    aiwrite: { task: '우리 교실에서 지켜야 할 규칙을 영어로 2~3문장 써 봐요.', frames: ['Don\'t ____, please!', 'Don\'t ____ here.', 'Be careful!'] },
+    script: { roles: ['Dami', 'Sam'], lines: [
+      ['Sam', 'Look! A big butterfly!', '봐! 큰 나비야!'],
+      ['Dami', 'Wow! It\'s pretty.', '와! 예쁘다.'],
+      ['Sam', 'I want to touch it.', '만져 보고 싶어.'],
+      ['Dami', 'Don\'t touch, please!', '만지면 안 돼!'],
+      ['Sam', 'Oh, I\'m sorry.', '아, 미안해.'],
+      ['Dami', 'That\'s okay. Let\'s go. Don\'t run!', '괜찮아. 가자. 뛰지 마!'],
+      ['Sam', 'Okay. Be careful!', '알았어. 조심해!'],
+    ] },
+    scriptfill: [
+      F([['Sam', 'I want to touch it.'], ['Dami', 'Don\'t ____, please!']], ['touch', 'eat', 'talk', 'enter'], 'touch'),
+      F([['Dami', 'Don\'t touch, please!'], ['Sam', 'Oh, I\'m ____.']], ['sorry', 'okay', 'careful', 'please'], 'sorry'),
+      F([['Sam', 'Look! A big ____!'], ['Dami', 'Wow! It\'s pretty.']], ['butterfly', 'chair', 'bread', 'desk'], 'butterfly'),
+      F([['Sam', 'Okay. Be ____!']], ['careful', 'sorry', 'push', 'enter'], 'careful'),
+    ],
+    roleplay: { desc: '박물관 안내원 AI와 규칙을 지키며 대화해요', starter: ['Hi! I\'m a museum guide. Welcome! Don\'t run, please.', '안녕! 나는 박물관 안내원이야. 환영해! 뛰지 마세요.'],
+      hints: ['Oh, I\'m sorry.', 'Okay.', 'Thank you.', 'Don\'t touch, please!', 'Be careful!'] },
+  });
+
+  /* ===== Lesson 3 Do You Want Some Pizza? ===== */
+  LESSONS[3] = mk(3, {
+    title: 'Do You Want Some Pizza?', ko: '피자 좀 먹을래?', goal: '음식을 권하고, 원하는지 아닌지 대답할 수 있어요.',
+    words: [['pizza', '피자'], ['bread', '빵'], ['chicken', '치킨'], ['spaghetti', '스파게티'], ['noodles', '국수'], ['cake', '케이크'], ['hungry', '배고픈']],
+    chant: [
+      ['I\'m hungry! I\'m hungry!', '배고파! 배고파!'],
+      ['Do you want some pizza?', '피자 좀 먹을래?'],
+      ['Yes, please! Yes, please!', '응, 줘! 응, 줘!'],
+      ['Do you want some noodles?', '국수 좀 먹을래?'],
+      ['No, thanks! No, thanks!', '아니, 괜찮아! 아니, 괜찮아!'],
+      ['I want some cake! Yummy, yummy cake!', '나는 케이크를 좀 먹고 싶어! 맛있는 케이크!'],
+    ],
+    order: [['Do you want some bread?', '빵 좀 먹을래?'], ['I want some chicken.', '나는 치킨을 좀 먹고 싶어.'], ['Here you are.', '여기 있어.']],
+    dialog: [
+      D('🍕', '피자', [['A', 'Do you want some ____?'], ['B', 'Yes, please.']], ['pizza', 'bread', 'noodles', 'cake'], 'pizza'),
+      D('🍝😋', '먹고 싶어요', [['A', 'Do you want some spaghetti?'], ['B', 'Yes, ____.']], ['please', 'thanks', 'sorry', 'hungry'], 'please'),
+      D('🍞🙅', '괜찮아요', [['A', 'Do you want some bread?'], ['B', 'No, ____.']], ['thanks', 'please', 'sorry', 'okay'], 'thanks'),
+      D('🍰', '케이크', [['A', 'What do you want?'], ['B', 'I want some ____.']], ['cake', 'chicken', 'pizza', 'noodles'], 'cake'),
+    ],
+    speak: [['Do you want some pizza?', '피자 좀 먹을래?'], ['Yes, please.', '응, 줘.'], ['No, thanks.', '아니, 괜찮아.'], ['I want some cake.', '나는 케이크를 좀 먹고 싶어.'], ['I\'m hungry.', '나 배고파.']],
+    situ: { title: '친구들이 먹고 싶은 음식', desc: '표를 보고 친구들의 대답을 골라요', tableTitle: '친구들이 먹고 싶은 음식',
+      table: [['Mia', 'pizza 🍕', '피자'], ['Jun', 'noodles 🍜', '국수'], ['Sora', 'chicken 🍗', '치킨'], ['Leo', 'cake 🍰', '케이크']], steps: [
+      T('Mia: "I want some ____."', '미아는 무엇을 먹고 싶을까요?', ['pizza', 'noodles', 'cake', 'bread'], 'pizza'),
+      T('Do you want some noodles, Jun?', '준은 뭐라고 대답할까요?', ['Yes, please.', 'No, thanks.'], 'Yes, please.'),
+      T('Do you want some pizza, Sora?', '소라는 뭐라고 대답할까요?', ['No, thanks.', 'Yes, please.'], 'No, thanks.'),
+      T('Leo: "I want some ____."', '레오는 무엇을 먹고 싶을까요?', ['cake', 'chicken', 'spaghetti', 'pizza'], 'cake'),
+    ] },
+    partner: { desc: 'AI 친구와 음식을 권하고 대답해요', starter: ['Hi! I\'m Apple. I\'m hungry. Do you want some pizza?', '안녕! 나는 애플이야. 배고파. 너도 피자 좀 먹을래?'],
+      hints: ['Yes, please.', 'No, thanks.', 'I want some noodles.', 'Do you want some cake?', 'Here you are.'] },
+    read: { title: '소풍 도시락 이야기', passage: [
+      ['Today is picnic day!', '오늘은 소풍 날이야!'],
+      ['I\'m hungry. I want some chicken.', '배고파. 나는 치킨이 좀 먹고 싶어.'],
+      ['Mom says, "Do you want some bread?"', '엄마가 "빵 좀 먹을래?"라고 하셔.'],
+      ['I say, "No, thanks."', '나는 "아니요, 괜찮아요."라고 말해.'],
+      ['My brother wants some cake.', '내 남동생은 케이크를 좀 먹고 싶어 해.'],
+    ], qs: [
+      ['Today is picnic day.', true, '"Today is picnic day!"라고 했어요.'],
+      ['I want some chicken.', true, '"I want some chicken."이라고 했어요.'],
+      ['I want some bread.', false, '빵은 "No, thanks."라고 했어요.'],
+      ['My brother wants some pizza.', false, '남동생은 케이크(cake)를 원해요.'],
+    ] },
+    write: [
+      ['피자 좀 먹을래?', 'Do you ____ some pizza?', 'want'],
+      ['응, 줘.', 'Yes, ____.', 'please'],
+      ['아니, 괜찮아.', 'No, ____.', 'thanks'],
+      ['나는 국수를 좀 먹고 싶어.', 'I want some ____.', 'noodles'],
+      ['나 배고파.', 'I\'m ____.', 'hungry'],
+    ],
+    aiwrite: { task: '내가 좋아하는 음식과 지금 먹고 싶은 음식을 영어로 2~3문장 써 봐요.', frames: ['I\'m hungry.', 'I want some ____.', 'I like ____.'] },
+    script: { roles: ['Yuna', 'Tom'], lines: [
+      ['Tom', 'Good afternoon, Yuna.', '(오후 인사) 안녕, 유나야.'],
+      ['Yuna', 'Hi, Tom. I\'m hungry.', '안녕, 톰. 나 배고파.'],
+      ['Tom', 'Do you want some pizza?', '피자 좀 먹을래?'],
+      ['Yuna', 'No, thanks.', '아니, 괜찮아.'],
+      ['Tom', 'Do you want some noodles?', '국수 좀 먹을래?'],
+      ['Yuna', 'Yes, please!', '응, 줘!'],
+      ['Tom', 'Here you are.', '여기 있어.'],
+      ['Yuna', 'Thank you. It\'s good!', '고마워. 맛있다!'],
+    ] },
+    scriptfill: [
+      F([['Yuna', 'Hi, Tom. I\'m ____.']], ['hungry', 'pizza', 'thanks', 'please'], 'hungry'),
+      F([['Tom', 'Do you ____ some pizza?']], ['want', 'push', 'enter', 'talk'], 'want'),
+      F([['Tom', 'Do you want some noodles?'], ['Yuna', 'Yes, ____!']], ['please', 'thanks', 'sorry', 'hungry'], 'please'),
+      F([['Tom', '____ you are.'], ['Yuna', 'Thank you. It\'s good!']], ['Here', 'Do', 'Want', 'Some'], 'Here'),
+    ],
+    roleplay: { desc: '애플 식당 요리사 AI에게 음식을 주문해요', starter: ['Welcome to Apple Restaurant! Do you want some spaghetti?', '애플 식당에 온 걸 환영해요! 스파게티 좀 드실래요?'],
+      hints: ['Yes, please.', 'No, thanks.', 'I want some chicken.', 'I\'m hungry.', 'Thank you.'] },
+  });
+
+  /* ===== Lesson 4 It's on the Desk. ===== */
+  LESSONS[4] = mk(4, {
+    title: 'It\'s on the Desk.', ko: '그것은 책상 위에 있어.', goal: '물건이 어디에 있는지 묻고, 위치를 말할 수 있어요.',
+    words: [['on', '~ 위에'], ['in', '~ 안에'], ['under', '~ 아래에'], ['bed', '침대'], ['desk', '책상'], ['box', '상자'], ['bag', '가방']],
+    chant: [
+      ['Where is my robot? Where, where, where?', '내 로봇이 어디 있지? 어디, 어디, 어디?'],
+      ['It\'s on the desk! On, on, on!', '책상 위에 있어! 위, 위, 위!'],
+      ['Where is my phone? Where, where, where?', '내 전화가 어디 있지? 어디, 어디, 어디?'],
+      ['It\'s in the box! In, in, in!', '상자 안에 있어! 안, 안, 안!'],
+      ['Where is my cat? Where, where, where?', '내 고양이가 어디 있지? 어디, 어디, 어디?'],
+      ['It\'s under the bed! Under, under, under!', '침대 아래에 있어! 아래, 아래, 아래!'],
+      ['Oh, here it is!', '아, 여기 있다!'],
+    ],
+    order: [['Where is my phone?', '내 전화가 어디에 있지?'], ['It\'s under the bed.', '그것은 침대 아래에 있어.'], ['It\'s in the bag.', '그것은 가방 안에 있어.']],
+    dialog: [
+      D('📱', '책상 위에 있어요', [['A', 'Where is my phone?'], ['B', 'It\'s ____ the desk.']], ['on', 'in', 'under', 'at'], 'on'),
+      D('🤖📦', '상자 안에 있어요', [['A', 'Where is my robot?'], ['B', 'It\'s in the ____.']], ['box', 'bed', 'desk', 'chair'], 'box'),
+      D('🐱', '침대 아래에 있어요', [['A', '____ is my cat?'], ['B', 'It\'s under the bed.']], ['Where', 'What', 'Who', 'How'], 'Where'),
+      D('⚽', '찾았다!', [['A', 'Oh, here it ____!'], ['B', 'Great!']], ['is', 'are', 'on', 'in'], 'is'),
+    ],
+    speak: [['Where is my phone?', '내 전화가 어디에 있지?'], ['It\'s on the desk.', '그것은 책상 위에 있어.'], ['It\'s in the box.', '그것은 상자 안에 있어.'], ['It\'s under the bed.', '그것은 침대 아래에 있어.'], ['Oh, here it is.', '아, 여기 있다.']],
+    situ: { title: '방 정리표 보고 답하기', desc: '물건이 어디에 있는지 표를 보고 골라요', tableTitle: '준의 방: 물건은 어디에?',
+      table: [['📱 phone', 'on the desk', '책상 위'], ['🤖 robot', 'in the box', '상자 안'], ['🐱 cat', 'under the bed', '침대 아래'], ['🧢 cap', 'in the bag', '가방 안']], steps: [
+      T('Where is my robot?', '로봇은 어디에 있나요?', ['It\'s in the box.', 'It\'s on the desk.', 'It\'s under the bed.', 'It\'s in the bag.'], 'It\'s in the box.'),
+      T('Where is my cat?', '고양이는 어디에 있나요?', ['It\'s under the bed.', 'It\'s in the box.', 'It\'s on the desk.', 'It\'s in the bag.'], 'It\'s under the bed.'),
+      T('Where is my phone?', '전화는 어디에 있나요?', ['It\'s on the desk.', 'It\'s under the bed.', 'It\'s in the bag.', 'It\'s in the box.'], 'It\'s on the desk.'),
+      T('Where is my cap?', '모자는 어디에 있나요?', ['It\'s in the bag.', 'It\'s on the desk.', 'It\'s in the box.', 'It\'s under the bed.'], 'It\'s in the bag.'),
+    ] },
+    partner: { desc: 'AI 친구가 잃어버린 물건의 위치를 알려 줘요', starter: ['Hi! I\'m Apple. Oh no! Where is my phone?', '안녕! 나는 애플이야. 이런! 내 전화가 어디 있지?'],
+      hints: ['It\'s on the desk.', 'It\'s in the bag.', 'It\'s under the bed.', 'Where is my robot?', 'Here it is.'] },
+    read: { title: '준의 방', passage: [
+      ['This is my room.', '여기는 내 방이야.'],
+      ['My robot is on the desk.', '내 로봇은 책상 위에 있어.'],
+      ['My ball is under the bed.', '내 공은 침대 아래에 있어.'],
+      ['My books are in the bag.', '내 책들은 가방 안에 있어.'],
+      ['Where is my cat? Oh, it\'s in the box!', '내 고양이는 어디 있지? 아, 상자 안에 있네!'],
+    ], qs: [
+      ['The robot is on the desk.', true, '"My robot is on the desk."라고 했어요.'],
+      ['The ball is in the bag.', false, '공은 침대 아래(under the bed)에 있어요.'],
+      ['The cat is in the box.', true, '"it\'s in the box!"라고 했어요.'],
+      ['The books are under the desk.', false, '책들은 가방 안(in the bag)에 있어요.'],
+    ] },
+    spell: [['under', '~ 아래에'], ['bed', '침대'], ['desk', '책상'], ['box', '상자'], ['bag', '가방'], ['where', '어디에']],
+    write: [
+      ['내 전화가 어디에 있지?', '____ is my phone?', 'Where'],
+      ['그것은 책상 위에 있어.', 'It\'s ____ the desk.', 'on'],
+      ['그것은 상자 안에 있어.', 'It\'s ____ the box.', 'in'],
+      ['그것은 침대 아래에 있어.', 'It\'s ____ the bed.', 'under'],
+      ['아, 여기 있다!', 'Oh, here it ____!', 'is'],
+    ],
+    aiwrite: { task: '내 방(또는 교실)에 있는 물건이 어디에 있는지 영어로 2~3문장 써 봐요.', frames: ['My ____ is on the desk.', 'My ____ is in the bag.', 'My ____ is under the bed.'] },
+    script: { roles: ['Sora', 'Dad'], lines: [
+      ['Sora', 'Dad, where is my ball?', '아빠, 제 공 어디 있어요?'],
+      ['Dad', 'Is it in the box?', '상자 안에 있니?'],
+      ['Sora', 'No, it\'s not in the box.', '아니요, 상자 안에 없어요.'],
+      ['Dad', 'Is it under the bed?', '침대 아래에 있니?'],
+      ['Sora', 'Yes! It\'s under the bed.', '네! 침대 아래에 있어요.'],
+      ['Dad', 'Great! Let\'s play outside.', '잘됐다! 밖에서 놀자.'],
+      ['Sora', 'Okay!', '좋아요!'],
+    ] },
+    scriptfill: [
+      F([['Sora', 'Dad, ____ is my ball?']], ['where', 'what', 'who', 'how'], 'where'),
+      F([['Dad', 'Is it ____ the box?'], ['Sora', 'No, it\'s not in the box.']], ['in', 'on', 'under', 'at'], 'in'),
+      F([['Dad', 'Is it under the bed?'], ['Sora', 'Yes! It\'s ____ the bed.']], ['under', 'in', 'on', 'at'], 'under'),
+      F([['Dad', 'Great! Let\'s ____ outside.']], ['play', 'push', 'eat', 'enter'], 'play'),
+    ],
+    roleplay: { desc: '모자를 잃어버린 친구 레오를 도와줘요', starter: ['Hi! I\'m Leo. I can\'t find my cap. Where is my cap?', '안녕! 나는 레오야. 내 모자를 못 찾겠어. 내 모자가 어디 있지?'],
+      hints: ['It\'s on the desk.', 'It\'s under the bed.', 'It\'s in the box.', 'Here it is.', 'Where is my phone?'] },
+  });
+
+  /* ===== Lesson 5 Is This Your Watch? ===== */
+  LESSONS[5] = mk(5, {
+    title: 'Is This Your Watch?', ko: '이것이 네 시계니?', goal: '물건의 주인인지 묻고 답하며, 내 물건을 설명할 수 있어요.',
+    words: [['cap', '(야구) 모자'], ['shoe', '신발'], ['watch', '손목시계'], ['glove', '글러브, 장갑'], ['umbrella', '우산'], ['pink', '분홍색(의)'], ['brown', '갈색(의)']],
+    chant: [
+      ['Is this your cap? Is this your cap?', '이거 네 모자니? 이거 네 모자니?'],
+      ['Yes, it is! Yes, it is!', '응, 맞아! 응, 맞아!'],
+      ['Is this your watch? Is this your watch?', '이거 네 시계니? 이거 네 시계니?'],
+      ['No, it isn\'t! No, it isn\'t!', '아니, 아니야! 아니, 아니야!'],
+      ['My watch is blue!', '내 시계는 파란색이야!'],
+      ['Thank you! You\'re welcome!', '고마워! 천만에!'],
+    ],
+    order: [['Is this your umbrella?', '이것이 네 우산이니?'], ['No, it isn\'t.', '아니, 그렇지 않아.'], ['My shoe is big.', '내 신발은 커.']],
+    dialog: [
+      D('🧢', '준의 모자', [['A', 'Is this your ____, Jun?'], ['B', 'Yes, it is.']], ['cap', 'shoe', 'watch', 'glove'], 'cap'),
+      D('⌚', '내 것이 아니에요', [['A', 'Is this your watch?'], ['B', 'No, it ____.']], ['isn\'t', 'is', 'are', 'am'], 'isn\'t'),
+      D('☂️', '내 것이 맞아요', [['A', 'Is this your umbrella?'], ['B', 'Yes, it ____. Thank you.']], ['is', 'isn\'t', 'are', 'do'], 'is'),
+      D('🙏', '고맙다는 말에 대답해요', [['A', 'Thank you.'], ['B', 'You\'re ____.']], ['welcome', 'sorry', 'okay', 'pink'], 'welcome'),
+    ],
+    speak: [['Is this your watch?', '이것이 네 시계니?'], ['Yes, it is.', '응, 그래.'], ['No, it isn\'t.', '아니, 그렇지 않아.'], ['My cap is pink.', '내 모자는 분홍색이야.'], ['You\'re welcome.', '천만에.']],
+    situ: { title: '분실물 주인 찾기', desc: '표를 보고 친구들의 대답을 골라요', tableTitle: '친구들의 물건',
+      table: [['Mia', 'pink cap 🧢', '분홍 모자'], ['Jun', 'blue umbrella ☂️', '파란 우산'], ['Sora', 'big shoe 👟', '큰 신발'], ['Leo', 'black watch ⌚', '검은 시계']], steps: [
+      T('Mia, is this your pink cap?', '미아는 뭐라고 대답할까요?', ['Yes, it is.', 'No, it isn\'t.'], 'Yes, it is.'),
+      T('Jun, is this your black watch?', '준은 뭐라고 대답할까요?', ['No, it isn\'t.', 'Yes, it is.'], 'No, it isn\'t.'),
+      T('Sora: "My shoe is ____."', '소라의 신발은 어떤가요?', ['big', 'small', 'pink', 'blue'], 'big'),
+      T('Leo, is this your black watch?', '레오는 뭐라고 대답할까요?', ['Yes, it is.', 'No, it isn\'t.'], 'Yes, it is.'),
+    ] },
+    partner: { desc: 'AI 친구가 주운 물건의 주인을 찾아요', starter: ['Hi! I\'m Apple. I found a cap. Is this your cap?', '안녕! 나는 애플이야. 모자를 찾았어. 이거 네 모자니?'],
+      hints: ['Yes, it is.', 'No, it isn\'t.', 'My cap is blue.', 'Thank you.', 'You\'re welcome.'] },
+    read: { title: '분실물 센터 안내', passage: [
+      ['This is the Lost and Found.', '여기는 분실물 센터예요.'],
+      ['There is a pink cap.', '분홍색 모자가 있어요.'],
+      ['There is a big umbrella.', '큰 우산이 있어요.'],
+      ['Mia says, "Is this my cap? Yes, it is!"', '미아가 "이거 내 모자예요? 네, 맞아요!"라고 해요.'],
+      ['Tom\'s watch is not here.', '톰의 시계는 여기에 없어요.'],
+    ], qs: [
+      ['There is a pink cap.', true, '"There is a pink cap."이라고 했어요.'],
+      ['The umbrella is small.', false, '큰(big) 우산이에요.'],
+      ['The pink cap is Mia\'s.', true, '미아가 "Yes, it is!"라고 했어요.'],
+      ['Tom\'s watch is here.', false, '"Tom\'s watch is not here."라고 했어요.'],
+    ] },
+    write: [
+      ['이것이 네 시계니?', 'Is this your ____?', 'watch'],
+      ['응, 그래.', 'Yes, it ____.', 'is'],
+      ['아니, 그렇지 않아.', 'No, it ____.', 'isn\'t'],
+      ['내 모자는 분홍색이야.', 'My cap is ____.', 'pink'],
+      ['천만에.', 'You\'re ____.', 'welcome'],
+    ],
+    aiwrite: { task: '내 물건(모자, 신발, 우산 등)을 색깔·크기와 함께 영어로 2~3문장 소개해 봐요.', frames: ['My ____ is pink.', 'My ____ is big.', 'Is this your ____?'] },
+    script: { roles: ['Yuna', 'Tom'], lines: [
+      ['Tom', 'Yuna, is this your glove?', '유나야, 이거 네 글러브니?'],
+      ['Yuna', 'No, it isn\'t. My glove is brown.', '아니. 내 글러브는 갈색이야.'],
+      ['Tom', 'Oh! Is this your glove?', '아! 이거 네 글러브니?'],
+      ['Yuna', 'Yes, it is! Thank you, Tom.', '응, 맞아! 고마워, 톰.'],
+      ['Tom', 'You\'re welcome.', '천만에.'],
+      ['Yuna', 'Let\'s play baseball!', '야구 하자!'],
+      ['Tom', 'Great!', '좋아!'],
+    ] },
+    scriptfill: [
+      F([['Tom', 'Yuna, is this your ____?'], ['Yuna', 'No, it isn\'t. My glove is brown.']], ['glove', 'cap', 'watch', 'shoe'], 'glove'),
+      F([['Yuna', 'No, it ____. My glove is brown.']], ['isn\'t', 'is', 'are', 'am'], 'isn\'t'),
+      F([['Tom', 'Oh! Is ____ your glove?']], ['this', 'it', 'you', 'my'], 'this'),
+      F([['Yuna', 'Yes, it is! Thank you, Tom.'], ['Tom', 'You\'re ____.']], ['welcome', 'sorry', 'okay', 'great'], 'welcome'),
+    ],
+    roleplay: { desc: '우산을 주운 친구 레오와 주인을 찾아요', starter: ['Hi! I\'m Leo. I found an umbrella. Is this your umbrella?', '안녕! 나는 레오야. 우산을 찾았어. 이거 네 우산이니?'],
+      hints: ['Yes, it is.', 'No, it isn\'t.', 'My umbrella is blue.', 'Thank you.', 'Is this your cap?'] },
+  });
+
+  /* ===== Lesson 6 What Time Is It? ===== */
+  LESSONS[6] = mk(6, {
+    title: 'What Time Is It?', ko: '몇 시야?', goal: '시각을 묻고 답하며, 무엇을 할 시간인지 말할 수 있어요.',
+    words: [['breakfast', '아침 식사'], ['lunch', '점심 식사'], ['dinner', '저녁 식사'], ['school', '학교'], ['eleven', '11, 열하나'], ['twelve', '12, 열둘'], ['thirty', '30, 서른']],
+    chant: [
+      ['Tick, tock! Tick, tock! What time is it?', '똑딱! 똑딱! 몇 시야?'],
+      ['It\'s seven thirty. It\'s time for breakfast!', '7시 30분이야. 아침 먹을 시간이야!'],
+      ['It\'s eight forty. It\'s time for school!', '8시 40분이야. 학교 갈 시간이야!'],
+      ['It\'s twelve o\'clock. It\'s time for lunch!', '12시야. 점심 먹을 시간이야!'],
+      ['It\'s six fifty. It\'s time for dinner!', '6시 50분이야. 저녁 먹을 시간이야!'],
+      ['It\'s nine o\'clock. It\'s time for bed! Good night!', '9시야. 잘 시간이야! 잘 자!'],
+    ],
+    order: [['What time is it?', '몇 시야?'], ['It\'s time for lunch.', '점심 먹을 시간이야.'], ['It\'s eleven thirty.', '11시 30분이야.']],
+    dialog: [
+      D('🕖', '7:00', [['A', 'What time is it?'], ['B', 'It\'s seven ____.']], ['o\'clock', 'thirty', 'fifty', 'twenty'], 'o\'clock'),
+      D('🍱', '12:10 점심', [['A', 'What time is it?'], ['B', 'It\'s twelve ten. It\'s time for ____.']], ['lunch', 'breakfast', 'dinner', 'bed'], 'lunch'),
+      D('🏫', '8:20', [['A', '____ time is it?'], ['B', 'It\'s eight twenty.']], ['What', 'Where', 'How', 'Who'], 'What'),
+      D('🛏️', '9:30', [['A', 'It\'s nine thirty. It\'s time for ____.'], ['B', 'Good night!']], ['bed', 'school', 'lunch', 'breakfast'], 'bed'),
+    ],
+    speak: [['What time is it?', '몇 시야?'], ['It\'s eleven fifty.', '11시 50분이야.'], ['It\'s time for lunch.', '점심 먹을 시간이야.'], ['It\'s time for school.', '학교 갈 시간이야.'], ['It\'s time for bed.', '잘 시간이야.']],
+    situ: { title: '하루 일과표 보고 답하기', desc: '일과표를 보고 질문에 답해요', tableTitle: '레오의 하루',
+      table: [['7:30', 'breakfast', '아침 식사'], ['8:20', 'school', '학교'], ['12:10', 'lunch', '점심 식사'], ['6:30', 'dinner', '저녁 식사'], ['9:40', 'bed', '잠자기']], steps: [
+      T('It\'s seven thirty. It\'s time for ____.', '7시 30분에는 무엇을 할 시간인가요?', ['breakfast', 'lunch', 'dinner', 'bed'], 'breakfast'),
+      T('It\'s six thirty. It\'s time for ____.', '6시 30분에는 무엇을 할 시간인가요?', ['dinner', 'school', 'breakfast', 'lunch'], 'dinner'),
+      T('It\'s time for school. What time is it?', '학교 갈 시간이에요. 몇 시인가요?', ['It\'s eight twenty.', 'It\'s twelve ten.', 'It\'s nine forty.', 'It\'s six thirty.'], 'It\'s eight twenty.'),
+      T('It\'s twelve ten. It\'s time for ____.', '12시 10분에는 무엇을 할 시간인가요?', ['lunch', 'bed', 'dinner', 'school'], 'lunch'),
+    ] },
+    partner: { desc: 'AI 친구와 시각을 묻고 답해요', starter: ['Hi! I\'m Apple. What time is it now?', '안녕! 나는 애플이야. 지금 몇 시야?'],
+      hints: ['It\'s ten o\'clock.', 'It\'s eleven fifty.', 'It\'s time for lunch.', 'What time is it?', 'It\'s time for school.'] },
+    read: { title: '레오의 하루', passage: [
+      ['I wake up at seven.', '나는 7시에 일어나.'],
+      ['It\'s seven thirty. It\'s time for breakfast.', '7시 30분이야. 아침 먹을 시간이야.'],
+      ['It\'s eight twenty. It\'s time for school.', '8시 20분이야. 학교 갈 시간이야.'],
+      ['I have lunch at twelve ten.', '나는 12시 10분에 점심을 먹어.'],
+      ['It\'s nine thirty. It\'s time for bed.', '9시 30분이야. 잘 시간이야.'],
+    ], qs: [
+      ['Leo wakes up at seven.', true, '"I wake up at seven."이라고 했어요.'],
+      ['Leo has breakfast at eight twenty.', false, '아침은 7시 30분(seven thirty)이에요.'],
+      ['Leo has lunch at twelve ten.', true, '"I have lunch at twelve ten."이라고 했어요.'],
+      ['It\'s time for bed at ten.', false, '9시 30분(nine thirty)이 잘 시간이에요.'],
+    ] },
+    write: [
+      ['몇 시야?', 'What ____ is it?', 'time'],
+      ['11시 50분이야.', 'It\'s eleven ____.', 'fifty'],
+      ['점심 먹을 시간이야.', 'It\'s time for ____.', 'lunch'],
+      ['학교 갈 시간이야.', 'It\'s time for ____.', 'school'],
+      ['잘 시간이야.', 'It\'s time for ____.', 'bed'],
+    ],
+    aiwrite: { task: '나의 하루 시간표를 영어로 2~3문장 써 봐요.', frames: ['It\'s seven thirty.', 'It\'s time for ____.', 'I have lunch at ____.'] },
+    script: { roles: ['Mia', 'Mom'], lines: [
+      ['Mom', 'Mia, what time is it?', '미아야, 몇 시니?'],
+      ['Mia', 'It\'s eight ten, Mom.', '8시 10분이에요, 엄마.'],
+      ['Mom', 'It\'s time for school!', '학교 갈 시간이야!'],
+      ['Mia', 'Oh, no! Where is my bag?', '이런! 제 가방 어디 있어요?'],
+      ['Mom', 'It\'s on the chair. Don\'t be late!', '의자 위에 있어. 늦지 마!'],
+      ['Mia', 'Okay, Mom. Bye!', '알겠어요, 엄마. 다녀오겠습니다!'],
+    ] },
+    scriptfill: [
+      F([['Mom', 'Mia, what ____ is it?']], ['time', 'day', 'name', 'school'], 'time'),
+      F([['Mia', 'It\'s eight ____, Mom.']], ['ten', 'time', 'lunch', 'bed'], 'ten'),
+      F([['Mom', 'It\'s time for ____!'], ['Mia', 'Oh, no! Where is my bag?']], ['school', 'bed', 'dinner', 'lunch'], 'school'),
+      F([['Mom', 'Don\'t be ____!'], ['Mia', 'Okay, Mom. Bye!']], ['late', 'time', 'school', 'okay'], 'late'),
+    ],
+    roleplay: { desc: '아침에 만난 친구 레오와 시각과 할 일을 말해요', starter: ['Good morning! I\'m Leo. What time is it?', '(아침 인사) 안녕! 나는 레오야. 몇 시야?'],
+      hints: ['It\'s seven thirty.', 'It\'s time for breakfast.', 'It\'s time for school.', 'Let\'s go!', 'What time is it?'] },
+  });
+
+  /* ===== Lesson 7 I'm a Doctor. ===== */
+  LESSONS[7] = mk(7, {
+    title: 'I\'m a Doctor.', ko: '나는 의사야.', goal: '직업을 묻고 답할 수 있어요.',
+    words: [['cook', '요리사'], ['doctor', '의사'], ['pilot', '조종사'], ['firefighter', '소방관'], ['farmer', '농부'], ['painter', '화가']],
+    chant: [
+      ['What do you do? What do you do?', '무슨 일을 하세요? 무슨 일을 하세요?'],
+      ['I\'m a cook! I\'m a cook! Yum, yum!', '나는 요리사야! 냠냠!'],
+      ['I\'m a pilot! I\'m a pilot! Zoom, zoom!', '나는 조종사야! 슝슝!'],
+      ['Are you a doctor?', '당신은 의사인가요?'],
+      ['Yes, I am! Yes, I am!', '네, 맞아요! 네, 맞아요!'],
+      ['Are you a farmer?', '당신은 농부인가요?'],
+      ['No, I\'m not! I\'m a firefighter!', '아니요! 나는 소방관이에요!'],
+    ],
+    order: [['What do you do?', '무슨 일을 하세요?'], ['I\'m a painter.', '나는 화가예요.'], ['No, I\'m not.', '아니요, 그렇지 않아요.']],
+    dialog: [
+      D('🧑‍⚕️', '병원에서 일해요', [['A', 'What do you do?'], ['B', 'I\'m a ____.']], ['doctor', 'cook', 'pilot', 'farmer'], 'doctor'),
+      D('🧑‍🍳', '요리사가 맞아요', [['A', 'Are you a cook?'], ['B', 'Yes, I ____.']], ['am', 'are', 'is', 'do'], 'am'),
+      D('🧑‍🚒', '농부가 아니에요', [['A', 'Are you a farmer?'], ['B', 'No, I\'m ____. I\'m a firefighter.']], ['not', 'a', 'am', 'do'], 'not'),
+      D('🧑‍🎨', '엄마는 화가예요', [['A', 'What does she do?'], ['B', 'She\'s a ____.']], ['painter', 'pilot', 'doctor', 'cook'], 'painter'),
+    ],
+    speak: [['What do you do?', '무슨 일을 하세요?'], ['I\'m a doctor.', '나는 의사예요.'], ['Are you a pilot?', '당신은 조종사인가요?'], ['Yes, I am.', '네, 맞아요.'], ['No, I\'m not.', '아니요, 그렇지 않아요.']],
+    situ: { title: '직업 맞히기', desc: '그림과 설명을 보고 알맞은 직업을 골라요', steps: [
+      T('I fly a plane. What do I do?', '나는 비행기를 조종해요. 내 직업은?', ['I\'m a pilot.', 'I\'m a cook.', 'I\'m a farmer.', 'I\'m a doctor.'], 'I\'m a pilot.', { pic: '✈️' }),
+      T('I help people in a fire. What do I do?', '나는 불이 났을 때 사람들을 도와요. 내 직업은?', ['I\'m a firefighter.', 'I\'m a painter.', 'I\'m a pilot.', 'I\'m a cook.'], 'I\'m a firefighter.', { pic: '🚒' }),
+      T('I grow carrots and corn. What do I do?', '나는 당근과 옥수수를 길러요. 내 직업은?', ['I\'m a farmer.', 'I\'m a doctor.', 'I\'m a firefighter.', 'I\'m a painter.'], 'I\'m a farmer.', { pic: '🥕🌽' }),
+      T('I make good food. What do I do?', '나는 맛있는 음식을 만들어요. 내 직업은?', ['I\'m a cook.', 'I\'m a pilot.', 'I\'m a farmer.', 'I\'m a doctor.'], 'I\'m a cook.', { pic: '🍲' }),
+    ] },
+    partner: { desc: 'AI 친구와 직업 놀이를 해요', starter: ['Hi! I\'m Apple. Let\'s play a job game! I\'m a cook. What do you do?', '안녕! 나는 애플이야. 직업 놀이 하자! 나는 요리사야. 너는 무슨 일을 하니?'],
+      hints: ['I\'m a doctor.', 'I\'m a firefighter.', 'Are you a farmer?', 'Yes, I am.', 'No, I\'m not.'] },
+    read: { title: '직업 체험의 날', passage: [
+      ['Today is Job Day at school.', '오늘은 학교 직업 체험의 날이야.'],
+      ['Mia\'s dad is a pilot.', '미아의 아빠는 조종사야.'],
+      ['Jun\'s mom is a doctor.', '준의 엄마는 의사야.'],
+      ['Sora\'s grandpa is a farmer.', '소라의 할아버지는 농부야.'],
+      ['I want to be a cook!', '나는 요리사가 되고 싶어!'],
+    ], qs: [
+      ['Mia\'s dad is a pilot.', true, '"Mia\'s dad is a pilot."이라고 했어요.'],
+      ['Jun\'s mom is a cook.', false, '준의 엄마는 의사(doctor)예요.'],
+      ['Sora\'s grandpa is a farmer.', true, '"Sora\'s grandpa is a farmer."라고 했어요.'],
+      ['I want to be a firefighter.', false, '요리사(cook)가 되고 싶어 해요.'],
+    ] },
+    write: [
+      ['무슨 일을 하세요?', 'What do you ____?', 'do'],
+      ['나는 의사예요.', 'I\'m a ____.', 'doctor'],
+      ['당신은 농부인가요?', 'Are you a ____?', 'farmer'],
+      ['네, 맞아요.', 'Yes, I ____.', 'am'],
+      ['그녀는 화가예요.', 'She\'s a ____.', 'painter'],
+    ],
+    aiwrite: { task: '가족의 직업이나 내가 되고 싶은 직업을 영어로 2~3문장 소개해 봐요.', frames: ['My mom is a ____.', 'My dad is a ____.', 'I want to be a ____.'] },
+    script: { roles: ['Jun', 'Mr. Kim'], lines: [
+      ['Jun', 'Hello! Are you a doctor?', '안녕하세요! 의사 선생님이세요?'],
+      ['Mr. Kim', 'No, I\'m not.', '아니, 그렇지 않단다.'],
+      ['Jun', 'What do you do?', '무슨 일을 하세요?'],
+      ['Mr. Kim', 'I\'m a firefighter.', '나는 소방관이야.'],
+      ['Jun', 'Wow! Cool!', '와! 멋져요!'],
+      ['Mr. Kim', 'Be careful with fire!', '불조심하렴!'],
+      ['Jun', 'Okay! Thank you!', '네! 감사합니다!'],
+    ] },
+    scriptfill: [
+      F([['Jun', 'Hello! Are you a doctor?'], ['Mr. Kim', 'No, I\'m ____.']], ['not', 'a', 'am', 'do'], 'not'),
+      F([['Jun', 'What do you ____?']], ['do', 'want', 'push', 'meet'], 'do'),
+      F([['Mr. Kim', 'I\'m a ____.'], ['Mr. Kim', 'Be careful with fire!']], ['firefighter', 'cook', 'pilot', 'farmer'], 'firefighter'),
+      F([['Jun', 'Are you a farmer?'], ['Mr. Kim', 'No, I\'m not. Are you a cook?'], ['Jun', 'Yes, I ____!']], ['am', 'is', 'are', 'not'], 'am'),
+    ],
+    roleplay: { desc: '어린이 기자 AI의 직업 인터뷰에 답해요', starter: ['Hello! I\'m a reporter. What do you do?', '안녕하세요! 저는 기자예요. 무슨 일을 하세요?'],
+      hints: ['I\'m a cook.', 'I\'m a pilot.', 'Are you a doctor?', 'Yes, I am.', 'No, I\'m not.'] },
+  });
+
+  /* ===== Lesson 8 How Much Is It? ===== */
+  LESSONS[8] = mk(8, {
+    title: 'How Much Is It?', ko: '그것은 얼마예요?', goal: '물건의 가격을 묻고 답할 수 있어요.',
+    words: [['toy car', '장난감 자동차'], ['pencil case', '필통'], ['jump rope', '줄넘기'], ['hundred', '100, 백'], ['thousand', '1,000, 천'], ['cheap', '값이 싼'], ['pretty', '예쁜']],
+    chant: [
+      ['I like this toy car!', '나는 이 장난감 자동차가 마음에 들어!'],
+      ['How much is it? How much is it?', '얼마예요? 얼마예요?'],
+      ['It\'s one thousand won!', '1,000원이에요!'],
+      ['I like this pencil case!', '나는 이 필통이 마음에 들어!'],
+      ['How much is it? How much is it?', '얼마예요? 얼마예요?'],
+      ['It\'s five hundred won! Wow, it\'s cheap!', '500원이에요! 와, 싸다!'],
+    ],
+    order: [['How much is it?', '그것은 얼마예요?'], ['It\'s two thousand won.', '2,000원이에요.'], ['Can I help you?', '도와드릴까요?']],
+    dialog: [
+      D('🚗', '장난감 자동차', [['A', 'I like this toy car. How ____ is it?'], ['B', 'It\'s three thousand won.']], ['much', 'many', 'old', 'time'], 'much'),
+      D('✏️', '700원', [['A', 'How much is it?'], ['B', 'It\'s seven ____ won.']], ['hundred', 'thousand', 'ten', 'twenty'], 'hundred'),
+      D('🪢', '2,000원', [['A', 'How much is it?'], ['B', 'It\'s two ____ won.']], ['thousand', 'hundred', 'ten', 'twenty'], 'thousand'),
+      D('🏪', '가게 주인', [['A', 'Can I ____ you?'], ['B', 'Yes, please.']], ['help', 'like', 'want', 'push'], 'help'),
+    ],
+    speak: [['How much is it?', '그것은 얼마예요?'], ['It\'s one thousand won.', '1,000원이에요.'], ['I like this pencil case.', '나는 이 필통이 마음에 들어요.'], ['Can I help you?', '도와드릴까요?'], ['It\'s cheap.', '값이 싸요.']],
+    situ: { title: '가격표 보고 답하기', desc: '가격표를 보고 질문에 답해요', tableTitle: '애플 문구점 가격표',
+      table: [['🚗 toy car', '5,000원', '오천 원'], ['✏️ pencil case', '900원', '구백 원'], ['🪢 jump rope', '1,000원', '천 원'], ['🖌️ brush', '300원', '삼백 원']], steps: [
+      T('How much is the toy car?', '장난감 자동차는 얼마예요?', ['It\'s five thousand won.', 'It\'s five hundred won.', 'It\'s nine hundred won.', 'It\'s one thousand won.'], 'It\'s five thousand won.'),
+      T('How much is the pencil case?', '필통은 얼마예요?', ['It\'s nine hundred won.', 'It\'s nine thousand won.', 'It\'s three hundred won.', 'It\'s five thousand won.'], 'It\'s nine hundred won.'),
+      T('How much is the jump rope?', '줄넘기는 얼마예요?', ['It\'s one thousand won.', 'It\'s one hundred won.', 'It\'s nine hundred won.', 'It\'s three hundred won.'], 'It\'s one thousand won.'),
+      T('It\'s three hundred won. What is it?', '300원짜리는 무엇인가요?', ['brush', 'toy car', 'jump rope', 'pencil case'], 'brush'),
+    ] },
+    partner: { desc: 'AI 가게 주인에게 물건 값을 물어봐요', starter: ['Welcome to Apple Shop! Can I help you?', '애플 가게에 온 걸 환영해요! 도와드릴까요?'],
+      hints: ['Yes, please.', 'I like this toy car.', 'How much is it?', 'It\'s cheap.', 'Thank you.'] },
+    read: { title: '벼룩시장 광고', passage: [
+      ['Come to our Flea Market!', '우리 벼룩시장에 오세요!'],
+      ['This toy car is two thousand won.', '이 장난감 자동차는 2,000원이에요.'],
+      ['This pencil case is pretty. It\'s eight hundred won.', '이 필통은 예뻐요. 800원이에요.'],
+      ['This jump rope is five hundred won. It\'s cheap!', '이 줄넘기는 500원이에요. 싸요!'],
+      ['Can I help you?', '도와드릴까요?'],
+    ], qs: [
+      ['The toy car is two thousand won.', true, '"This toy car is two thousand won."이라고 했어요.'],
+      ['The pencil case is eight thousand won.', false, '필통은 800원(eight hundred)이에요.'],
+      ['The jump rope is cheap.', true, '"It\'s cheap!"이라고 했어요.'],
+      ['The jump rope is one thousand won.', false, '줄넘기는 500원(five hundred)이에요.'],
+    ] },
+    spell: [['hundred', '100, 백'], ['thousand', '1,000, 천'], ['cheap', '값이 싼'], ['pretty', '예쁜'], ['help', '돕다'], ['much', '(값이) 얼마']],
+    write: [
+      ['그것은 얼마예요?', 'How ____ is it?', 'much'],
+      ['1,000원이에요.', 'It\'s one ____ won.', 'thousand'],
+      ['500원이에요.', 'It\'s five ____ won.', 'hundred'],
+      ['도와드릴까요?', 'Can I ____ you?', 'help'],
+      ['나는 이 필통이 마음에 들어.', 'I ____ this pencil case.', 'like'],
+    ],
+    aiwrite: { task: '사고 싶은 물건과 가격을 영어로 2~3문장 써 봐요.', frames: ['I like this ____.', 'How much is it?', 'It\'s ____ won.'] },
+    script: { roles: ['Yuna', 'Shopkeeper'], lines: [
+      ['Shopkeeper', 'Hello! Can I help you?', '안녕하세요! 도와드릴까요?'],
+      ['Yuna', 'Yes, please. I like this jump rope.', '네. 이 줄넘기가 마음에 들어요.'],
+      ['Shopkeeper', 'It\'s pretty, right?', '예쁘죠?'],
+      ['Yuna', 'Yes! How much is it?', '네! 얼마예요?'],
+      ['Shopkeeper', 'It\'s one thousand won.', '1,000원이에요.'],
+      ['Yuna', 'Oh, it\'s cheap! Here you are.', '와, 싸네요! 여기 있어요.'],
+      ['Shopkeeper', 'Thank you!', '고마워요!'],
+    ] },
+    scriptfill: [
+      F([['Shopkeeper', 'Hello! Can I ____ you?']], ['help', 'like', 'want', 'meet'], 'help'),
+      F([['Yuna', 'Yes! How ____ is it?']], ['much', 'old', 'many', 'time'], 'much'),
+      F([['Shopkeeper', 'It\'s one ____ won.']], ['thousand', 'hundred', 'ten', 'time'], 'thousand', { pic: '🏷️', picKo: '1,000원' }),
+      F([['Yuna', 'Oh, it\'s ____! Here you are.']], ['cheap', 'late', 'sorry', 'hungry'], 'cheap'),
+    ],
+    roleplay: { desc: '애플 가게 주인 AI에게 물건을 사요', starter: ['Hello! I\'m the shopkeeper. Can I help you?', '안녕하세요! 저는 가게 주인이에요. 도와드릴까요?'],
+      hints: ['Yes, please.', 'I like this pencil case.', 'How much is it?', 'It\'s cheap!', 'Here you are.'] },
+  });
+
+  /* ===== Lesson 9 What Day Is It Today? ===== */
+  LESSONS[9] = mk(9, {
+    title: 'What Day Is It Today?', ko: '오늘 무슨 요일이야?', goal: '요일을 묻고 답하며, 오늘 있는 수업을 말할 수 있어요.',
+    ids: { match: 'short', situ: 'timetable' },
+    chantTitle: '요일 챈트 따라 부르기',
+    words: DAYS.map(d => [d, DAYS_KO[d]]),
+    chant: [
+      ['Sunday, Monday, Tuesday!', '일요일, 월요일, 화요일!'],
+      ['Wednesday, Thursday, Friday!', '수요일, 목요일, 금요일!'],
+      ['Saturday, Saturday, it\'s a fun day!', '토요일, 토요일, 신나는 날!'],
+      ['What day is it today?', '오늘 무슨 요일이야?'],
+      ['It\'s Friday! It\'s Friday!', '금요일이야! 금요일이야!'],
+      ['I have art class today!', '나는 오늘 미술 수업이 있어!'],
+      ['Let\'s go home! Sure!', '집에 가자! 좋아!'],
+    ],
+    orderAct: { title: '요일 순서 맞추기', desc: '일요일부터 토요일까지 차례대로 눌러요', sents: null, items: DAYS, doneMsg: '일요일부터 토요일까지 완벽해요! Sunday → Saturday' },
+    matchAct: { title: '줄임말 짝 맞추기', desc: '달력에 쓰는 줄임말과 요일을 이어요', how: '왼쪽 줄임말을 누르고, 알맞은 요일을 오른쪽에서 눌러요.', pairs: DAYS.map(d => [d.slice(0, 3), d]), doneMsg: '줄임말 짝을 모두 찾았어요!' },
+    dialog: [
+      { cal: 'Wednesday', lines: [['A', 'What day is it today?'], ['B', 'It\'s ____.']], options: ['Wednesday', 'Monday', 'Friday', 'Sunday'], answer: 'Wednesday' },
+      { cal: 'Monday', lines: [['A', 'What ____ is it today?'], ['B', 'It\'s Monday.']], options: ['day', 'home', 'art', 'class'], answer: 'day' },
+      { cal: 'Saturday', lines: [['A', 'What day is it today?'], ['B', 'It\'s ____.']], options: ['Saturday', 'Sunday', 'Thursday', 'Tuesday'], answer: 'Saturday' },
+      { cal: 'Friday', lines: [['A', 'Let\'s go home.'], ['B', '____.']], options: ['Sure', 'Monday', 'Today', 'Art'], answer: 'Sure' },
+    ],
+    speak: [['What day is it today?', '오늘 무슨 요일이야?'], ['It\'s Monday.', '월요일이야.'], ['It\'s Thursday.', '목요일이야.'], ['I have art class today.', '나는 오늘 미술 수업이 있어.'], ['Let\'s go home.', '집에 가자.']],
+    situ: { title: '시간표 보고 답하기', desc: '민지의 시간표를 보고 질문에 답해요', thShort: true,
+      table: [['Monday', 'English', '영어'], ['Tuesday', 'art', '미술'], ['Wednesday', 'music', '음악'], ['Thursday', 'P.E.', '체육'], ['Friday', 'science', '과학']], steps: [
+      T('It\'s Tuesday. What class do I have today?', '화요일이에요. 오늘은 무슨 수업이 있나요?', ['art', 'music', 'P.E.', 'English'], 'art'),
+      T('I have music class today. What day is it today?', '오늘 음악 수업이 있어요. 오늘은 무슨 요일인가요?', ['Wednesday', 'Monday', 'Friday', 'Tuesday'], 'Wednesday'),
+      T('It\'s Thursday. What class do I have today?', '목요일이에요. 오늘은 무슨 수업이 있나요?', ['P.E.', 'science', 'art', 'English'], 'P.E.'),
+      T('I have science class today. What day is it today?', '오늘 과학 수업이 있어요. 오늘은 무슨 요일인가요?', ['Friday', 'Thursday', 'Sunday', 'Wednesday'], 'Friday'),
+    ] },
+    partner: { desc: 'AI 친구와 요일을 묻고 답해요', starter: ['Hi! I\'m Apple. What day is it today?', '안녕! 나는 애플이야. 오늘 무슨 요일이야?'],
+      hints: ['It\'s Monday.', 'It\'s Friday.', 'I have art class today.', 'What day is it today?', 'Sure!'] },
+    read: { title: '민지의 일기 읽기', passage: [
+      ['Hi, I\'m Minji.', '안녕, 나는 민지야.'],
+      ['Today is Wednesday.', '오늘은 수요일이야.'],
+      ['I have art class today. I like art!', '나는 오늘 미술 수업이 있어. 나는 미술이 좋아!'],
+      ['On Friday, I have music class.', '금요일에는 음악 수업이 있어.'],
+      ['On Sunday, I stay home with my family.', '일요일에는 가족과 집에 있어.'],
+    ], qs: [
+      ['Today is Monday.', false, '오늘은 수요일(Wednesday)이에요.'],
+      ['Minji has art class today.', true, '"I have art class today."라고 했어요.'],
+      ['Minji has music class on Friday.', true, '"On Friday, I have music class."라고 했어요.'],
+      ['Minji goes to school on Sunday.', false, '일요일에는 가족과 집에 있어요(stay home).'],
+    ] },
+    spellAct: { title: '요일 철자 쓰기', desc: '우리말을 보고 요일을 영어로 써요', how: '영어로 써 보세요 (첫 글자는 대문자!)', cap: '요일은 대문자로 시작해요' },
+    write: [
+      ['오늘 무슨 요일이야?', 'What ____ is it today?', 'day'],
+      ['금요일이야.', 'It\'s ____.', 'Friday'],
+      ['나는 오늘 미술 수업이 있어.', 'I have ____ class today.', 'art'],
+      ['집에 가자.', 'Let\'s go ____.', 'home'],
+      ['오늘은 화요일이야.', 'Today is ____.', 'Tuesday'],
+    ],
+    aiwrite: { task: '오늘이 무슨 요일인지, 오늘 어떤 수업이 있는지 영어로 2~3문장 써 봐요.', frames: ['Today is ____.', 'It\'s ____.', 'I have ____ class today.', 'I like ____.'] },
+    script: { roles: ['Minji', 'Jun'], lines: [
+      ['Jun', 'Hi, Minji!', '안녕, 민지야!'],
+      ['Minji', 'Hi, Jun! What day is it today?', '안녕, 준아! 오늘 무슨 요일이야?'],
+      ['Jun', 'It\'s Thursday.', '목요일이야.'],
+      ['Minji', 'Oh, I have art class today!', '아, 나 오늘 미술 수업 있어!'],
+      ['Jun', 'Me, too! I like art.', '나도! 나는 미술이 좋아.'],
+      ['Minji', 'Let\'s go to art class.', '미술 수업에 가자.'],
+      ['Jun', 'Sure!', '좋아!'],
+      ['Minji', 'Class is over. Let\'s go home.', '수업이 끝났다. 집에 가자.'],
+      ['Jun', 'Sure. Bye, Minji!', '좋아. 안녕, 민지야!'],
+    ] },
+    scriptfill: [
+      F([['Minji', 'Hi, Jun! What ____ is it today?'], ['Jun', 'It\'s Thursday.']], ['day', 'class', 'home', 'art'], 'day'),
+      F([['Jun', 'It\'s ____.'], ['Minji', 'Oh, I have art class today!']], ['Thursday', 'Sure', 'home', 'today'], 'Thursday'),
+      F([['Minji', 'Oh, I have ____ class today!'], ['Jun', 'Me, too! I like art.']], ['art', 'day', 'home', 'Sunday'], 'art'),
+      F([['Minji', 'Class is over. Let\'s go ____.'], ['Jun', 'Sure. Bye, Minji!']], ['home', 'art', 'day', 'Friday'], 'home'),
+    ],
+    roleplay: { desc: 'AI 친구 준과 학교 장면을 연기해요', starter: ['Hi! I\'m Jun. What day is it today?', '안녕! 나는 준이야. 오늘 무슨 요일이야?'],
+      hints: ['It\'s Thursday.', 'I have art class today.', 'Me, too!', 'Let\'s go home.', 'Sure!'] },
+  });
+
+  /* ===== Lesson 10 How Old Is He? ===== */
+  LESSONS[10] = mk(10, {
+    title: 'How Old Is He?', ko: '그는 몇 살이야?', goal: '나이를 묻고 답할 수 있어요.',
+    words: [['three', '3, 셋'], ['six', '6, 여섯'], ['ten', '10, 열'], ['twelve', '12, 열둘'], ['seventy', '70, 일흔'], ['cute', '귀여운'], ['year', '해, 나이(살)']],
+    chant: [
+      ['How old is he? How old is he?', '그는 몇 살이야? 그는 몇 살이야?'],
+      ['He\'s three years old! He\'s very cute!', '그는 세 살이야! 정말 귀여워!'],
+      ['How old is she? How old is she?', '그녀는 몇 살이야? 그녀는 몇 살이야?'],
+      ['She\'s twelve years old!', '그녀는 열두 살이야!'],
+      ['How old are you? How old are you?', '너는 몇 살이니? 너는 몇 살이니?'],
+      ['I\'m ten years old! Ten, ten, ten!', '나는 열 살이야! 열, 열, 열!'],
+    ],
+    order: [['How old is she?', '그녀는 몇 살이야?'], ['He\'s six years old.', '그는 여섯 살이야.'], ['I\'m ten years old.', '나는 열 살이야.']],
+    dialog: [
+      D('👦', '6살 남자아이', [['A', 'How old is he?'], ['B', 'He\'s ____ years old.']], ['six', 'ten', 'three', 'twelve'], 'six'),
+      D('👧', '12살 여자아이', [['A', 'How old is ____?'], ['B', 'She\'s twelve years old.']], ['she', 'he', 'you', 'it'], 'she'),
+      D('🧒', '나는 10살', [['A', 'How old are you?'], ['B', 'I\'m ten years ____.']], ['old', 'year', 'cute', 'good'], 'old'),
+      D('👶', '귀여운 아기', [['A', 'He\'s one year old.'], ['B', 'He\'s very ____.']], ['cute', 'old', 'cheap', 'late'], 'cute'),
+    ],
+    speak: [['How old is he?', '그는 몇 살이야?'], ['He\'s six years old.', '그는 여섯 살이야.'], ['How old are you?', '너는 몇 살이니?'], ['I\'m ten years old.', '나는 열 살이야.'], ['She\'s very cute.', '그녀는 정말 귀여워.']],
+    situ: { title: '가족 사진 보고 답하기', desc: '가족의 나이를 보고 질문에 답해요', tableTitle: '준의 가족',
+      table: [['👴 Grandpa', '70', '일흔 살'], ['👦 Jun', '10', '열 살'], ['👧 Mia', '12', '열두 살'], ['👶 Sam', '3', '세 살']], steps: [
+      T('How old is Jun?', '준은 몇 살인가요?', ['He\'s ten years old.', 'He\'s three years old.', 'He\'s twelve years old.', 'He\'s seventy years old.'], 'He\'s ten years old.'),
+      T('How old is Mia?', '미아는 몇 살인가요?', ['She\'s twelve years old.', 'She\'s ten years old.', 'She\'s three years old.', 'She\'s seventy years old.'], 'She\'s twelve years old.'),
+      T('How old is Grandpa?', '할아버지는 몇 살이신가요?', ['He\'s seventy years old.', 'He\'s twelve years old.', 'He\'s ten years old.', 'He\'s three years old.'], 'He\'s seventy years old.'),
+      T('How old is Sam?', '샘은 몇 살인가요?', ['He\'s three years old.', 'He\'s ten years old.', 'He\'s six years old.', 'He\'s twelve years old.'], 'He\'s three years old.'),
+    ] },
+    partner: { desc: 'AI 친구와 나이를 묻고 답해요', starter: ['Hi! I\'m Apple. I\'m ten years old. How old are you?', '안녕! 나는 애플이야. 나는 열 살이야. 너는 몇 살이니?'],
+      hints: ['I\'m ten years old.', 'I\'m eleven years old.', 'How old is he?', 'He\'s very cute.', 'Nice to meet you.'] },
+    read: { title: '우리 가족 소개', passage: [
+      ['This is my family.', '여기는 우리 가족이야.'],
+      ['My grandma is seventy years old.', '우리 할머니는 일흔 살이셔.'],
+      ['My sister is twelve years old.', '우리 언니는 열두 살이야.'],
+      ['I\'m ten years old.', '나는 열 살이야.'],
+      ['My dog, Coco, is three years old. He\'s very cute!', '우리 강아지 코코는 세 살이야. 정말 귀여워!'],
+    ], qs: [
+      ['Grandma is seventy years old.', true, '"My grandma is seventy years old."라고 했어요.'],
+      ['My sister is ten years old.', false, '언니는 열두 살(twelve)이에요.'],
+      ['Coco is three years old.', true, '"Coco, is three years old."라고 했어요.'],
+      ['Coco is not cute.', false, '"He\'s very cute!"라고 했어요.'],
+    ] },
+    spell: [['three', '3, 셋'], ['six', '6, 여섯'], ['ten', '10, 열'], ['twelve', '12, 열둘'], ['cute', '귀여운'], ['old', '나이가 ~인']],
+    write: [
+      ['그는 몇 살이야?', 'How ____ is he?', 'old'],
+      ['그는 여섯 살이야.', 'He\'s ____ years old.', 'six'],
+      ['그녀는 열두 살이야.', 'She\'s ____ years old.', 'twelve'],
+      ['나는 열 살이야.', 'I\'m ten ____ old.', 'years'],
+      ['그는 정말 귀여워.', 'He\'s very ____.', 'cute'],
+    ],
+    aiwrite: { task: '가족이나 반려동물의 나이를 영어로 2~3문장 소개해 봐요.', frames: ['My ____ is ____ years old.', 'I\'m ____ years old.', 'He\'s very cute.'] },
+    script: { roles: ['Sora', 'Leo'], lines: [
+      ['Leo', 'Excuse me, Sora. Who is he?', '저기, 소라야. 저 아이는 누구야?'],
+      ['Sora', 'He\'s my brother, Sam.', '내 남동생 샘이야.'],
+      ['Leo', 'How old is he?', '몇 살이야?'],
+      ['Sora', 'He\'s four years old.', '네 살이야.'],
+      ['Leo', 'He\'s very cute!', '정말 귀엽다!'],
+      ['Sora', 'Thank you. How old are you, Leo?', '고마워. 레오, 너는 몇 살이야?'],
+      ['Leo', 'I\'m eleven years old.', '나는 열한 살이야.'],
+    ] },
+    scriptfill: [
+      F([['Leo', 'How ____ is he?']], ['old', 'much', 'time', 'cute'], 'old'),
+      F([['Sora', 'He\'s four ____ old.']], ['years', 'year', 'cute', 'old'], 'years'),
+      F([['Leo', 'He\'s very ____!']], ['cute', 'cheap', 'late', 'hungry'], 'cute'),
+      F([['Sora', 'How old are ____, Leo?'], ['Leo', 'I\'m eleven years old.']], ['you', 'he', 'she', 'it'], 'you'),
+    ],
+    roleplay: { desc: '여동생을 소개하는 친구 레오와 대화해요', starter: ['Hi! I\'m Leo. This is my sister. How old are you?', '안녕! 나는 레오야. 이 아이는 내 여동생이야. 너는 몇 살이니?'],
+      hints: ['I\'m ten years old.', 'How old is she?', 'She\'s very cute.', 'He\'s six years old.', 'Nice to meet you.'] },
+  });
+
+  /* ===== Lesson 11 What Are You Doing? ===== */
+  LESSONS[11] = mk(11, {
+    title: 'What Are You Doing?', ko: '너는 무엇을 하고 있어?', goal: '지금 무엇을 하고 있는지 묻고 답할 수 있어요.',
+    words: [['singing', '노래하기'], ['dancing', '춤추기'], ['drawing', '그리기'], ['making', '만들기'], ['playing', '연주하기, 놀기'], ['homework', '숙제'], ['picture', '그림']],
+    chant: [
+      ['What are you doing? What are you doing?', '너는 뭐 하고 있어? 뭐 하고 있어?'],
+      ['I\'m singing! La, la, la!', '나는 노래하고 있어! 라라라!'],
+      ['I\'m dancing! Cha, cha, cha!', '나는 춤추고 있어! 차차차!'],
+      ['What is he doing? What is he doing?', '그는 뭐 하고 있어? 뭐 하고 있어?'],
+      ['He\'s drawing a picture!', '그는 그림을 그리고 있어!'],
+      ['He\'s doing his homework!', '그는 숙제를 하고 있어!'],
+    ],
+    order: [['What are you doing?', '너는 무엇을 하고 있어?'], ['I\'m drawing a picture.', '나는 그림을 그리고 있어.'], ['He\'s playing the violin.', '그는 바이올린을 연주하고 있어.']],
+    dialog: [
+      D('🎤', '노래하는 중', [['A', 'What are you doing?'], ['B', 'I\'m ____.']], ['singing', 'dancing', 'drawing', 'making'], 'singing'),
+      D('💃', '춤추는 중', [['A', 'What are you ____?'], ['B', 'I\'m dancing.']], ['doing', 'making', 'singing', 'playing'], 'doing'),
+      D('🎻', '바이올린 연주 중', [['A', 'What is he doing?'], ['B', 'He\'s ____ the violin.']], ['playing', 'making', 'drawing', 'doing'], 'playing'),
+      D('🍊🧃', '주스를 만드는 중', [['A', 'What are you doing?'], ['B', 'I\'m ____ orange juice.']], ['making', 'playing', 'singing', 'dancing'], 'making'),
+    ],
+    speak: [['What are you doing?', '너는 무엇을 하고 있어?'], ['I\'m singing.', '나는 노래하고 있어.'], ['I\'m drawing a picture.', '나는 그림을 그리고 있어.'], ['What is he doing?', '그는 무엇을 하고 있어?'], ['He\'s doing homework.', '그는 숙제를 하고 있어.']],
+    situ: { title: '그림 보고 하는 일 말하기', desc: '그림 속 사람이 무엇을 하는지 골라요', steps: [
+      T('What is she doing?', '그녀는 무엇을 하고 있나요?', ['She\'s drawing a picture.', 'She\'s singing.', 'She\'s dancing.', 'She\'s doing homework.'], 'She\'s drawing a picture.', { pic: '🎨', picKo: '그림 그리는 중' }),
+      T('What is Mom doing?', '엄마는 무엇을 하고 있나요?', ['She\'s cleaning the house.', 'She\'s playing the violin.', 'She\'s drawing a picture.', 'She\'s dancing.'], 'She\'s cleaning the house.', { pic: '🧹', picKo: '청소하는 중' }),
+      T('What is he doing?', '그는 무엇을 하고 있나요?', ['He\'s doing homework.', 'He\'s singing.', 'He\'s making orange juice.', 'He\'s dancing.'], 'He\'s doing homework.', { pic: '📚✏️', picKo: '숙제하는 중' }),
+      T('What is he doing?', '그는 무엇을 하고 있나요?', ['He\'s playing the violin.', 'He\'s drawing a picture.', 'He\'s cleaning the house.', 'He\'s doing homework.'], 'He\'s playing the violin.', { pic: '🎻', picKo: '연주하는 중' }),
+    ] },
+    partner: { desc: 'AI 친구와 지금 하는 일을 묻고 답해요', starter: ['Hi! I\'m Apple. I\'m singing. La, la, la! What are you doing?', '안녕! 나는 애플이야. 노래하고 있어. 라라라! 너는 뭐 하고 있어?'],
+      hints: ['I\'m dancing.', 'I\'m drawing a picture.', 'I\'m doing homework.', 'What are you doing?', 'Let\'s sing together!'] },
+    read: { title: '장기 자랑 준비 시간', passage: [
+      ['It\'s talent show day!', '오늘은 장기 자랑 날이야!'],
+      ['Mia is singing a song.', '미아는 노래를 부르고 있어.'],
+      ['Jun is playing the violin.', '준은 바이올린을 연주하고 있어.'],
+      ['Sora and Leo are dancing.', '소라와 레오는 춤을 추고 있어.'],
+      ['I\'m drawing a big picture for the show.', '나는 장기 자랑을 위해 큰 그림을 그리고 있어.'],
+    ], qs: [
+      ['Mia is singing a song.', true, '"Mia is singing a song."이라고 했어요.'],
+      ['Jun is dancing.', false, '준은 바이올린을 연주하고 있어요(playing the violin).'],
+      ['Sora and Leo are dancing.', true, '"Sora and Leo are dancing."이라고 했어요.'],
+      ['I\'m making orange juice.', false, '나는 그림을 그리고 있어요(drawing a picture).'],
+    ] },
+    write: [
+      ['너는 무엇을 하고 있어?', 'What are you ____?', 'doing'],
+      ['나는 노래하고 있어.', 'I\'m ____.', 'singing'],
+      ['나는 그림을 그리고 있어.', 'I\'m drawing a ____.', 'picture'],
+      ['그는 무엇을 하고 있어?', 'What is ____ doing?', 'he'],
+      ['그는 숙제를 하고 있어.', 'He\'s doing ____.', 'homework'],
+    ],
+    aiwrite: { task: '지금 나와 가족(또는 친구)이 무엇을 하고 있는지 영어로 2~3문장 써 봐요.', frames: ['I\'m ____ing.', 'My mom is ____ing.', 'My friend is ____ing.'] },
+    script: { roles: ['Dami', 'Dad'], lines: [
+      ['Dami', 'Hi, Dad! What are you doing?', '아빠! 뭐 하고 계세요?'],
+      ['Dad', 'I\'m making orange juice.', '오렌지 주스를 만들고 있단다.'],
+      ['Dami', 'Yum! What is Sam doing?', '맛있겠다! 샘은 뭐 하고 있어요?'],
+      ['Dad', 'He\'s doing his homework.', '숙제하고 있어.'],
+      ['Dami', 'And what is Mom doing?', '그럼 엄마는 뭐 하세요?'],
+      ['Dad', 'She\'s singing in the garden.', '정원에서 노래하고 계셔.'],
+      ['Dami', 'Let\'s drink juice together!', '다 같이 주스 마셔요!'],
+    ] },
+    scriptfill: [
+      F([['Dami', 'Hi, Dad! What are you ____?']], ['doing', 'making', 'singing', 'drawing'], 'doing'),
+      F([['Dad', 'I\'m ____ orange juice.']], ['making', 'playing', 'dancing', 'singing'], 'making'),
+      F([['Dami', 'Yum! What is Sam doing?'], ['Dad', 'He\'s doing his ____.']], ['homework', 'picture', 'violin', 'juice'], 'homework'),
+      F([['Dad', 'She\'s ____ in the garden.']], ['singing', 'making', 'doing', 'drawing'], 'singing', { pic: '🎤', picKo: '노래하는 중' }),
+    ],
+    roleplay: { desc: '그림 그리는 친구 레오와 지금 하는 일을 말해요', starter: ['Hi! I\'m Leo. I\'m drawing a picture. What are you doing?', '안녕! 나는 레오야. 나는 그림을 그리고 있어. 너는 뭐 하고 있어?'],
+      hints: ['I\'m singing.', 'I\'m doing homework.', 'What is he doing?', 'I\'m dancing.', 'Let\'s play together!'] },
+  });
+
   root.AQ_LESSONS = { LESSONS, DAYS, DAYS_KO };
   if (typeof module !== 'undefined') module.exports = root.AQ_LESSONS;
 })(typeof globalThis !== 'undefined' ? globalThis : this);
@@ -4214,8 +4931,8 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function startAct(chNo, actId) {
     const LP = lessonFor(LU), ch = LP.chapters.find(c => c.no === chNo), a = ch.acts.find(x => x.id === actId);
     LACT = { ch, a, i: 0, ok: 0, n: 0, done: false, st: {} };
-    if (a.type === 'choice') LACT.steps = a.gen === 'listenDays' ? shuf(LSN.DAYS).slice(0, a.n || 5).map(d => ({ speak: d, ko: LSN.DAYS_KO[d], options: shuf([d, ...shuf(LSN.DAYS.filter(x => x !== d)).slice(0, 3)]), answer: d })) : a.steps.map(x => ({ ...x, options: shuf(x.options) }));
-    if (a.type === 'order') LACT.pool = shuf(a.items), LACT.got = [];
+    if (a.type === 'choice') LACT.steps = a.gen === 'listen' ? shuf(a.words).slice(0, a.n || 5).map(w => ({ speak: w[0], ko: w[1], options: shuf([w[0], ...shuf(a.words.filter(x => x[0] !== w[0])).slice(0, 3).map(x => x[0])]), answer: w[0] })) : a.steps.map(x => ({ ...x, options: shuf(x.options) }));
+    if (a.type === 'order') { LACT.seqs = a.sents ? a.sents.map(x => ({ items: x[0].split(' '), ko: x[1] })) : [{ items: a.items }]; orderSetup(); }
     if (a.type === 'match') LACT.left = shuf(a.pairs.map(p => p[0])), LACT.right = shuf(a.pairs.map(p => p[1])), LACT.got = [], LACT.sel = null;
     if (a.type === 'spell' || a.type === 'speak') LACT.items = shuf(a.words || a.sentences).slice(0, a.type === 'spell' ? 5 : 5);
     if (a.type === 'aitalk') LACT.log = [{ me: false, text: a.starter[0], ko: a.starter[1] }], LACT.sent = 0;
@@ -4246,7 +4963,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function nextAct() { const nx = nextActInfo(); if (nx) startAct(nx.c.no, nx.a.id); else go('lessons'); }
   let afterRender = () => {};
   const opt = (o, k, cls = '') => `<button class="l-opt ${cls}" data-act="lpick" data-v="${k}">${esc(o)}</button>`;
-  const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === 'A' || who === 'Jun' ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
+  const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === lines[0][0] ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
 
   /* 1) 챈트 */
   function rChant() {
@@ -4270,11 +4987,13 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     LACT.st.playing = false; LACT.st.cur = null; renderLact(); toast('👏 잘 불렀어요! ✅ 다 불렀어요를 눌러요');
   }
 
-  /* 2) 순서 맞추기 */
+  /* 2) 순서 맞추기 (요일 차례 · 낱말 카드로 문장 만들기) */
+  function orderSetup() { const q = LACT.seqs[LACT.i]; LACT.items = q.items; LACT.pool = shuf(q.items.map((_, k) => k)); LACT.got = []; LACT.miss = 0; }
   function rOrder() {
-    afterRender = () => {};
-    return `<div class="glass l-order"><p class="sub">${esc(LACT.a.desc)}</p><div class="l-slots">${LACT.a.items.map((_, k) => `<span class="l-slot ${LACT.got[k] ? 'ok' : ''}">${LACT.got[k] ? esc(LACT.got[k]) : k + 1}</span>`).join('')}</div>
-      <div class="l-opts">${LACT.pool.map((o, k) => LACT.got.includes(o) ? '' : opt(o, k)).join('')}</div></div>`;
+    afterRender = () => {}; const q = LACT.seqs[LACT.i], sent = !!LACT.a.sents;
+    return `<div class="glass l-order">${sent ? `<div class="l-big sm">${esc(q.ko)}</div><p class="sub">낱말 카드를 차례대로 눌러 문장을 만들어요 · ${LACT.i + 1}/${LACT.seqs.length}</p>` : `<p class="sub">${esc(LACT.a.desc)}</p>`}
+      <div class="l-slots ${sent ? 'sent' : ''}">${LACT.items.map((_, k) => `<span class="l-slot ${LACT.got[k] != null ? 'ok' : ''}">${LACT.got[k] != null ? esc(LACT.items[LACT.got[k]]) : k + 1}</span>`).join('')}</div>
+      <div class="l-opts">${LACT.pool.map(k => LACT.got.includes(k) ? '' : opt(LACT.items[k], k)).join('')}</div></div>`;
   }
   /* 3) 고르기 (듣기·대화·시간표·대본) */
   function rChoice() {
@@ -4282,8 +5001,9 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     afterRender = () => {};
     let top = '';
     if (st.speak) top = S.settings.quiet ? `<div class="l-big">${esc(st.ko)}</div><p class="sub">조용한 교실 모드: 우리말을 보고 골라요</p>` : `<button class="l-spk" data-act="lsay" data-t="${esc(st.speak)}">🔊</button><p class="sub">잘 듣고 알맞은 요일 카드를 골라요 · 🔊를 누르면 다시 들려요</p>`;
+    if (st.pic) top = `<div class="l-pic"><b>${esc(st.pic)}</b>${st.picKo ? `<small>${esc(st.picKo)}</small>` : ''}</div>`;
     if (st.cal) top = `<div class="l-cal"><i>TODAY</i><b>${esc(st.cal)}</b><small>${esc(LSN.DAYS_KO[st.cal] || '')}</small></div>`;
-    if (a.table) top = `<table class="l-tt"><tr>${a.table.map(r => `<th>${r[0].slice(0, 3)}</th>`).join('')}</tr><tr>${a.table.map(r => `<td>${esc(r[1])}<small>${esc(r[2])}</small></td>`).join('')}</tr></table><p class="l-q">${esc(st.q)}</p><p class="sub">${esc(st.ko)}</p>`;
+    if (a.table) top = (st.pic ? top : '') + `${a.tableTitle ? `<p class="l-tt-t">${esc(a.tableTitle)}</p>` : ''}<table class="l-tt"><tr>${a.table.map(r => `<th>${esc(a.thShort ? r[0].slice(0, 3) : r[0])}</th>`).join('')}</tr><tr>${a.table.map(r => `<td>${esc(r[1])}<small>${esc(r[2])}</small></td>`).join('')}</tr></table><p class="l-q">${esc(st.q)}</p><p class="sub">${esc(st.ko)}</p>`;
     if (st.lines) top += bubbles(st.lines) + (S.settings.quiet ? '' : `<button class="btn ghost sm" data-act="lsay" data-t="${esc(st.lines.map(l => l[1]).join(' '))}">🔊 대화 듣기</button>`);
     return `<div class="glass l-choice">${top}<div class="l-opts g2">${st.options.map((o, k) => opt(o, k)).join('')}</div></div>`;
   }
@@ -4291,21 +5011,32 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function rMatch() {
     afterRender = () => {};
     const col = (arr, side) => arr.map((o, k) => { const done = LACT.got.some(g => g[side] === o); return `<button class="l-opt ${done ? 'ok' : ''} ${LACT.sel && LACT.sel.side === side && LACT.sel.v === o ? 'sel' : ''}" data-act="lpick" data-v="${side * 100 + k}" ${done ? 'disabled' : ''}>${esc(o)}</button>`; }).join('');
-    return `<div class="glass l-match"><p class="sub">왼쪽 줄임말을 누르고, 알맞은 요일을 오른쪽에서 눌러요.</p><div class="l-mcols"><div>${col(LACT.left, 0)}</div><div>${col(LACT.right, 1)}</div></div></div>`;
+    return `<div class="glass l-match"><p class="sub">${esc(LACT.a.how || '왼쪽 낱말을 누르고, 알맞은 짝을 오른쪽에서 눌러요.')}</p><div class="l-mcols"><div>${col(LACT.left, 0)}</div><div>${col(LACT.right, 1)}</div></div></div>`;
   }
   function lPick(v, el) {
     const { a } = LACT; if (LACT.lock) return;
     if (a.type === 'order') {
-      const o = LACT.pool[v], need = a.items[LACT.got.length];
-      if (o === need) { LACT.got.push(o); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.items.length) return lDone('일요일부터 토요일까지 완벽해요! Sunday → Saturday'); renderLact(); }
-      else { AU.bad(); el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 400); toast(`${LACT.got.length + 1}번째는 ${LSN.DAYS_KO[need]}이에요!`, 1400); }
+      const need = LACT.items[LACT.got.length];
+      if (LACT.items[v] === need) {
+        const free = LACT.pool.find(k => !LACT.got.includes(k) && LACT.items[k] === need); LACT.got.push(free); AU.good(); LACT.miss = 0;
+        if (LACT.got.length === LACT.items.length) {
+          if (!a.sents) return lDone(a.doneMsg || '순서를 완벽하게 맞혔어요!');
+          sayP(LACT.items.join(' ')); LACT.ok++; LACT.i++;
+          if (LACT.i >= LACT.seqs.length) return lDone('문장을 모두 바르게 만들었어요! 🧩');
+          toast('⭕ ' + LACT.seqs[LACT.i - 1].items.join(' '), 1300); orderSetup();
+        }
+        renderLact();
+      } else {
+        AU.bad(); el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 400); LACT.miss++;
+        toast(LACT.miss >= 2 ? `${LACT.got.length + 1}번째 낱말은 "${need}"이에요!` : (LSN.DAYS_KO && LSN.DAYS_KO[need] && !a.sents ? `${LACT.got.length + 1}번째는 ${LSN.DAYS_KO[need]}이에요!` : '다시 생각해 봐요! 우리말 뜻을 떠올려요'), 1400);
+      }
       return;
     }
     if (a.type === 'match') {
       const side = v >= 100 ? 1 : 0, k = v % 100, val = side ? LACT.right[k] : LACT.left[k];
       if (!LACT.sel || LACT.sel.side === side) { LACT.sel = { side, v: val }; renderLact(); return; }
       const l = side ? LACT.sel.v : val, r = side ? val : LACT.sel.v; LACT.sel = null;
-      if (a.pairs.some(p => p[0] === l && p[1] === r)) { LACT.got.push([l, r]); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.pairs.length) return lDone('줄임말 짝을 모두 찾았어요!'); }
+      if (a.pairs.some(p => p[0] === l && p[1] === r)) { LACT.got.push([l, r]); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.pairs.length) return lDone(a.doneMsg || '짝을 모두 찾았어요! 🔗'); }
       else { AU.bad(); toast('다시 찾아봐요!', 1000); }
       renderLact(); return;
     }
@@ -4366,8 +5097,8 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   function rSpell() {
     const it = LACT.items[LACT.i], hint = it[0].slice(0, LACT.st.h || 0);
     afterRender = () => { const i = $('#spIn'); if (i) i.focus(); };
-    return `<div class="glass l-spell"><div class="l-big">${esc(it[1])}</div><p class="sub">영어로 써 보세요 (첫 글자는 대문자!)</p>
-      <form id="spForm" class="l-form"><input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="${hint ? esc(hint) + '…' : 'Monday'}"><button class="btn" type="submit">확인</button></form>
+    return `<div class="glass l-spell"><div class="l-big">${esc(it[1])}</div><p class="sub">${esc(LACT.a.how || '영어로 써 보세요')}</p>
+      <form id="spForm" class="l-form"><input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="16" placeholder="${hint ? esc(hint) + '…' : '영어로 쓰기'}"><button class="btn" type="submit">확인</button></form>
       <p class="l-heard" id="heard">${LACT.st.msg || ''}</p><button class="linkish" id="spHint">💡 힌트 (글자 하나씩)</button><p class="voice-note">${LACT.i + 1} / ${LACT.items.length}</p></div>`;
   }
   function rWrite() {
@@ -4378,14 +5109,14 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
   }
   function checkTyped() {
     const { a } = LACT, isSpell = a.type === 'spell', it = isSpell ? LACT.items[LACT.i] : a.items[LACT.i], ans = isSpell ? it[0] : it[2];
-    const v = ($('#spIn').value || '').trim().replace(/[.!]$/, '');
+    const v = ($('#spIn').value || '').trim().replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').replace(/[.!]$/, '');
     if (!v) return;
     if (v.toLowerCase() === ans.toLowerCase()) {
       LACT.ok++; AU.good ? AU.good() : AU.tap(); LACT.st = {};
-      const capNote = isSpell && v !== ans ? ` (요일은 대문자로 시작해요: ${ans})` : '';
+      const capNote = isSpell && a.cap && v !== ans ? ` (${a.cap}: ${ans})` : '';
       toast(`⭕ 정답! ${esc(ans)}${capNote}`, 1300); sayP(isSpell ? ans : it[1].replace('____', ans));
       LACT.i++; const total = isSpell ? LACT.items.length : a.items.length;
-      if (LACT.i >= total) return lDone(isSpell ? '요일 철자를 모두 썼어요!' : '문장을 모두 완성했어요!');
+      if (LACT.i >= total) return lDone(isSpell ? '철자를 모두 바르게 썼어요! ⌨️' : '문장을 모두 완성했어요!');
       renderLact();
     } else { AU.bad(); LACT.st.msg = `🙂 다시 써 볼까요? ${isSpell ? '' : '(힌트: ' + esc(ans[0]) + '…)'}`; LACT.st.h = Math.min((LACT.st.h || 0) + 1, ans.length - 1); renderLact(); }
   }
@@ -4404,7 +5135,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     if (!SESS) { toast('🤖 AI 짝꿍은 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     const { a } = LACT; LACT.sent++; const last = LACT.sent >= a.turns;
     LACT.log.push({ me: true, text }); LACT.busy = true; renderLact();
-    const r = await api('/api/ai/talk', { scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/talk', { unit: LU, scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
     LACT.busy = false;
     if (r.ok) { LACT.log.push({ text: r.en, ko: r.ko }); sayP(r.en); if (last) LACT.end = true; }
     else { LACT.log.push({ text: r.error || 'AI 짝꿍과 연결이 안 돼요.', err: true }); LACT.fail = true; LACT.sent--; }
@@ -4425,7 +5156,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
     if (v.split(/\s+/).length < 3) { toast('영어로 2~3문장 써 볼까요?'); return; }
     if (!SESS) { toast('🤖 AI 쓰기 도우미는 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     LACT.busy = true; renderLact();
-    const r = await api('/api/ai/write', { text: v }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/write', { unit: LU, text: v }, { token: SESS.token, timeout: 25000 });
     LACT.busy = false; if (r.ok) LACT.st.fb = r.text; else { toast(r.error || 'AI 도우미와 연결이 안 돼요.', 2600); LACT.fail = true; }
     renderLact();
   }
@@ -5373,7 +6104,7 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
       playIntro(proceed); // 게임 시작하기 → 언제나 인트로 영상부터
     });
   }
-  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, cloudFlush, playEvolution, playIntro, L, render, save, get Q() { return Q; } };
+  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, cloudFlush, playEvolution, playIntro, L, render, save, get Q() { return Q; }, get LACT() { return LACT; } };
   boot();
 })();
 </script>

@@ -1711,3 +1711,11 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 .sw-btn.on { background: linear-gradient(180deg, #5ae08a, #2a9a5a); }
 .sw-btn.off { background: linear-gradient(180deg, #9aa4b8, #5a6478); }
 .reduce .l-line, .reduce .l-opt { animation: none !important; transition: none !important; }
+
+.l-pic { margin: 2px auto 8px; text-align: center; }
+.l-pic b { display: block; font-size: 64px; line-height: 1.15; filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+.l-pic small { display: inline-block; margin-top: 2px; padding: 3px 12px; border-radius: 12px; font-size: 13.5px; font-weight: 800; color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); }
+.l-big.sm { font-size: 22px; margin: 6px auto; }
+.l-slots.sent { display: flex; flex-wrap: wrap; justify-content: center; }
+.l-slots.sent .l-slot { min-width: 54px; padding: 8px 10px; font-family: 'Barlow', sans-serif; font-size: 15px; }
+.l-tt-t { margin: 0 0 4px; font-size: 13px; font-weight: 800; color: #ffe27a; text-align: center; }

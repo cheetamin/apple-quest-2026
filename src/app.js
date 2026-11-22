@@ -997,8 +997,8 @@
   function startAct(chNo, actId) {
     const LP = lessonFor(LU), ch = LP.chapters.find(c => c.no === chNo), a = ch.acts.find(x => x.id === actId);
     LACT = { ch, a, i: 0, ok: 0, n: 0, done: false, st: {} };
-    if (a.type === 'choice') LACT.steps = a.gen === 'listenDays' ? shuf(LSN.DAYS).slice(0, a.n || 5).map(d => ({ speak: d, ko: LSN.DAYS_KO[d], options: shuf([d, ...shuf(LSN.DAYS.filter(x => x !== d)).slice(0, 3)]), answer: d })) : a.steps.map(x => ({ ...x, options: shuf(x.options) }));
-    if (a.type === 'order') LACT.pool = shuf(a.items), LACT.got = [];
+    if (a.type === 'choice') LACT.steps = a.gen === 'listen' ? shuf(a.words).slice(0, a.n || 5).map(w => ({ speak: w[0], ko: w[1], options: shuf([w[0], ...shuf(a.words.filter(x => x[0] !== w[0])).slice(0, 3).map(x => x[0])]), answer: w[0] })) : a.steps.map(x => ({ ...x, options: shuf(x.options) }));
+    if (a.type === 'order') { LACT.seqs = a.sents ? a.sents.map(x => ({ items: x[0].split(' '), ko: x[1] })) : [{ items: a.items }]; orderSetup(); }
     if (a.type === 'match') LACT.left = shuf(a.pairs.map(p => p[0])), LACT.right = shuf(a.pairs.map(p => p[1])), LACT.got = [], LACT.sel = null;
     if (a.type === 'spell' || a.type === 'speak') LACT.items = shuf(a.words || a.sentences).slice(0, a.type === 'spell' ? 5 : 5);
     if (a.type === 'aitalk') LACT.log = [{ me: false, text: a.starter[0], ko: a.starter[1] }], LACT.sent = 0;
@@ -1029,7 +1029,7 @@
   function nextAct() { const nx = nextActInfo(); if (nx) startAct(nx.c.no, nx.a.id); else go('lessons'); }
   let afterRender = () => {};
   const opt = (o, k, cls = '') => `<button class="l-opt ${cls}" data-act="lpick" data-v="${k}">${esc(o)}</button>`;
-  const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === 'A' || who === 'Jun' ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
+  const bubbles = lines => `<div class="l-dlg">${lines.map(([who, t]) => `<div class="l-b ${who === lines[0][0] ? 'l' : 'r'}"><i>${esc(who)}</i><p>${esc(t).replace(/_{2,}/g, '<span class="l-blank">?</span>')}</p></div>`).join('')}</div>`;
 
   /* 1) 챈트 */
   function rChant() {
@@ -1053,11 +1053,13 @@
     LACT.st.playing = false; LACT.st.cur = null; renderLact(); toast('👏 잘 불렀어요! ✅ 다 불렀어요를 눌러요');
   }
 
-  /* 2) 순서 맞추기 */
+  /* 2) 순서 맞추기 (요일 차례 · 낱말 카드로 문장 만들기) */
+  function orderSetup() { const q = LACT.seqs[LACT.i]; LACT.items = q.items; LACT.pool = shuf(q.items.map((_, k) => k)); LACT.got = []; LACT.miss = 0; }
   function rOrder() {
-    afterRender = () => {};
-    return `<div class="glass l-order"><p class="sub">${esc(LACT.a.desc)}</p><div class="l-slots">${LACT.a.items.map((_, k) => `<span class="l-slot ${LACT.got[k] ? 'ok' : ''}">${LACT.got[k] ? esc(LACT.got[k]) : k + 1}</span>`).join('')}</div>
-      <div class="l-opts">${LACT.pool.map((o, k) => LACT.got.includes(o) ? '' : opt(o, k)).join('')}</div></div>`;
+    afterRender = () => {}; const q = LACT.seqs[LACT.i], sent = !!LACT.a.sents;
+    return `<div class="glass l-order">${sent ? `<div class="l-big sm">${esc(q.ko)}</div><p class="sub">낱말 카드를 차례대로 눌러 문장을 만들어요 · ${LACT.i + 1}/${LACT.seqs.length}</p>` : `<p class="sub">${esc(LACT.a.desc)}</p>`}
+      <div class="l-slots ${sent ? 'sent' : ''}">${LACT.items.map((_, k) => `<span class="l-slot ${LACT.got[k] != null ? 'ok' : ''}">${LACT.got[k] != null ? esc(LACT.items[LACT.got[k]]) : k + 1}</span>`).join('')}</div>
+      <div class="l-opts">${LACT.pool.map(k => LACT.got.includes(k) ? '' : opt(LACT.items[k], k)).join('')}</div></div>`;
   }
   /* 3) 고르기 (듣기·대화·시간표·대본) */
   function rChoice() {
@@ -1065,8 +1067,9 @@
     afterRender = () => {};
     let top = '';
     if (st.speak) top = S.settings.quiet ? `<div class="l-big">${esc(st.ko)}</div><p class="sub">조용한 교실 모드: 우리말을 보고 골라요</p>` : `<button class="l-spk" data-act="lsay" data-t="${esc(st.speak)}">🔊</button><p class="sub">잘 듣고 알맞은 요일 카드를 골라요 · 🔊를 누르면 다시 들려요</p>`;
+    if (st.pic) top = `<div class="l-pic"><b>${esc(st.pic)}</b>${st.picKo ? `<small>${esc(st.picKo)}</small>` : ''}</div>`;
     if (st.cal) top = `<div class="l-cal"><i>TODAY</i><b>${esc(st.cal)}</b><small>${esc(LSN.DAYS_KO[st.cal] || '')}</small></div>`;
-    if (a.table) top = `<table class="l-tt"><tr>${a.table.map(r => `<th>${r[0].slice(0, 3)}</th>`).join('')}</tr><tr>${a.table.map(r => `<td>${esc(r[1])}<small>${esc(r[2])}</small></td>`).join('')}</tr></table><p class="l-q">${esc(st.q)}</p><p class="sub">${esc(st.ko)}</p>`;
+    if (a.table) top = (st.pic ? top : '') + `${a.tableTitle ? `<p class="l-tt-t">${esc(a.tableTitle)}</p>` : ''}<table class="l-tt"><tr>${a.table.map(r => `<th>${esc(a.thShort ? r[0].slice(0, 3) : r[0])}</th>`).join('')}</tr><tr>${a.table.map(r => `<td>${esc(r[1])}<small>${esc(r[2])}</small></td>`).join('')}</tr></table><p class="l-q">${esc(st.q)}</p><p class="sub">${esc(st.ko)}</p>`;
     if (st.lines) top += bubbles(st.lines) + (S.settings.quiet ? '' : `<button class="btn ghost sm" data-act="lsay" data-t="${esc(st.lines.map(l => l[1]).join(' '))}">🔊 대화 듣기</button>`);
     return `<div class="glass l-choice">${top}<div class="l-opts g2">${st.options.map((o, k) => opt(o, k)).join('')}</div></div>`;
   }
@@ -1074,21 +1077,32 @@
   function rMatch() {
     afterRender = () => {};
     const col = (arr, side) => arr.map((o, k) => { const done = LACT.got.some(g => g[side] === o); return `<button class="l-opt ${done ? 'ok' : ''} ${LACT.sel && LACT.sel.side === side && LACT.sel.v === o ? 'sel' : ''}" data-act="lpick" data-v="${side * 100 + k}" ${done ? 'disabled' : ''}>${esc(o)}</button>`; }).join('');
-    return `<div class="glass l-match"><p class="sub">왼쪽 줄임말을 누르고, 알맞은 요일을 오른쪽에서 눌러요.</p><div class="l-mcols"><div>${col(LACT.left, 0)}</div><div>${col(LACT.right, 1)}</div></div></div>`;
+    return `<div class="glass l-match"><p class="sub">${esc(LACT.a.how || '왼쪽 낱말을 누르고, 알맞은 짝을 오른쪽에서 눌러요.')}</p><div class="l-mcols"><div>${col(LACT.left, 0)}</div><div>${col(LACT.right, 1)}</div></div></div>`;
   }
   function lPick(v, el) {
     const { a } = LACT; if (LACT.lock) return;
     if (a.type === 'order') {
-      const o = LACT.pool[v], need = a.items[LACT.got.length];
-      if (o === need) { LACT.got.push(o); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.items.length) return lDone('일요일부터 토요일까지 완벽해요! Sunday → Saturday'); renderLact(); }
-      else { AU.bad(); el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 400); toast(`${LACT.got.length + 1}번째는 ${LSN.DAYS_KO[need]}이에요!`, 1400); }
+      const need = LACT.items[LACT.got.length];
+      if (LACT.items[v] === need) {
+        const free = LACT.pool.find(k => !LACT.got.includes(k) && LACT.items[k] === need); LACT.got.push(free); AU.good(); LACT.miss = 0;
+        if (LACT.got.length === LACT.items.length) {
+          if (!a.sents) return lDone(a.doneMsg || '순서를 완벽하게 맞혔어요!');
+          sayP(LACT.items.join(' ')); LACT.ok++; LACT.i++;
+          if (LACT.i >= LACT.seqs.length) return lDone('문장을 모두 바르게 만들었어요! 🧩');
+          toast('⭕ ' + LACT.seqs[LACT.i - 1].items.join(' '), 1300); orderSetup();
+        }
+        renderLact();
+      } else {
+        AU.bad(); el.classList.add('shake'); setTimeout(() => el.classList.remove('shake'), 400); LACT.miss++;
+        toast(LACT.miss >= 2 ? `${LACT.got.length + 1}번째 낱말은 "${need}"이에요!` : (LSN.DAYS_KO && LSN.DAYS_KO[need] && !a.sents ? `${LACT.got.length + 1}번째는 ${LSN.DAYS_KO[need]}이에요!` : '다시 생각해 봐요! 우리말 뜻을 떠올려요'), 1400);
+      }
       return;
     }
     if (a.type === 'match') {
       const side = v >= 100 ? 1 : 0, k = v % 100, val = side ? LACT.right[k] : LACT.left[k];
       if (!LACT.sel || LACT.sel.side === side) { LACT.sel = { side, v: val }; renderLact(); return; }
       const l = side ? LACT.sel.v : val, r = side ? val : LACT.sel.v; LACT.sel = null;
-      if (a.pairs.some(p => p[0] === l && p[1] === r)) { LACT.got.push([l, r]); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.pairs.length) return lDone('줄임말 짝을 모두 찾았어요!'); }
+      if (a.pairs.some(p => p[0] === l && p[1] === r)) { LACT.got.push([l, r]); AU.good ? AU.good() : AU.tap(); if (LACT.got.length === a.pairs.length) return lDone(a.doneMsg || '짝을 모두 찾았어요! 🔗'); }
       else { AU.bad(); toast('다시 찾아봐요!', 1000); }
       renderLact(); return;
     }
@@ -1149,8 +1163,8 @@
   function rSpell() {
     const it = LACT.items[LACT.i], hint = it[0].slice(0, LACT.st.h || 0);
     afterRender = () => { const i = $('#spIn'); if (i) i.focus(); };
-    return `<div class="glass l-spell"><div class="l-big">${esc(it[1])}</div><p class="sub">영어로 써 보세요 (첫 글자는 대문자!)</p>
-      <form id="spForm" class="l-form"><input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="12" placeholder="${hint ? esc(hint) + '…' : 'Monday'}"><button class="btn" type="submit">확인</button></form>
+    return `<div class="glass l-spell"><div class="l-big">${esc(it[1])}</div><p class="sub">${esc(LACT.a.how || '영어로 써 보세요')}</p>
+      <form id="spForm" class="l-form"><input id="spIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="16" placeholder="${hint ? esc(hint) + '…' : '영어로 쓰기'}"><button class="btn" type="submit">확인</button></form>
       <p class="l-heard" id="heard">${LACT.st.msg || ''}</p><button class="linkish" id="spHint">💡 힌트 (글자 하나씩)</button><p class="voice-note">${LACT.i + 1} / ${LACT.items.length}</p></div>`;
   }
   function rWrite() {
@@ -1161,14 +1175,14 @@
   }
   function checkTyped() {
     const { a } = LACT, isSpell = a.type === 'spell', it = isSpell ? LACT.items[LACT.i] : a.items[LACT.i], ans = isSpell ? it[0] : it[2];
-    const v = ($('#spIn').value || '').trim().replace(/[.!]$/, '');
+    const v = ($('#spIn').value || '').trim().replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').replace(/[.!]$/, '');
     if (!v) return;
     if (v.toLowerCase() === ans.toLowerCase()) {
       LACT.ok++; AU.good ? AU.good() : AU.tap(); LACT.st = {};
-      const capNote = isSpell && v !== ans ? ` (요일은 대문자로 시작해요: ${ans})` : '';
+      const capNote = isSpell && a.cap && v !== ans ? ` (${a.cap}: ${ans})` : '';
       toast(`⭕ 정답! ${esc(ans)}${capNote}`, 1300); sayP(isSpell ? ans : it[1].replace('____', ans));
       LACT.i++; const total = isSpell ? LACT.items.length : a.items.length;
-      if (LACT.i >= total) return lDone(isSpell ? '요일 철자를 모두 썼어요!' : '문장을 모두 완성했어요!');
+      if (LACT.i >= total) return lDone(isSpell ? '철자를 모두 바르게 썼어요! ⌨️' : '문장을 모두 완성했어요!');
       renderLact();
     } else { AU.bad(); LACT.st.msg = `🙂 다시 써 볼까요? ${isSpell ? '' : '(힌트: ' + esc(ans[0]) + '…)'}`; LACT.st.h = Math.min((LACT.st.h || 0) + 1, ans.length - 1); renderLact(); }
   }
@@ -1187,7 +1201,7 @@
     if (!SESS) { toast('🤖 AI 짝꿍은 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     const { a } = LACT; LACT.sent++; const last = LACT.sent >= a.turns;
     LACT.log.push({ me: true, text }); LACT.busy = true; renderLact();
-    const r = await api('/api/ai/talk', { scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/talk', { unit: LU, scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
     LACT.busy = false;
     if (r.ok) { LACT.log.push({ text: r.en, ko: r.ko }); sayP(r.en); if (last) LACT.end = true; }
     else { LACT.log.push({ text: r.error || 'AI 짝꿍과 연결이 안 돼요.', err: true }); LACT.fail = true; LACT.sent--; }
@@ -1208,7 +1222,7 @@
     if (v.split(/\s+/).length < 3) { toast('영어로 2~3문장 써 볼까요?'); return; }
     if (!SESS) { toast('🤖 AI 쓰기 도우미는 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     LACT.busy = true; renderLact();
-    const r = await api('/api/ai/write', { text: v }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/write', { unit: LU, text: v }, { token: SESS.token, timeout: 25000 });
     LACT.busy = false; if (r.ok) LACT.st.fb = r.text; else { toast(r.error || 'AI 도우미와 연결이 안 돼요.', 2600); LACT.fail = true; }
     renderLact();
   }
@@ -2156,6 +2170,6 @@
       playIntro(proceed); // 게임 시작하기 → 언제나 인트로 영상부터
     });
   }
-  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, cloudFlush, playEvolution, playIntro, L, render, save, get Q() { return Q; } };
+  window.__AQ = { get S() { return S; }, set S(v) { S = v; }, go, ACT, cloudFlush, playEvolution, playIntro, L, render, save, get Q() { return Q; }, get LACT() { return LACT; } };
   boot();
 })();
