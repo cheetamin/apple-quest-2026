@@ -1768,3 +1768,13 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; padding: 0; }
 .l-ch-h em.go { color: #ffe27a; }
 .l-sheet .linkish.l-all { color: #6a3ab0; font-weight: 800; }
+
+/* 파닉스 입 모양 영상 (체험판) */
+.ph-video { margin: 10px 0; }
+.btn.ph-vbtn { width: 100%; background: linear-gradient(135deg, #ff7a6a, #e8508a); color: #fff; }
+.btn.ph-vbtn small { color: #fff; opacity: .92; }
+.ph-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.ph-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ph-vsrc { margin: 6px 0 0; font-size: 11.5px; opacity: .8; line-height: 1.5; }
+.ph-vsrc a { color: inherit; text-decoration: underline; }
+.ph-vnone { margin: 10px 0; padding: 8px 10px; border-radius: 8px; font-size: 13px; background: rgba(0,0,0,.06); }

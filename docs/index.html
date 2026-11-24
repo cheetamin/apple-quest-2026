@@ -1782,6 +1782,16 @@ svg.dressed .tw.d1 { animation-delay: .6s; } svg.dressed .tw.d2 { animation-dela
 button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; padding: 0; }
 .l-ch-h em.go { color: #ffe27a; }
 .l-sheet .linkish.l-all { color: #6a3ab0; font-weight: 800; }
+
+/* 파닉스 입 모양 영상 (체험판) */
+.ph-video { margin: 10px 0; }
+.btn.ph-vbtn { width: 100%; background: linear-gradient(135deg, #ff7a6a, #e8508a); color: #fff; }
+.btn.ph-vbtn small { color: #fff; opacity: .92; }
+.ph-frame { position: relative; width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
+.ph-frame iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.ph-vsrc { margin: 6px 0 0; font-size: 11.5px; opacity: .8; line-height: 1.5; }
+.ph-vsrc a { color: inherit; text-decoration: underline; }
+.ph-vnone { margin: 10px 0; padding: 8px 10px; border-radius: 8px; font-size: 13px; background: rgba(0,0,0,.06); }
 </style>
 <div class="screen916" id="screen">
 <div class="world" aria-hidden="true"><div class="bgimg" id="bgimg"></div><div class="ray"></div></div>
@@ -2744,7 +2754,22 @@ button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; pa
     const rest = `<path d="M44 64 Q80 58 116 64 Q80 68 44 64Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M44 64 Q80 74 116 64 Q80 78 44 64Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`;
     return `<svg viewBox="0 0 160 124" class="mouth ${anim ? 'anim' : ''}" aria-hidden="true">${skin}<g class="m-rest">${rest}</g><g class="m-shape">${S[key] || S.open}</g></svg>`;
   }
-  root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG };
+  // 입 모양 영상 (공모전 체험판): 홍콩 교육국(EDB) SENSE 'Phonics Videos' 유튜브 영상에 연결만 함 (파일은 넣지 않음)
+  // https://sense.edb.gov.hk/en/types-of-special-educational-needs/specific-learning-difficulties/resources/resources-for-parents/268.html
+  const V = { aS: 'e0fd3BGVlm0', aL: '_B1KmI53E2s', eS: 'aZLVq1bUs9s', eL: 'EKNnUv6L984', iS: 'z02QytleHdo', iL: 'szfgZgevKzc', oS: '8TU6--pn8Gg', oL: '1u9q9mPoT68', uS: 'kpRE9X_wV7A', uL: 'zUxBS0QYpMg',
+    b: 'D5SNqITxzTc', d: '2ZNOVpi-6QY', f: 'vqUPEUtaneM', g: 'MA8xUoYEalE', h: 'sxxjT9DTtVw', j: '_BNFKU1m5_I', k: 'DrLMAYN1VKE', l: 'rSFXNr1W4hA', m: 'WXiJxfwzD98', n: 'rBf5WHvkhiM',
+    p: 'VxlvUs_bz48', qu: 'xxbRKOf8FFE', r: 'nSFz8mAyW-o', s: 'xV905myW4Xs', t: 'PJNydoA8kIo', v: 'k7D1EJd0mtI', w: 'DDTIgvTiQFU', x: 'jq2m8XxsTnM', y: 'XOIAOZLyCN8', z: '-wvARsdZKAw' };
+  // [영상 id, 영상 속 예시 단어]
+  const VIDEO = {
+    'abc:A a': [V.aS, 'cap'], 'abc:B b': [V.b, 'boy'], 'abc:C c': [V.k, 'cat'], 'abc:D d': [V.d, 'dog'], 'abc:E e': [V.eS, 'red'], 'abc:F f': [V.f, 'fun'], 'abc:G g': [V.g, 'girl'],
+    'abc:H h': [V.h, 'hot'], 'abc:I i': [V.iS, 'sit'], 'abc:J j': [V.j, 'jog'], 'abc:K k': [V.k, 'cat'], 'abc:L l': [V.l, 'look'], 'abc:M m': [V.m, 'meet'], 'abc:N n': [V.n, 'nose'],
+    'abc:O o': [V.oS, 'dog'], 'abc:P p': [V.p, 'pencil'], 'abc:Q q': [V.qu, 'queen'], 'abc:R r': [V.r, 'rabbit'], 'abc:S s': [V.s, 'sit'], 'abc:T t': [V.t, 'teacher'], 'abc:U u': [V.uS, 'up'],
+    'abc:V v': [V.v, 'van'], 'abc:W w': [V.w, 'watch'], 'abc:X x': [V.x, 'six'], 'abc:Y y': [V.y, 'you'], 'abc:Z z': [V.z, 'zebra'],
+    'long:a_e': [V.aL, 'name'], 'long:ai': [V.aL, 'name'], 'long:ay': [V.aL, 'name'], 'long:i_e': [V.iL, 'ice'], 'long:o_e': [V.oL, 'old'], 'long:oa': [V.oL, 'old'],
+    'long:u_e': [V.uL, 'computer'], 'long:ee': [V.eL, 'see'], 'long:ea': [V.eL, 'see'],
+  };
+  const VIDEO_SRC = { name: '홍콩 교육국(EDB) SENSE · Phonics Videos', url: 'https://sense.edb.gov.hk/en/types-of-special-educational-needs/specific-learning-difficulties/resources/resources-for-parents/268.html', playlist: 'https://www.youtube.com/playlist?list=PLP-z-NmK9DcvQTJ_UHZZ54-tdiA6hJdXN' };
+  root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG, VIDEO, VIDEO_SRC };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
 </script>
 <script>/* 차시별 복습 활동 — 공모전 체험판의 '천재(이) 4학년' 단원마다 붙는 4차시 15개 활동
@@ -5299,6 +5324,11 @@ button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; pa
     const name = it.g.length <= 3 && it.g.includes(' ') ? it.g.split(' ')[0] + '.' : '';
     speak(`${name} ${it.word}. ${it.word}.`, slow ? 0.55 : 0.8);
   }
+  function phVideoHTML(gk, it) { // 입 모양 영상 (체험판) — 누를 때만 유튜브를 불러옴
+    const v = PH.VIDEO && PH.VIDEO[`${gk}:${it.g}`];
+    if (!v) return `<p class="ph-vnone">🎬 이 소리는 아직 입 모양 영상이 없어요. 위 그림을 보고 따라 해요!</p>`;
+    return `<div class="ph-video" data-id="${esc(v[0])}"><button class="btn ph-vbtn" data-act="phvideo">🎬 실제 입 모양 영상 보기<small>영상 속 예시 단어: ${esc(v[1])}</small></button></div>`;
+  }
   function phonicsSheet(k) {
     const g = PH.GROUPS.find(x => x.key === phGroup), it = g.items[k]; if (!it) return;
     const m = PH.MOUTH[it.mouth];
@@ -5307,6 +5337,7 @@ button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; pa
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
       <div class="ph-detail"><div class="ph-big">${esc(it.g)}</div><div class="ph-sound"><b>${esc(it.ipa)}</b><span>"${esc(it.ko)}" 소리</span></div></div>
       <div class="ph-mouth">${PH.mouthSVG(it.mouth, !S.settings.reduceMotion)}<div><b>👄 ${m.name}</b><p>${esc(it.tip || m.tip)}</p>${it.tip ? `<p class="sub">${esc(m.tip)}</p>` : ''}</div></div>
+      ${CONTEST ? phVideoHTML(g.key, it) : ''}
       <div class="ph-ex"><span class="e">${it.e}</span><span class="w">${wordHTML}</span></div>
       <div class="grid2"><button class="btn" data-act="phsay" data-v="${k}">🔊 소리 듣기</button><button class="btn ghost" data-act="phsay" data-v="${k}" data-slow="1">🐢 천천히</button></div>
       <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="phcell" data-v="${(k + g.items.length - 1) % g.items.length}">◀ 이전</button><button class="btn ghost" data-act="phcell" data-v="${(k + 1) % g.items.length}">다음 ▶</button></div>`);
@@ -5602,6 +5633,12 @@ button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; pa
       if (v === 'decay') { if (!S.maxStage) { toast('먼저 진화해야 퇴화를 볼 수 있어요.'); return; } S.lastStudy = now() - 5 * 86400000; S.lastSeen = S.lastStudy; L.applyDecay(S, now()); toast('😴 며칠 빠진 상태예요. 복습 퀴즈로 되찾아 보세요!'); }
       if (v === 'reset') { try { localStorage.removeItem(KEY); localStorage.removeItem(SESS_KEY); } catch (e) {} location.reload(); return; }
       save(); render();
+    },
+    phvideo: (d, el) => {
+      AU.tap(); const box = el.closest('.ph-video'), id = box.dataset.id;
+      if (!navigator.onLine) { toast('인터넷에 연결되어 있어야 영상을 볼 수 있어요.'); return; }
+      box.innerHTML = `<div class="ph-frame"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&playsinline=1&autoplay=1&modestbranding=1" title="입 모양 영상" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+        <p class="ph-vsrc">영상 출처: <a href="${PH.VIDEO_SRC.url}" target="_blank" rel="noopener">${esc(PH.VIDEO_SRC.name)}</a> · 영국식 발음 · 안 나오면 <a href="https://youtu.be/${encodeURIComponent(id)}" target="_blank" rel="noopener">유튜브에서 열기</a></p>`;
     },
     phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
     phcell: d => { AU.tap(); closeSheet(); phonicsSheet(+d.v); },

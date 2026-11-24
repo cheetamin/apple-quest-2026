@@ -1317,6 +1317,11 @@
     const name = it.g.length <= 3 && it.g.includes(' ') ? it.g.split(' ')[0] + '.' : '';
     speak(`${name} ${it.word}. ${it.word}.`, slow ? 0.55 : 0.8);
   }
+  function phVideoHTML(gk, it) { // 입 모양 영상 (체험판) — 누를 때만 유튜브를 불러옴
+    const v = PH.VIDEO && PH.VIDEO[`${gk}:${it.g}`];
+    if (!v) return `<p class="ph-vnone">🎬 이 소리는 아직 입 모양 영상이 없어요. 위 그림을 보고 따라 해요!</p>`;
+    return `<div class="ph-video" data-id="${esc(v[0])}"><button class="btn ph-vbtn" data-act="phvideo">🎬 실제 입 모양 영상 보기<small>영상 속 예시 단어: ${esc(v[1])}</small></button></div>`;
+  }
   function phonicsSheet(k) {
     const g = PH.GROUPS.find(x => x.key === phGroup), it = g.items[k]; if (!it) return;
     const m = PH.MOUTH[it.mouth];
@@ -1325,6 +1330,7 @@
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button>
       <div class="ph-detail"><div class="ph-big">${esc(it.g)}</div><div class="ph-sound"><b>${esc(it.ipa)}</b><span>"${esc(it.ko)}" 소리</span></div></div>
       <div class="ph-mouth">${PH.mouthSVG(it.mouth, !S.settings.reduceMotion)}<div><b>👄 ${m.name}</b><p>${esc(it.tip || m.tip)}</p>${it.tip ? `<p class="sub">${esc(m.tip)}</p>` : ''}</div></div>
+      ${CONTEST ? phVideoHTML(g.key, it) : ''}
       <div class="ph-ex"><span class="e">${it.e}</span><span class="w">${wordHTML}</span></div>
       <div class="grid2"><button class="btn" data-act="phsay" data-v="${k}">🔊 소리 듣기</button><button class="btn ghost" data-act="phsay" data-v="${k}" data-slow="1">🐢 천천히</button></div>
       <div class="grid2" style="margin-top:8px"><button class="btn ghost" data-act="phcell" data-v="${(k + g.items.length - 1) % g.items.length}">◀ 이전</button><button class="btn ghost" data-act="phcell" data-v="${(k + 1) % g.items.length}">다음 ▶</button></div>`);
@@ -1620,6 +1626,12 @@
       if (v === 'decay') { if (!S.maxStage) { toast('먼저 진화해야 퇴화를 볼 수 있어요.'); return; } S.lastStudy = now() - 5 * 86400000; S.lastSeen = S.lastStudy; L.applyDecay(S, now()); toast('😴 며칠 빠진 상태예요. 복습 퀴즈로 되찾아 보세요!'); }
       if (v === 'reset') { try { localStorage.removeItem(KEY); localStorage.removeItem(SESS_KEY); } catch (e) {} location.reload(); return; }
       save(); render();
+    },
+    phvideo: (d, el) => {
+      AU.tap(); const box = el.closest('.ph-video'), id = box.dataset.id;
+      if (!navigator.onLine) { toast('인터넷에 연결되어 있어야 영상을 볼 수 있어요.'); return; }
+      box.innerHTML = `<div class="ph-frame"><iframe src="https://www.youtube-nocookie.com/embed/${encodeURIComponent(id)}?rel=0&playsinline=1&autoplay=1&modestbranding=1" title="입 모양 영상" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+        <p class="ph-vsrc">영상 출처: <a href="${PH.VIDEO_SRC.url}" target="_blank" rel="noopener">${esc(PH.VIDEO_SRC.name)}</a> · 영국식 발음 · 안 나오면 <a href="https://youtu.be/${encodeURIComponent(id)}" target="_blank" rel="noopener">유튜브에서 열기</a></p>`;
     },
     phgroup: d => { AU.tap(); phGroup = d.v; renderPhonics(); },
     phcell: d => { AU.tap(); closeSheet(); phonicsSheet(+d.v); },

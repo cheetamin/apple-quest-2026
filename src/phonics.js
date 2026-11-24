@@ -95,5 +95,20 @@
     const rest = `<path d="M44 64 Q80 58 116 64 Q80 68 44 64Z" fill="${L}" stroke="${LS}" stroke-width="2"/><path d="M44 64 Q80 74 116 64 Q80 78 44 64Z" fill="#e04a62" stroke="${LS}" stroke-width="2"/>`;
     return `<svg viewBox="0 0 160 124" class="mouth ${anim ? 'anim' : ''}" aria-hidden="true">${skin}<g class="m-rest">${rest}</g><g class="m-shape">${S[key] || S.open}</g></svg>`;
   }
-  root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG };
+  // 입 모양 영상 (공모전 체험판): 홍콩 교육국(EDB) SENSE 'Phonics Videos' 유튜브 영상에 연결만 함 (파일은 넣지 않음)
+  // https://sense.edb.gov.hk/en/types-of-special-educational-needs/specific-learning-difficulties/resources/resources-for-parents/268.html
+  const V = { aS: 'e0fd3BGVlm0', aL: '_B1KmI53E2s', eS: 'aZLVq1bUs9s', eL: 'EKNnUv6L984', iS: 'z02QytleHdo', iL: 'szfgZgevKzc', oS: '8TU6--pn8Gg', oL: '1u9q9mPoT68', uS: 'kpRE9X_wV7A', uL: 'zUxBS0QYpMg',
+    b: 'D5SNqITxzTc', d: '2ZNOVpi-6QY', f: 'vqUPEUtaneM', g: 'MA8xUoYEalE', h: 'sxxjT9DTtVw', j: '_BNFKU1m5_I', k: 'DrLMAYN1VKE', l: 'rSFXNr1W4hA', m: 'WXiJxfwzD98', n: 'rBf5WHvkhiM',
+    p: 'VxlvUs_bz48', qu: 'xxbRKOf8FFE', r: 'nSFz8mAyW-o', s: 'xV905myW4Xs', t: 'PJNydoA8kIo', v: 'k7D1EJd0mtI', w: 'DDTIgvTiQFU', x: 'jq2m8XxsTnM', y: 'XOIAOZLyCN8', z: '-wvARsdZKAw' };
+  // [영상 id, 영상 속 예시 단어]
+  const VIDEO = {
+    'abc:A a': [V.aS, 'cap'], 'abc:B b': [V.b, 'boy'], 'abc:C c': [V.k, 'cat'], 'abc:D d': [V.d, 'dog'], 'abc:E e': [V.eS, 'red'], 'abc:F f': [V.f, 'fun'], 'abc:G g': [V.g, 'girl'],
+    'abc:H h': [V.h, 'hot'], 'abc:I i': [V.iS, 'sit'], 'abc:J j': [V.j, 'jog'], 'abc:K k': [V.k, 'cat'], 'abc:L l': [V.l, 'look'], 'abc:M m': [V.m, 'meet'], 'abc:N n': [V.n, 'nose'],
+    'abc:O o': [V.oS, 'dog'], 'abc:P p': [V.p, 'pencil'], 'abc:Q q': [V.qu, 'queen'], 'abc:R r': [V.r, 'rabbit'], 'abc:S s': [V.s, 'sit'], 'abc:T t': [V.t, 'teacher'], 'abc:U u': [V.uS, 'up'],
+    'abc:V v': [V.v, 'van'], 'abc:W w': [V.w, 'watch'], 'abc:X x': [V.x, 'six'], 'abc:Y y': [V.y, 'you'], 'abc:Z z': [V.z, 'zebra'],
+    'long:a_e': [V.aL, 'name'], 'long:ai': [V.aL, 'name'], 'long:ay': [V.aL, 'name'], 'long:i_e': [V.iL, 'ice'], 'long:o_e': [V.oL, 'old'], 'long:oa': [V.oL, 'old'],
+    'long:u_e': [V.uL, 'computer'], 'long:ee': [V.eL, 'see'], 'long:ea': [V.eL, 'see'],
+  };
+  const VIDEO_SRC = { name: '홍콩 교육국(EDB) SENSE · Phonics Videos', url: 'https://sense.edb.gov.hk/en/types-of-special-educational-needs/specific-learning-difficulties/resources/resources-for-parents/268.html', playlist: 'https://www.youtube.com/playlist?list=PLP-z-NmK9DcvQTJ_UHZZ54-tdiA6hJdXN' };
+  root.AQ_PHONICS = { GROUPS, MOUTH, mouthSVG, VIDEO, VIDEO_SRC };
 })(typeof globalThis !== 'undefined' ? globalThis : this);
