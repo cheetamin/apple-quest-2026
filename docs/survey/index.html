@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>영어 학습 점검 · 초등 4학년</title>
+<meta name="robots" content="noindex">
+<style>
+:root { --o: #EF7709; --o2: #FFB15C; --ol: #FFF3E6; --ink: #2A2118; --mute: #7A6A5A; --line: #EAD9C6; --ok: #2F9E5B; --bad: #D9483B; --blue: #3A72D8; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #FFF9F2; color: var(--ink); font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic", sans-serif; }
+button, input, textarea { font: inherit; }
+.wrap { max-width: 620px; margin: 0 auto; padding: 18px 16px 120px; }
+.top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.brand { font-weight: 900; color: var(--o); font-size: 15px; }
+.who { font-size: 13px; color: var(--mute); }
+.prog { height: 10px; border-radius: 5px; background: #F2E3D2; overflow: hidden; margin: 6px 0 14px; }
+.prog i { display: block; height: 100%; background: linear-gradient(90deg, var(--o2), var(--o)); transition: width .25s; }
+.card { background: #fff; border-radius: 18px; padding: 20px 18px; box-shadow: 0 2px 0 var(--line), 0 6px 24px rgba(160,100,30,.08); }
+h1 { font-size: 26px; margin: 0 0 6px; }
+h2 { font-size: 21px; margin: 0 0 10px; line-height: 1.4; }
+p { line-height: 1.6; }
+.sub { color: var(--mute); font-size: 15px; margin: 4px 0 14px; }
+.tag { display: inline-block; padding: 2px 9px; border-radius: 8px; font-size: 13px; font-weight: 800; color: #fff; margin-right: 6px; vertical-align: 2px; }
+.t-듣기 { background: var(--blue); } .t-읽기 { background: var(--ok); } .t-쓰기 { background: var(--o); }
+.orig { font-size: 12px; color: var(--mute); margin-left: 4px; }
+.qimg { display: block; width: 100%; max-width: 560px; margin: 10px auto 14px; border-radius: 12px; border: 1px solid var(--line); background: #fafafa; min-height: 120px; }
+.opts { display: grid; gap: 10px; margin-top: 8px; }
+.opts.row { grid-template-columns: repeat(5, 1fr); }
+.opts.row4 { grid-template-columns: repeat(4, 1fr); }
+.opts.row3 { grid-template-columns: repeat(3, 1fr); }
+.opt { width: 100%; padding: 14px 12px; border-radius: 14px; border: 2px solid var(--line); background: #fff; text-align: left; font-size: 18px; cursor: pointer; color: var(--ink); line-height: 1.4; }
+.opts.row .opt, .opts.row4 .opt, .opts.row3 .opt { text-align: center; font-size: 22px; padding: 14px 4px; }
+.opt.on { border-color: var(--o); background: var(--ol); font-weight: 800; box-shadow: 0 0 0 3px rgba(239,119,9,.18); }
+.opt:active { transform: scale(.98); }
+.part { margin: 14px 0 6px; font-weight: 800; }
+input.ans { width: 100%; padding: 14px; font-size: 20px; border-radius: 12px; border: 2px solid var(--line); }
+input.ans:focus, textarea:focus { outline: none; border-color: var(--o); }
+textarea { width: 100%; min-height: 110px; padding: 12px; font-size: 17px; border-radius: 12px; border: 2px solid var(--line); resize: vertical; }
+.bar { position: fixed; left: 0; right: 0; bottom: 0; background: rgba(255,249,242,.96); border-top: 1px solid var(--line); padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); }
+.bar .in { max-width: 620px; margin: 0 auto; display: flex; gap: 10px; }
+.btn { flex: 1; padding: 15px; border-radius: 14px; border: 0; background: var(--o); color: #fff; font-size: 18px; font-weight: 900; cursor: pointer; box-shadow: 0 3px 0 #B85500; }
+.btn:disabled { background: #E7CDB2; box-shadow: none; cursor: default; }
+.btn.ghost { flex: 0 0 auto; background: #fff; color: var(--ink); border: 2px solid var(--line); box-shadow: none; }
+.btn.sm { flex: 0 0 auto; padding: 9px 14px; font-size: 15px; }
+.scale { display: grid; gap: 10px; margin-top: 12px; }
+.scale .opt { font-size: 19px; padding: 15px 16px; }
+.err { color: var(--bad); font-weight: 700; min-height: 22px; margin-top: 8px; }
+.note { background: var(--ol); border-radius: 12px; padding: 12px 14px; font-size: 15px; line-height: 1.6; }
+table.tt { width: 100%; border-collapse: collapse; margin: 8px 0 12px; font-size: 15px; text-align: center; }
+table.tt th, table.tt td { border: 1px solid var(--line); padding: 8px 4px; }
+table.tt th { background: var(--ol); }
+table.tt tr > :first-child { width: 54px; white-space: nowrap; }
+.nw { white-space: nowrap; }
+.big { font-size: 64px; text-align: center; margin: 8px 0; }
+.center { text-align: center; }
+.link { background: none; border: 0; color: var(--mute); text-decoration: underline; cursor: pointer; font-size: 14px; }
+/* 선생님 결과 */
+.t-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.tabs { display: flex; gap: 6px; margin: 12px 0; }
+.tabs button { padding: 9px 16px; border-radius: 10px; border: 2px solid var(--line); background: #fff; font-weight: 800; cursor: pointer; }
+.tabs button.on { background: var(--o); border-color: var(--o); color: #fff; }
+.kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 10px 0 16px; }
+.kpi { background: var(--ol); border-radius: 12px; padding: 10px 8px; text-align: center; }
+.kpi b { display: block; font-size: 24px; } .kpi small { color: var(--mute); font-size: 12px; }
+table.res { width: 100%; border-collapse: collapse; font-size: 14px; margin: 6px 0 18px; }
+table.res th, table.res td { border-bottom: 1px solid var(--line); padding: 7px 5px; text-align: left; vertical-align: middle; }
+table.res th { font-size: 12px; color: var(--mute); }
+.meter { height: 12px; border-radius: 6px; background: #F2E3D2; overflow: hidden; min-width: 80px; }
+.meter i { display: block; height: 100%; background: var(--o); }
+.stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; min-width: 120px; background: #eee; }
+.stack i { display: block; height: 100%; }
+.legend { display: flex; flex-wrap: wrap; gap: 10px; font-size: 12px; color: var(--mute); margin: 4px 0 8px; }
+.legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 4px; background: var(--c); vertical-align: -1px; }
+.free { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.7; }
+.sec { margin-top: 22px; }
+.sec h3 { font-size: 17px; margin: 0 0 6px; }
+.hi td { background: #FFF8EF; }
+.row-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.copyurl { width: 100%; font-size: 13px; padding: 8px; border-radius: 8px; border: 1px solid var(--line); background: #fafafa; }
+@media (max-width: 560px) { .hide-s { display: none; } .stack { min-width: 70px; } table.res { font-size: 13px; } }
+@media (max-width: 420px) { .kpis { grid-template-columns: repeat(2, 1fr); } .opt { font-size: 17px; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<div class="bar" id="bar" hidden><div class="in" id="barIn"></div></div>
+<script>
+(() => {
+'use strict';
+const API = 'https://apple-quest-2026.cheetamin.workers.dev';
+const $ = s => document.querySelector(s);
+const app = $('#app'), bar = $('#bar'), barIn = $('#barIn');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const q = new URLSearchParams(location.search);
+const LS = 'aq-eval-v1';
+const C5 = ['①', '②', '③', '④', '⑤'];
+const SCALE = ['① 전혀 아니에요', '② 아니에요', '③ 보통이에요', '④ 그래요', '⑤ 정말 그래요'];
+const SC_COL = ['#D9483B', '#F2A35E', '#D8D2C8', '#8CC9A0', '#2F9E5B'];
+const SURVEY = [
+  ['Ⅰ. 영어에 대한 나의 마음', ['나는 영어 시간이 즐거워요.', '나는 영어를 더 잘하고 싶어요.', '영어 시간이 아니어도 영어 노래나 영상, 게임을 찾아봐요.', '나는 영어를 잘할 수 있다는 자신이 있어요.', '틀려도 괜찮다고 생각하고 영어로 말해 봐요.', '영어를 배우면 나중에 도움이 될 것 같아요.']],
+  ['Ⅱ. 나의 영어 실력 느낌', ['선생님이나 친구가 쉬운 영어로 말하면 무슨 뜻인지 알 수 있어요.', '짧은 영어 문장을 소리 내어 읽고 뜻을 알 수 있어요.', '영어 글자를 보면 어떤 소리가 나는지 알아요. (예: b는 /브/ 소리)', '배운 표현으로 영어 질문에 대답할 수 있어요. (예: What day is it today?)', '내 생각을 영어 문장 한두 개로 쓸 수 있어요.', '앞에서 배운 단원의 단어와 문장을 지금도 기억해요.']],
+  ['Ⅲ. 스스로 공부하기와 함께 소통하기', ['영어 시간이 끝난 뒤에도 배운 것을 스스로 복습해요.', '모르는 단어나 문장이 있으면 스스로 찾아보거나 물어봐요.', '내가 영어를 얼마나 알고 있는지 스스로 확인해 봐요.', '하루에 조금씩이라도 꾸준히 영어를 공부해요.', '친구와 짝이 되어 영어로 대화하는 활동에 즐겁게 참여해요.', '태블릿이나 컴퓨터 프로그램으로 영어를 공부하는 것이 도움이 돼요.']],
+  ['Ⅳ. 영어 공부할 때 어려운 점', ['영어 시간이 끝나면 배운 영어를 다시 써 볼 기회가 거의 없어요.', '영어로 말해 보고 싶은데 함께 연습할 상대가 없어요.', '영어로 글을 쓰면 내가 맞게 썼는지 알기 어려워요.', '영어 소리를 낼 때 입 모양을 어떻게 해야 하는지 잘 모르겠어요.', '문제를 틀렸을 때 왜 틀렸는지 바로 알고 싶어요.', '게임처럼 재미있게 영어를 복습할 수 있다면 더 자주 할 것 같아요.']],
+];
+const SURVEY_FLAT = SURVEY.flatMap(([sec, rows]) => rows.map(t => ({ sec, t })));
+// 1부 문제 (진단평가에서 고른 10문항)
+const P1 = [
+  { no: 1, area: '듣기', orig: '02', title: '잘 듣고, 알맞은 그림을 고르세요.', img: 'q1', parts: [{ k: 'q1', opts: C5, row: 'row' }] },
+  { no: 2, area: '듣기', orig: '05', title: '잘 듣고, 이어질 응답으로 가장 알맞은 것을 고르세요.', help: '보기 ①~⑤는 소리로 나와요.', parts: [{ k: 'q2', opts: C5, row: 'row' }] },
+  { no: 3, area: '듣기', orig: '10', title: '잘 듣고, 내용에 알맞은 요일과 수업을 고르세요.', parts: [
+    { k: 'q3a', label: '(1) 요일', opts: ['화요일', '금요일', '토요일'], row: 'row3' },
+    { k: 'q3b', label: '(2) 수업', opts: [['cooking', 'I have a cooking class.'], ['art', 'I have an art class.'], ['robot', 'I have a robot class.']] }] },
+  { no: 4, area: '듣기', orig: '11', title: '잘 듣고, 내용과 일치하는 것을 고르세요.', parts: [{ k: 'q4', opts: [['①', '① 두 사람이 대화하는 시간은 8시 20분이다.'], ['②', '② 저녁을 먹을 시간이다.'], ['③', '③ Paul은 닭고기를 원한다.'], ['④', '④ Paul은 목마르다.'], ['⑤', '⑤ Paul은 바이올린 수업이 있다.']] }] },
+  { no: 5, area: '읽기', orig: '15', title: '다음 그림을 보고, 알맞은 문장을 고르세요.', img: 'q5', parts: [{ k: 'q5', opts: [['①', "① It's time for bed."], ['②', "② It's time for lunch."], ['③', "③ It's time for dinner."], ['④', "④ It's time for school."], ['⑤', "⑤ It's time for breakfast."]] }] },
+  { no: 6, area: '읽기', orig: '18', title: '다음 그림을 보고, 그림에 알맞은 문장을 <보기>에서 고르세요.', img: 'q6', parts: [
+    { k: 'q6a', label: '(1) 시계', opts: ['①', '②', '③'], row: 'row3' }, { k: 'q6b', label: '(2) 우산', opts: ['①', '②', '③'], row: 'row3' }] },
+  { no: 7, area: '읽기', orig: '19', title: '다음 그림을 보고, 그림에 알맞은 문장을 <보기>에서 고르세요.', img: 'q7', parts: [
+    { k: 'q7a', label: '(1)', opts: ['①', '②', '③', '④'], row: 'row4' }, { k: 'q7b', label: '(2)', opts: ['①', '②', '③', '④'], row: 'row4' }] },
+  { no: 8, area: '쓰기', orig: '16', title: '다음 그림을 보고, 빈칸에 알맞은 단어를 <보기>에서 골라 쓰세요.', img: 'q8', parts: [
+    { k: 'q8a', label: '(1) ______ the desk', text: true }, { k: 'q8b', label: '(2) ______ the chair', text: true }] },
+  { no: 9, area: '쓰기', orig: '17', title: '다음 그림을 보고, 문장을 완성하세요.', img: 'q9', parts: [{ k: 'q9', label: 'The ______ is nine hundred won.', text: true }] },
+  { no: 10, area: '쓰기', orig: '20', title: '다음 그림을 보고, 빈칸에 알맞은 어구를 <보기>에서 골라 쓰세요.', img: 'q10', parts: [{ k: 'q10', label: "I'm ______ .", text: true }] },
+];
+
+/* ---------------- 저장 ---------------- */
+let S = load();
+function load() { try { return JSON.parse(localStorage.getItem(LS)) || {}; } catch (e) { return {}; } }
+function save() { try { localStorage.setItem(LS, JSON.stringify(S)); } catch (e) {} }
+async function api(path, body, token) {
+  const opt = { method: body ? 'POST' : 'GET', headers: {} };
+  if (body) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
+  if (token) opt.headers.Authorization = 'Bearer ' + token;
+  try { const r = await fetch(API + path, opt); const j = await r.json(); j.http = r.status; return j; }
+  catch (e) { return { ok: false, error: '인터넷 연결을 확인해 주세요.' }; }
+}
+
+/* ---------------- 학생 화면 ---------------- */
+// 단계: 0 코드 → 1 1부 안내 → 2..11 문제 → 12 2부 안내 → 13..36 설문 → 37 서술 → 38 확인 → 39 끝
+const STEP_P1 = 2, STEP_P2 = 12, STEP_S = 13, STEP_FREE = 37, STEP_SUBMIT = 38, STEP_DONE = 39;
+function setBar(html) { if (!html) { bar.hidden = true; barIn.innerHTML = ''; return; } bar.hidden = false; barIn.innerHTML = html; }
+function head() {
+  const pct = Math.round(Math.min(S.step || 0, STEP_SUBMIT) / STEP_SUBMIT * 100);
+  return `<div class="top"><span class="brand">🍎 영어 학습 점검</span><span class="who">${esc(S.label || '')}${S.round === 'post' ? ' · 사후' : ''}</span></div><div class="prog"><i style="width:${pct}%"></i></div>`;
+}
+function go(step) { S.step = step; save(); render(); window.scrollTo(0, 0); }
+function render() {
+  if (location.hash === '#teacher') return renderTeacher();
+  const st = S.step || 0;
+  if (!S.code || st === 0) return renderCode();
+  if (st === 1) return renderIntro1();
+  if (st >= STEP_P1 && st < STEP_P2) return renderQ(P1[st - STEP_P1]);
+  if (st === STEP_P2) return renderIntro2();
+  if (st >= STEP_S && st < STEP_FREE) return renderS(st - STEP_S);
+  if (st === STEP_FREE) return renderFree();
+  if (st === STEP_SUBMIT) return renderSubmit();
+  return renderDone();
+}
+function renderCode() {
+  const pre = (q.get('code') || S.code || '').toUpperCase();
+  app.innerHTML = `<div class="top"><span class="brand">🍎 영어 학습 점검</span><button class="link" id="toT">선생님 결과 보기</button></div>
+    <div class="card"><h1>영어 학습 점검</h1><p class="sub">초등 4학년 · 1부 영어 문제 10개 → 2부 나의 영어 마음 설문<br>시험이 아니에요. 성적에 들어가지 않고, 이름도 쓰지 않아요.</p>
+    <label class="part" for="code">학급 코드</label><input class="ans" id="code" autocomplete="off" autocapitalize="characters" maxlength="8" placeholder="예: DH0401" value="${esc(pre)}">
+    <div class="err" id="err"></div></div>`;
+  setBar(`<button class="btn" id="go">시작하기</button>`);
+  $('#toT').onclick = () => { location.hash = '#teacher'; };
+  const start = async () => {
+    const c = $('#code').value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (c.length < 4) { $('#err').textContent = '선생님이 알려 준 학급 코드를 넣어 주세요.'; return; }
+    $('#go').disabled = true; $('#err').textContent = '';
+    const r = await api('/api/class?code=' + encodeURIComponent(c));
+    $('#go').disabled = false;
+    if (!r.ok) { $('#err').textContent = r.error || '학급 코드를 확인해 주세요.'; return; }
+    const round = q.get('r') === 'post' ? 'post' : 'pre';
+    if (S.code !== c || S.round !== round) S = { answers: {} };
+    S.code = c; S.round = round; S.label = `${r.school_name} ${r.grade}학년 ${r.cls}반`; S.answers = S.answers || {};
+    go(1);
+  };
+  $('#go').onclick = start; $('#code').onkeydown = e => { if (e.key === 'Enter') start(); };
+}
+function renderIntro1() {
+  app.innerHTML = head() + `<div class="card"><h1>1부. 영어 문제 풀기</h1><p class="sub">${esc(S.label)}</p>
+    <div class="note">· 문제는 10개예요. 잘 몰라도 괜찮아요. 아는 만큼만 풀어요.<br>· <b>1~4번은 선생님이 들려주는 소리를 잘 듣고</b> 풀어요.<br>· 다 풀면 2부 설문으로 넘어가요.</div></div>`;
+  setBar(`<button class="btn ghost" id="bk">처음으로</button><button class="btn" id="nx">1번 문제 시작</button>`);
+  $('#bk').onclick = () => go(0); $('#nx').onclick = () => go(STEP_P1);
+}
+function optHTML(part, val) {
+  return part.opts.map(o => { const [v, l] = Array.isArray(o) ? o : [o, o]; return `<button class="opt ${val === v ? 'on' : ''}" data-k="${part.k}" data-v="${esc(v)}">${esc(l)}</button>`; }).join('');
+}
+function qDone(item) { return item.parts.every(p => String(S.answers[p.k] || '').trim()); }
+function renderQ(item) {
+  const A = S.answers;
+  let body = '';
+  if (item.img) body += `<img class="qimg" alt="${item.no}번 그림" src="${API}/api/eval/img?k=${item.img}&code=${encodeURIComponent(S.code)}">`;
+  if (item.no === 3) body += `<table class="tt"><tr><th>요일</th><th>화요일</th><th>금요일</th><th>토요일</th></tr><tr><th>수업</th><td>I have a cooking class.</td><td>I have an art class.</td><td>I have a robot class.</td></tr></table>`;
+  item.parts.forEach(p => {
+    if (p.label) body += `<div class="part">${esc(p.label)}</div>`;
+    body += p.text ? `<input class="ans" data-k="${p.k}" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="40" value="${esc(A[p.k] || '')}" placeholder="영어로 쓰기">`
+      : `<div class="opts ${p.row || ''}">${optHTML(p, A[p.k])}</div>`;
+  });
+  app.innerHTML = head() + `<div class="card"><h2><span class="tag t-${item.area}">${item.area}</span>${item.no}. ${esc(item.title)}${item.area === '듣기' ? `<span class="orig">(진단 ${item.orig})</span>` : ''}</h2>${item.help ? `<p class="sub">${esc(item.help)}</p>` : ''}${body}</div>`;
+  const last = item.no === 10;
+  setBar(`<button class="btn ghost" id="bk">이전</button><button class="btn" id="nx" ${qDone(item) ? '' : 'disabled'}>${last ? '1부 끝! 2부로' : '다음 문제'}</button>`);
+  app.querySelectorAll('.opt').forEach(b => b.onclick = () => { A[b.dataset.k] = b.dataset.v; save(); b.parentNode.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); $('#nx').disabled = !qDone(item); });
+  app.querySelectorAll('input.ans').forEach(i => i.oninput = () => { A[i.dataset.k] = i.value; save(); $('#nx').disabled = !qDone(item); });
+  $('#bk').onclick = () => go(S.step - 1); $('#nx').onclick = () => go(S.step + 1);
+}
+function renderIntro2() {
+  app.innerHTML = head() + `<div class="card"><div class="big">👏</div><h1 class="center">1부 끝! 수고했어요</h1>
+    <p class="center">이제 <b>2부. 나의 영어 마음 살펴보기</b>예요.<br>2부는 시험이 아니에요. 정답도 없어요.<br>문장을 읽고, <b>내 마음과 가장 가까운 것</b>을 골라요.</p></div>`;
+  setBar(`<button class="btn ghost" id="bk">이전</button><button class="btn" id="nx">2부 시작</button>`);
+  $('#bk').onclick = () => go(S.step - 1); $('#nx').onclick = () => go(STEP_S);
+}
+function renderS(i) {
+  const it = SURVEY_FLAT[i], k = 's' + (i + 1), cur = S.answers[k];
+  app.innerHTML = head() + `<div class="card"><p class="sub">${esc(it.sec)} · ${i + 1} / 24</p><h2>${i + 1}. ${esc(it.t)}</h2>
+    <div class="scale">${SCALE.map((l, j) => `<button class="opt ${cur === j + 1 ? 'on' : ''}" data-v="${j + 1}">${l}</button>`).join('')}</div></div>`;
+  setBar(`<button class="btn ghost" id="bk">이전</button><button class="btn" id="nx" ${cur ? '' : 'disabled'}>다음</button>`);
+  app.querySelectorAll('.opt').forEach(b => b.onclick = () => { S.answers[k] = +b.dataset.v; save(); app.querySelectorAll('.opt').forEach(x => x.classList.toggle('on', x === b)); setTimeout(() => go(S.step + 1), 220); });
+  $('#bk').onclick = () => go(S.step - 1); $('#nx').onclick = () => go(S.step + 1);
+}
+function renderFree() {
+  const A = S.answers;
+  app.innerHTML = head() + `<div class="card"><h2>자유롭게 써요 <span class="sub">(쓰고 싶은 만큼만)</span></h2>
+    <div class="part">25. 영어를 공부할 때 가장 어렵거나 힘든 점은 무엇인가요?</div><textarea id="f25" maxlength="300">${esc(A.f25 || '')}</textarea>
+    <div class="part">26. 영어 공부를 도와주는 프로그램이 있다면, 어떤 기능이 있으면 좋겠나요?</div><textarea id="f26" maxlength="300">${esc(A.f26 || '')}</textarea></div>`;
+  setBar(`<button class="btn ghost" id="bk">이전</button><button class="btn" id="nx">다음</button>`);
+  ['f25', 'f26'].forEach(k => { $('#' + k).oninput = e => { A[k] = e.target.value; save(); }; });
+  $('#bk').onclick = () => go(S.step - 1); $('#nx').onclick = () => go(STEP_SUBMIT);
+}
+function renderSubmit() {
+  const miss = P1.filter(it => !qDone(it)).map(it => it.no + '번');
+  const missS = SURVEY_FLAT.map((_, i) => i + 1).filter(i => !S.answers['s' + i]).map(i => i + '번');
+  app.innerHTML = head() + `<div class="card"><div class="big">📮</div><h1 class="center">다 했어요!</h1>
+    ${miss.length || missS.length ? `<p class="note">아직 안 고른 문항이 있어요.<br>${miss.length ? '1부: ' + miss.join(', ') + '<br>' : ''}${missS.length ? '2부: ' + missS.join(', ') : ''}<br>그래도 제출할 수 있어요.</p>` : '<p class="center">아래 「제출하기」를 누르면 끝나요.</p>'}
+    <div class="err" id="err"></div></div>`;
+  setBar(`<button class="btn ghost" id="bk">이전</button><button class="btn" id="nx">제출하기</button>`);
+  $('#bk').onclick = () => go(STEP_FREE);
+  $('#nx').onclick = async () => {
+    $('#nx').disabled = true; $('#nx').textContent = '보내는 중…';
+    const r = await api('/api/eval/submit', { code: S.code, round: S.round, answers: S.answers });
+    if (!r.ok) { $('#err').textContent = r.error || '보내지 못했어요. 다시 눌러 주세요.'; $('#nx').disabled = false; $('#nx').textContent = '제출하기'; return; }
+    S.done = true; go(STEP_DONE);
+  };
+}
+function renderDone() {
+  app.innerHTML = head() + `<div class="card center"><div class="big">🍎</div><h1>끝까지 답해 줘서 고마워요!</h1><p>잘 보냈어요. 이제 선생님 안내를 기다려요.</p></div>`;
+  setBar(`<button class="btn ghost" id="nx">다음 친구 시작 (같은 기기로 할 때)</button>`);
+  $('#nx').onclick = () => { const keep = { code: S.code, round: S.round, label: S.label, answers: {} }; S = keep; go(1); };
+}
+
+/* ---------------- 선생님 결과 ---------------- */
+let T = (() => { try { return JSON.parse(sessionStorage.getItem(LS + '-t')) || null; } catch (e) { return null; } })();
+let TR = 'pre', timer = null, lastData = null;
+function renderTeacher() {
+  setBar(null); clearInterval(timer);
+  if (!T) {
+    app.innerHTML = `<div class="top"><span class="brand">🍎 영어 학습 점검 · 선생님</span><button class="link" id="toS">학생 화면</button></div>
+      <div class="card"><h1>선생님 결과 보기</h1><p class="sub">애플왕의 진화 모험 선생님 계정의 학급 코드와 비밀번호로 들어와요. 우리 반 결과만 보여요.</p>
+      <label class="part" for="tc">학급 코드</label><input class="ans" id="tc" autocomplete="off" autocapitalize="characters" maxlength="8" placeholder="예: DH0401">
+      <label class="part" for="tp">선생님 비밀번호</label><input class="ans" id="tp" type="password" autocomplete="current-password">
+      <div class="err" id="err"></div><div class="row-btns"><button class="btn" id="tl">결과 보기</button></div></div>`;
+    $('#toS').onclick = () => { location.hash = ''; render(); };
+    const login = async () => {
+      $('#tl').disabled = true; $('#err').textContent = '';
+      const r = await api('/api/teacher/login', { class_code: $('#tc').value, password: $('#tp').value });
+      $('#tl').disabled = false;
+      if (!r.ok) { $('#err').textContent = r.error || '들어가지 못했어요.'; return; }
+      T = { token: r.token, code: r.class_code, label: `${r.school_name} ${r.grade}학년 ${r.cls}반` };
+      try { sessionStorage.setItem(LS + '-t', JSON.stringify(T)); } catch (e) {}
+      renderTeacher();
+    };
+    $('#tl').onclick = login; $('#tp').onkeydown = e => { if (e.key === 'Enter') login(); };
+    return;
+  }
+  app.innerHTML = `<div class="top"><span class="brand">🍎 영어 학습 점검 · 선생님</span><button class="link" id="lo">로그아웃</button></div><div id="tres"><div class="card">불러오는 중…</div></div>`;
+  $('#lo').onclick = () => { T = null; try { sessionStorage.removeItem(LS + '-t'); } catch (e) {} clearInterval(timer); renderTeacher(); };
+  loadResults(); timer = setInterval(() => { if (location.hash === '#teacher' && !document.hidden) loadResults(true); }, 15000);
+}
+async function loadResults(quiet) {
+  const r = await api('/api/eval/results', null, T.token);
+  if (!r.ok) { if (r.http === 401) { T = null; try { sessionStorage.removeItem(LS + '-t'); } catch (e) {} return renderTeacher(); } if (!quiet) $('#tres').innerHTML = `<div class="card err">${esc(r.error || '결과를 불러오지 못했어요.')}</div>`; return; }
+  lastData = r; drawResults();
+}
+const pc = v => v == null ? '–' : v + '%';
+function drawResults() {
+  const r = lastData, d = r.rounds[TR], other = r.rounds[TR === 'pre' ? 'post' : 'pre'];
+  const base = location.origin + location.pathname;
+  const link = `${base}?code=${encodeURIComponent(r.class_code)}${TR === 'post' ? '&r=post' : ''}`;
+  let h = `<div class="card"><div class="t-head"><div><h1 style="font-size:22px">${esc(T.label)}</h1><p class="sub" style="margin:0">학급 코드 ${esc(r.class_code)} · 15초마다 자동으로 새로고침</p></div>
+    <button class="btn sm ghost" id="rf">지금 새로고침</button></div>
+    <div class="tabs"><button data-r="pre" class="${TR === 'pre' ? 'on' : ''}">사전 (${r.rounds.pre.n}명)</button><button data-r="post" class="${TR === 'post' ? 'on' : ''}">사후 (${r.rounds.post.n}명)</button></div>
+    <div class="part">학생에게 줄 주소 (${TR === 'pre' ? '사전' : '사후'})</div><input class="copyurl" id="lnk" readonly value="${esc(link)}">
+    <div class="row-btns"><button class="btn sm" id="cp">주소 복사</button><button class="btn sm ghost" id="csv" ${d.n ? '' : 'disabled'}>CSV 내려받기</button><button class="btn sm ghost" id="dl1" ${d.n ? '' : 'disabled'}>마지막 응답 1개 지우기</button><button class="btn sm ghost" id="dla" ${d.n ? '' : 'disabled'}>이 회차 모두 지우기</button></div></div>`;
+  if (!d.n) {
+    h += `<div class="card sec"><p class="center">아직 ${TR === 'pre' ? '사전' : '사후'} 응답이 없어요.<br>위 주소를 학생들에게 알려 주면, 제출하는 대로 여기에 바로 나타나요.</p></div>`;
+  } else {
+    h += `<div class="card sec"><div class="kpis"><div class="kpi"><b>${d.n}명</b><small>응답</small></div><div class="kpi"><b>${pc(d.areas['듣기'])}</b><small>듣기 정답률</small></div><div class="kpi"><b>${pc(d.areas['읽기'])}</b><small>읽기 정답률</small></div><div class="kpi"><b>${pc(d.areas['쓰기'])}</b><small>쓰기 정답률</small></div></div>
+      <p class="sub" style="margin-top:-6px">1부 평균 ${d.avg_score} / 10문항</p>
+      <h3>1부 영어 문제 · 문항별 정답률</h3><table class="res"><tr><th>번호</th><th class="hide-s">4학년 단원</th><th>정답</th><th>정답률</th><th></th></tr>
+      ${d.items.map(it => `<tr><td class="nw">${it.no} <span class="tag t-${it.area}" style="font-size:11px;padding:1px 6px">${it.area}</span></td><td class="hide-s">${esc(it.unit)}</td><td>${esc(it.key)}</td><td class="nw"><b>${pc(it.rate)}</b><br><small>${it.correct}명</small></td><td><div class="meter"><i style="width:${it.rate || 0}%"></i></div></td></tr>`).join('')}</table>`;
+    h += `<h3>2부 설문 · 문항별 응답</h3><div class="legend">${SCALE.map((l, j) => `<span style="--c:${SC_COL[j]}">${l}</span>`).join('')}</div>
+      <table class="res"><tr><th>번호</th><th>문항</th><th>응답 분포</th><th class="nw">④+⑤</th><th>평균</th></tr>
+      ${d.survey.map((s, i) => { const it = SURVEY_FLAT[i]; const hi = i >= 18;
+        return `${i % 6 === 0 ? `<tr><td colspan="5" style="font-weight:800;padding-top:12px">${esc(it.sec)}${hi ? ' <small style="color:var(--o)">(높을수록 앱이 필요)</small>' : ''}</td></tr>` : ''}<tr class="${hi ? 'hi' : ''}"><td>${s.no}</td><td>${esc(it.t)}</td><td><div class="stack" title="${s.counts.join(' / ')}">${s.counts.map((c, j) => `<i style="width:${s.total ? c / s.total * 100 : 0}%;background:${SC_COL[j]}"></i>`).join('')}</div><small>${s.counts.join(' · ')}</small></td><td><b>${pc(s.top2)}</b></td><td>${s.mean ?? '–'}</td></tr>`; }).join('')}</table>
+      <p class="sub">해석: Ⅰ~Ⅲ(1~18번)은 낮을수록, Ⅳ(19~24번)는 높을수록 앱이 필요하다는 뜻이에요.</p>`;
+    h += `<h3>25. 영어 공부할 때 가장 어려운 점 (${d.free25.length})</h3><ul class="free">${d.free25.map(x => `<li>${esc(x)}</li>`).join('') || '<li>아직 없어요</li>'}</ul>
+      <h3 style="margin-top:14px">26. 있으면 좋겠는 기능 (${d.free26.length})</h3><ul class="free">${d.free26.map(x => `<li>${esc(x)}</li>`).join('') || '<li>아직 없어요</li>'}</ul></div>`;
+    if (other.n && r.rounds.pre.n && r.rounds.post.n) {
+      const P = r.rounds.pre, Q = r.rounds.post;
+      h += `<div class="card sec"><h3>사전 · 사후 비교</h3><table class="res"><tr><th>항목</th><th>사전 (${P.n}명)</th><th>사후 (${Q.n}명)</th><th>변화</th></tr>
+        ${['듣기', '읽기', '쓰기'].map(a => `<tr><td>${a} 정답률</td><td>${pc(P.areas[a])}</td><td>${pc(Q.areas[a])}</td><td>${(Q.areas[a] - P.areas[a]).toFixed(1)}%p</td></tr>`).join('')}
+        <tr><td>1부 평균 점수</td><td>${P.avg_score}</td><td>${Q.avg_score}</td><td>${(Q.avg_score - P.avg_score).toFixed(1)}</td></tr>
+        ${SURVEY.map((sec, si) => { const m = x => { const xs = x.survey.slice(si * 6, si * 6 + 6).filter(s => s.mean != null); return xs.length ? xs.reduce((a, s) => a + s.mean, 0) / xs.length : null; }; const a = m(P), b = m(Q);
+          return `<tr><td>${esc(sec[0])} 평균</td><td>${a == null ? '–' : a.toFixed(2)}</td><td>${b == null ? '–' : b.toFixed(2)}</td><td>${a == null || b == null ? '–' : (b - a).toFixed(2)}</td></tr>`; }).join('')}</table></div>`;
+    }
+  }
+  $('#tres').innerHTML = h;
+  $('#rf').onclick = () => loadResults();
+  app.querySelectorAll('.tabs button').forEach(b => b.onclick = () => { TR = b.dataset.r; drawResults(); });
+  $('#cp').onclick = async () => { try { await navigator.clipboard.writeText(link); $('#cp').textContent = '복사했어요!'; } catch (e) { $('#lnk').select(); } };
+  if (d.n) {
+    $('#csv').onclick = () => downloadCSV(d);
+    $('#dl1').onclick = async () => { if (!confirm('가장 마지막에 들어온 응답 1개를 지울까요? (연습으로 낸 답을 지울 때)')) return; await api('/api/eval/delete', { round: TR, last: true }, T.token); loadResults(); };
+    $('#dla').onclick = async () => { if (!confirm(`${TR === 'pre' ? '사전' : '사후'} 응답 ${d.n}개를 모두 지울까요? 되돌릴 수 없어요.`)) return; await api('/api/eval/delete', { round: TR }, T.token); loadResults(); };
+  }
+}
+function downloadCSV(d) {
+  const keys = ['q1', 'q2', 'q3a', 'q3b', 'q4', 'q5', 'q6a', 'q6b', 'q7a', 'q7b', 'q8a', 'q8b', 'q9', 'q10'];
+  const head = ['제출 시각', '1부 점수(10)'].concat(keys).concat(Array.from({ length: 24 }, (_, i) => '설문' + (i + 1))).concat(['25', '26']);
+  const cell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
+  const lines = [head.join(',')].concat(d.rows.map(r => [new Date(r.at).toLocaleString('ko-KR'), r.score].concat(keys.map(k => r.a[k])).concat(Array.from({ length: 24 }, (_, i) => r.a['s' + (i + 1)])).concat([r.a.f25, r.a.f26]).map(cell).join(',')));
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `영어학습점검_${TR === 'pre' ? '사전' : '사후'}_${lastData.class_code}.csv`; a.click();
+}
+
+window.addEventListener('hashchange', render);
+if (q.get('code') && (q.get('code').toUpperCase() !== S.code || (q.get('r') === 'post' ? 'post' : 'pre') !== S.round)) S.step = 0;
+render();
+})();
+</script>
+</body>
+</html>

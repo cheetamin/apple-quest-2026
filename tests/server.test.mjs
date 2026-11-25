@@ -272,3 +272,37 @@ test('AI 대화 짝꿍·쓰기 도우미 + 선생님의 우리 반 AI 끄기', a
     assert.strictEqual((await call('/api/ai/talk', { scenario: 'day', text: 'Hi' }, { Authorization: 'Bearer ' + stok })).status, 404, '원래 버전에는 없음');
   } finally { delete env.AI; }
 });
+
+test('영어 학습 점검: 학급 코드로 제출하고, 선생님은 우리 반 결과만 보고, 연습 답을 지울 수 있다', async () => {
+  const SC = { school_code: 'S10-7777777', school_name: '점검초등학교', grade: 4, cls: 1 };
+  let r = await call('/api/teacher/register', { ...SC, teacher_name: '점검', password: 'eval1234', class_code: 'EV0401' });
+  assert.strictEqual(r.body.ok, true);
+  r = await call('/api/admin/teachers', undefined, ADMIN);
+  const t = r.body.teachers.find(x => x.school_name === SC.school_name);
+  await call('/api/admin/decide', { id: t.id, approve: true }, ADMIN);
+  assert.strictEqual((await call('/api/eval/submit', { code: 'NOPE99', answers: { q1: '①' } })).status, 404);
+  const full = { q1: '①', q2: '④', q3a: '금요일', q3b: 'robot', q4: '③', q5: '④', q6a: '①', q6b: '③', q7a: '③', q7b: '②', q8a: ' Under ', q8b: 'on', q9: 'Toy car', q10: "I'm playing a game.", f25: '말하기가 어려워요' };
+  for (let i = 1; i <= 24; i++) full['s' + i] = (i % 5) + 1;
+  r = await call('/api/eval/submit', { code: 'ev0401', round: 'pre', answers: full }); assert.strictEqual(r.body.ok, true);
+  const half = { ...full, q1: '②', q9: 'car', q8b: 'in', s1: 5 };
+  r = await call('/api/eval/submit', { code: 'EV0401', round: 'pre', answers: half }); assert.strictEqual(r.body.ok, true);
+  r = await call('/api/eval/submit', { code: 'EV0401', round: 'post', answers: full }); assert.strictEqual(r.body.ok, true);
+  assert.strictEqual((await call('/api/eval/results')).status, 401);
+  r = await call('/api/teacher/login', { class_code: 'EV0401', password: 'eval1234' });
+  const H = { Authorization: 'Bearer ' + r.body.token };
+  r = await call('/api/eval/results', undefined, H);
+  const pre = r.body.rounds.pre;
+  assert.strictEqual(pre.n, 2); assert.strictEqual(r.body.rounds.post.n, 1);
+  assert.strictEqual(pre.items[0].rate, 50); assert.strictEqual(pre.items[1].rate, 100); assert.strictEqual(pre.items[7].rate, 50); assert.strictEqual(pre.items[8].rate, 50); assert.strictEqual(pre.items[9].rate, 100);
+  assert.deepStrictEqual(pre.survey[0].counts, [0, 1, 0, 0, 1]);
+  assert.strictEqual(pre.avg_score, 8.5); assert.strictEqual(pre.free25.length, 2);
+  // 그림: 학급 코드가 있어야만
+  await env.DB.prepare('INSERT INTO eval_assets (k,part,mime,data) VALUES (?,?,?,?)').bind('q1', 0, 'image/webp', btoa('RIFF')).run();
+  assert.strictEqual((await call('/api/eval/img?k=q1')).status, 403);
+  assert.strictEqual((await call('/api/eval/img?k=q1&code=EV0401')).status, 200);
+  // 연습 답 지우기
+  await call('/api/eval/delete', { round: 'pre', last: true }, H);
+  r = await call('/api/eval/results', undefined, H); assert.strictEqual(r.body.rounds.pre.n, 1);
+  // 체험판 주소로는 점검 기능이 없음
+  assert.strictEqual((await call('/contest/api/eval/submit', { code: 'EV0401', answers: full })).status, 404);
+});

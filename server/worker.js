@@ -88,11 +88,113 @@ const int = (v, lo, hi) => { const n = parseInt(v, 10); return Number.isFinite(n
 const csvCell = v => { const s = String(v == null ? '' : v); return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 function bearer(req) { const h = req.headers.get('Authorization') || ''; return h.startsWith('Bearer ') ? h.slice(7) : ''; }
 
+/* ---------------- 영어 학습 점검 (별도 주소 /survey/) — 원래 버전 DB에만 ---------------- */
+const EVAL_SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS eval_responses (id INTEGER PRIMARY KEY AUTOINCREMENT, teacher_id INTEGER NOT NULL, round TEXT NOT NULL, answers TEXT NOT NULL, created_at INTEGER NOT NULL)`,
+  `CREATE INDEX IF NOT EXISTS eval_t ON eval_responses(teacher_id, round)`,
+  `CREATE TABLE IF NOT EXISTS eval_assets (k TEXT NOT NULL, part INTEGER NOT NULL, mime TEXT, data TEXT NOT NULL, PRIMARY KEY (k, part))`,
+];
+const EVAL_ROUNDS = ['pre', 'post'];
+const evN = v => String(v == null ? '' : v).toLowerCase().replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').trim();
+const EVAL_ITEMS = [ // 1부 채점: [번호, 영역, 4학년 단원, 정답 표시, 채점 함수]
+  [1, '듣기', 'L7 직업', '①', a => a.q1 === '①'],
+  [2, '듣기', 'L1 인사·이름', '④', a => a.q2 === '④'],
+  [3, '듣기', 'L9 요일', '금요일 + robot class', a => a.q3a === '금요일' && a.q3b === 'robot'],
+  [4, '듣기', 'L6 시각·L3 음식', '③', a => a.q4 === '③'],
+  [5, '읽기', 'L6 시각', '④', a => a.q5 === '④'],
+  [6, '읽기', 'L5 물건·색깔', '(1) ① (2) ③', a => a.q6a === '①' && a.q6b === '③'],
+  [7, '읽기', 'L2 금지 표현', '(1) ③ (2) ②', a => a.q7a === '③' && a.q7b === '②'],
+  [8, '쓰기', 'L4 위치', '(1) under (2) on', a => evN(a.q8a).replace(/\.$/, '') === 'under' && evN(a.q8b).replace(/\.$/, '') === 'on'],
+  [9, '쓰기', 'L8 가격', 'toy car', a => /^(the )?toy ?car\.?$/.test(evN(a.q9))],
+  [10, '쓰기', 'L11 하고 있는 일', 'playing a game', a => /^(i'?m )?playing a game\.?$/.test(evN(a.q10))],
+];
+const EVAL_KEYS = { q1: 4, q2: 4, q3a: 6, q3b: 8, q4: 4, q5: 4, q6a: 4, q6b: 4, q7a: 4, q7b: 4, q8a: 30, q8b: 30, q9: 40, q10: 60, f25: 300, f26: 300 };
+async function evalTeacherByCode(env, code) {
+  const c = normCode(code); if (!CODE_RE.test(c)) return null;
+  return env.DB.prepare("SELECT id FROM teachers WHERE class_code=? AND status='approved'").bind(c).first();
+}
+function evalClean(raw) {
+  const a = {};
+  for (const [k, max] of Object.entries(EVAL_KEYS)) if (raw[k] != null) a[k] = str(raw[k], max);
+  for (let i = 1; i <= 24; i++) { const v = int(raw['s' + i], 1, 5); if (v) a['s' + i] = v; }
+  return a;
+}
+function evalSummary(rows) {
+  const ans = rows.map(r => { try { return JSON.parse(r.answers); } catch (e) { return {}; } });
+  const n = ans.length, pct = x => n ? Math.round(x / n * 1000) / 10 : null;
+  const items = EVAL_ITEMS.map(([no, area, unit, key, f]) => ({ no, area, unit, key, correct: ans.filter(a => { try { return f(a); } catch (e) { return false; } }).length }));
+  items.forEach(it => { it.rate = pct(it.correct); });
+  const areas = {}; ['듣기', '읽기', '쓰기'].forEach(ar => { const xs = items.filter(i => i.area === ar); areas[ar] = n ? Math.round(xs.reduce((s, i) => s + i.rate, 0) / xs.length * 10) / 10 : null; });
+  const survey = []; for (let i = 1; i <= 24; i++) {
+    const c = [0, 0, 0, 0, 0]; ans.forEach(a => { if (a['s' + i]) c[a['s' + i] - 1]++; });
+    const t = c.reduce((x, y) => x + y, 0);
+    survey.push({ no: i, counts: c, total: t, top2: t ? Math.round((c[3] + c[4]) / t * 1000) / 10 : null, mean: t ? Math.round(c.reduce((s, v, j) => s + v * (j + 1), 0) / t * 100) / 100 : null });
+  }
+  const scores = ans.map(a => EVAL_ITEMS.filter(([, , , , f]) => { try { return f(a); } catch (e) { return false; } }).length);
+  return { n, items, areas, survey, avg_score: n ? Math.round(scores.reduce((x, y) => x + y, 0) / n * 10) / 10 : null,
+    free25: ans.map(a => a.f25).filter(Boolean), free26: ans.map(a => a.f26).filter(Boolean),
+    rows: rows.map((r, i) => ({ at: r.created_at, score: scores[i], a: ans[i] })) };
+}
+async function evalRoute(env, req, p, url, body) {
+  if (p === '/api/eval/submit' && req.method === 'POST') {
+    const t = await evalTeacherByCode(env, body.code); if (!t) return fail('학급 코드를 찾을 수 없어요. 선생님께 다시 확인해 주세요.', 404);
+    const round = EVAL_ROUNDS.includes(body.round) ? body.round : 'pre';
+    const a = evalClean(body.answers || {});
+    if (Object.keys(a).length < 10) return fail('답이 너무 적어요. 다시 해 주세요.');
+    const day = Date.now() - 864e5;
+    const cnt = await env.DB.prepare('SELECT COUNT(*) AS c FROM eval_responses WHERE teacher_id=? AND created_at>?').bind(t.id, day).first();
+    if (cnt && cnt.c >= 300) return fail('오늘은 더 이상 제출할 수 없어요. 선생님께 말해 주세요.', 429);
+    await env.DB.prepare('INSERT INTO eval_responses (teacher_id,round,answers,created_at) VALUES (?,?,?,?)').bind(t.id, round, JSON.stringify(a), Date.now()).run();
+    return json({ ok: true });
+  }
+  if (p === '/api/eval/img') { // 문제 그림: 학급 코드가 맞을 때만
+    const t = await evalTeacherByCode(env, url.searchParams.get('code')); if (!t) return fail('학급 코드가 필요해요.', 403);
+    const k = str(url.searchParams.get('k'), 10);
+    const { results } = await env.DB.prepare('SELECT mime,data FROM eval_assets WHERE k=? ORDER BY part').bind(k).all();
+    if (!results || !results.length) return fail('그림이 없어요.', 404);
+    const bin = Uint8Array.from(atob(results.map(r => r.data).join('')), ch => ch.charCodeAt(0));
+    return new Response(bin, { headers: cors({ 'Content-Type': results[0].mime || 'image/webp', 'Cache-Control': 'private, max-age=86400' }) });
+  }
+  if (p === '/api/eval/results') {
+    const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
+    const out = { ok: true, class_code: t.class_code, school_name: t.school_name, grade: t.grade, cls: t.cls, rounds: {} };
+    for (const r of EVAL_ROUNDS) {
+      const { results } = await env.DB.prepare('SELECT answers,created_at FROM eval_responses WHERE teacher_id=? AND round=? ORDER BY created_at').bind(t.id, r).all();
+      out.rounds[r] = evalSummary(results || []);
+    }
+    return json(out);
+  }
+  if (p === '/api/eval/delete' && req.method === 'POST') { // 연습으로 낸 답 지우기: 회차 전체 또는 마지막 1개
+    const t = await teacherRow(env, req); if (!t) return fail('다시 로그인해 주세요.', 401);
+    const round = EVAL_ROUNDS.includes(body.round) ? body.round : null; if (!round) return fail('회차를 골라 주세요.');
+    if (body.last) await env.DB.prepare('DELETE FROM eval_responses WHERE id=(SELECT id FROM eval_responses WHERE teacher_id=? AND round=? ORDER BY created_at DESC LIMIT 1)').bind(t.id, round).run();
+    else await env.DB.prepare('DELETE FROM eval_responses WHERE teacher_id=? AND round=?').bind(t.id, round).run();
+    return json({ ok: true });
+  }
+  if (p === '/api/eval/import' && req.method === 'POST') { // 한 번만 쓰는 그림 가져오기: 저장소의 암호화된 파일 → D1 (키는 저장소에 없음)
+    if (await sha256('aq-eval-import|' + str(body.secret, 64)) !== '4f2d2e7a792a8d3f12be0daf76b92e33288e0ae3e583593c6811ab9fe65cdaa3') return fail('권한이 없어요.', 403);
+    const r = await fetch('https://raw.githubusercontent.com/cheetamin/apple-quest-2026/main/server/eval_assets.enc');
+    if (!r.ok) return fail('파일을 가져오지 못했어요: ' + r.status, 502);
+    const raw = Uint8Array.from(atob((await r.text()).trim()), c => c.charCodeAt(0));
+    const kb = Uint8Array.from(str(body.key, 64).match(/../g).map(h => parseInt(h, 16)));
+    const ck = await crypto.subtle.importKey('raw', kb, 'AES-GCM', false, ['decrypt']);
+    const plain = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, ck, raw.slice(12)));
+    const A = JSON.parse(plain), done = {};
+    for (const [k, b64] of Object.entries(A)) {
+      await env.DB.prepare('DELETE FROM eval_assets WHERE k=?').bind(k).run();
+      for (let i = 0, part = 0; i < b64.length; i += 40000, part++) await env.DB.prepare('INSERT INTO eval_assets (k,part,mime,data) VALUES (?,?,?,?)').bind(k, part, 'image/webp', b64.slice(i, i + 40000)).run();
+      done[k] = b64.length;
+    }
+    return json({ ok: true, done });
+  }
+  return null;
+}
+
 const schemaReady = new Set();
 async function ensureSchema(env) {
   const k = env.CONTEST ? 'contest' : 'main';
   if (schemaReady.has(k)) return;
-  for (const q of SCHEMA.concat(env.CONTEST ? AI_SCHEMA : [])) await env.DB.prepare(q).run();
+  for (const q of SCHEMA.concat(env.CONTEST ? AI_SCHEMA : EVAL_SCHEMA)) await env.DB.prepare(q).run();
   try { await env.DB.prepare('ALTER TABLE teachers ADD COLUMN class_code TEXT').run(); } catch (e) { /* 이미 있음 */ }
   try { await env.DB.prepare('ALTER TABLE teachers ADD COLUMN ai_off INTEGER DEFAULT 0').run(); } catch (e) { /* 이미 있음 */ }
   await env.DB.prepare('CREATE UNIQUE INDEX IF NOT EXISTS teachers_code ON teachers(class_code)').run();
@@ -476,6 +578,7 @@ async function route(req, env) {
     return json({ ok: true, nickname: row.nickname, state: row.state ? JSON.parse(row.state) : null, updated_at: row.updated_at, server_now: Date.now() });
   }
 
+  if (p.startsWith('/api/eval/') && !env.CONTEST) { const r = await evalRoute(env, req, p, url, body); if (r) return r; }
   if (p === '/api/survey' && req.method === 'POST') {
     const r = int(body.rating, 1, 5); if (!r) return fail('하트를 골라 주세요.');
     await env.DB.prepare('INSERT INTO surveys (rating,comment,info,school_name,created_at) VALUES (?,?,?,?,?)').bind(r, str(body.comment, 200), str(body.info, 120), str(body.school_name, 40), Date.now()).run();
