@@ -171,22 +171,6 @@ async function evalRoute(env, req, p, url, body) {
     else await env.DB.prepare('DELETE FROM eval_responses WHERE teacher_id=? AND round=?').bind(t.id, round).run();
     return json({ ok: true });
   }
-  if (p === '/api/eval/import' && req.method === 'POST') { // 한 번만 쓰는 그림 가져오기: 저장소의 암호화된 파일 → D1 (키는 저장소에 없음)
-    if (await sha256('aq-eval-import|' + str(body.secret, 64)) !== '4f2d2e7a792a8d3f12be0daf76b92e33288e0ae3e583593c6811ab9fe65cdaa3') return fail('권한이 없어요.', 403);
-    const r = await fetch('https://raw.githubusercontent.com/cheetamin/apple-quest-2026/main/server/eval_assets.enc');
-    if (!r.ok) return fail('파일을 가져오지 못했어요: ' + r.status, 502);
-    const raw = Uint8Array.from(atob((await r.text()).trim()), c => c.charCodeAt(0));
-    const kb = Uint8Array.from(str(body.key, 64).match(/../g).map(h => parseInt(h, 16)));
-    const ck = await crypto.subtle.importKey('raw', kb, 'AES-GCM', false, ['decrypt']);
-    const plain = new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: raw.slice(0, 12) }, ck, raw.slice(12)));
-    const A = JSON.parse(plain), done = {};
-    for (const [k, b64] of Object.entries(A)) {
-      await env.DB.prepare('DELETE FROM eval_assets WHERE k=?').bind(k).run();
-      for (let i = 0, part = 0; i < b64.length; i += 40000, part++) await env.DB.prepare('INSERT INTO eval_assets (k,part,mime,data) VALUES (?,?,?,?)').bind(k, part, 'image/webp', b64.slice(i, i + 40000)).run();
-      done[k] = b64.length;
-    }
-    return json({ ok: true, done });
-  }
   return null;
 }
 
