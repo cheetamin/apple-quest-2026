@@ -246,6 +246,18 @@
       while (sh.join(' ') === toks.join(' ') && guard++ < 5) sh = shuffle(toks, r);
       return { ...base, id, prompt: '단어를 순서대로 눌러 문장을 완성하세요.', show: item.ko, speak: item.en, tiles: sh, answer: toks.join(' '), explain: `${item.en} (${item.ko})` };
     }
+    if (type === 'write') { // 쓰기: 단어(뜻·그림 보고) 또는 문장 빈칸 — 체험판 세트에 1문제
+      if (ctx.sentence) {
+        const toks = tokenize(item.en); if (toks.length < 2) return null;
+        const vocab = new Set(unit.words.map(w => norm(w.en)));
+        let idx = toks.findIndex(t => vocab.has(norm(t)) && norm(t).length >= 2);
+        if (idx < 0) { let best = -1, len = 0; toks.forEach((t, i) => { const n = norm(t).replace(/'/g, ''); if (!t.includes("'") && n.length > len) { len = n.length; best = i; } }); idx = best; }
+        if (idx < 0) return null;
+        const raw = toks[idx], word = raw.replace(/[.,?!]/g, ''), punct = raw.slice(word.length);
+        return { ...base, id: `${unit.id}:write:${item.en}`, prompt: '문장의 빈칸에 알맞은 말을 영어로 쓰세요.', show: toks.map((t, i) => (i === idx ? '____' + punct : t)).join(' '), hint: item.ko, sentence: true, speak: item.en, answer: word, explain: `${item.en} (${item.ko})` };
+      }
+      return { ...base, id: `${unit.id}:write:${item.en}`, prompt: '뜻에 알맞은 영어 단어를 쓰세요.', show: item.ko, pic: item.e || '', speak: item.en, answer: item.en, explain: `${item.en} = ${item.ko}` };
+    }
     if (type === 'match') {
       const ws = [item, ...pickDistractors(unit.words.length >= 4 ? unit.words : pool, item, 3, r, '')];
       if (ws.length < 4) return null;
@@ -260,7 +272,7 @@
     ['blank', 'listen', 'phonics', 'order', 'match', 'listenSent'],
   ];
 
-  function buildSet(UNITS, unitId, setIdx, seed) {
+  function buildSet(UNITS, unitId, setIdx, seed, opts) {
     const r = rng(seed);
     const unit = UNITS.find(u => u.id === unitId);
     const pool = UNITS.flatMap(u => u.words);
@@ -296,6 +308,17 @@
         q = makeQ('ko2en', unit, w, { ...ctx, pool }, r);
       }
       out.push(q);
+    }
+    if (opts && opts.write) { // 쓰기 1문제: 세트 1은 단어(두 낱말 단어 우선 → 띄어쓰기 연습), 세트 2는 문장 빈칸
+      let wq = null;
+      if (setIdx % 2 === 0) {
+        const cand = shuffle(unit.words, r).filter(w => !used.has(w.en)).sort((a, b) => (b.en.includes(' ') ? 1 : 0) - (a.en.includes(' ') ? 1 : 0));
+        if (cand[0]) wq = makeQ('write', unit, cand[0], { ...ctx }, r);
+      } else {
+        for (const s2 of shuffle(unit.sentences, r)) { if (used.has(s2.en)) continue; wq = makeQ('write', unit, s2, { ...ctx, sentence: true }, r); if (wq) break; }
+      }
+      if (!wq && unit.words[0]) wq = makeQ('write', unit, unit.words[0], { ...ctx }, r);
+      if (wq) out.splice(out.length - 1, 0, wq);
     }
     return out;
   }

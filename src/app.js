@@ -237,7 +237,7 @@
   let Q = null;
   function startSet(unitId, setIdx) {
     if (!isOpen(unitId)) { toast('선생님이 아직 열지 않은 단원이에요.'); return; }
-    Q = { mode: 'set', unit: unitId, setIdx, list: L.buildSet(UNITS, unitId, setIdx, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
+    Q = { mode: 'set', unit: unitId, setIdx, list: L.buildSet(UNITS, unitId, setIdx, now() & 0xffff, CONTEST ? { write: true } : undefined), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
     closeSheet(); go('play');
   }
   function startReview() {
@@ -300,6 +300,8 @@
       case 'order': return `<div class="qshow banner" style="min-height:48px"><span class="ko" style="font-size:20px">${esc(q.show)}</span></div>
         <div class="answer-line" id="aline">${(Q.order || []).map((ti, k) => `<button class="tile" data-act="untile" data-v="${k}">${esc(q.tiles[ti])}</button>`).join('')}</div>
         <div class="tiles">${q.tiles.map((t, k) => `<button class="tile ${(Q.order || []).includes(k) ? 'used' : ''}" data-act="tile" data-v="${k}">${esc(t)}</button>`).join('')}</div>`;
+      case 'write': return `<div class="qshow banner">${q.sentence ? `<span class="sent">${esc(q.show).replace('____', '<i class="blank"></i>')}<small style="display:block;font-family:var(--f-body);font-size:14px;font-weight:500;color:#4a5277;margin-top:4px">${esc(q.hint)}</small></span>` : `${q.pic ? `<span class="pic">${q.pic}</span>` : ''}<span class="ko">${esc(q.show)}</span>`}</div>
+        <form class="wform" id="wForm"><input id="wIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="영어로 쓰기 ✏️"><button class="btn" type="submit">확인</button></form><p class="wnote">띄어쓰기와 a, an도 확인해요</p>`;
       case 'match': {
         const M = Q.match || (Q.match = { sel: null, done: [], miss: 0 });
         return `<div class="match"><div class="col">${q.left.map(w => `<button class="l ${M.done.includes(w) ? 'done' : ''} ${M.sel === w ? 'sel' : ''}" data-act="ml" data-v="${esc(w)}">${esc(w)}</button>`).join('')}</div>
@@ -363,6 +365,7 @@
     const wasFb = Q.phase === 'fb';
     el.innerHTML = `${qtopHTML()}<div class="qprompt">${q.type !== 'listen' && q.type !== 'listenSent' ? `<button class="spk" data-act="speakq" aria-label="듣기">🔊</button>` : ''}<span>${q.prompt}</span></div>${bodyHTML(q)}<div id="fb"></div>`;
     if (wasFb) { feedback(Q.lastOk, 0); return; }
+    if (q.type === 'write') setTimeout(() => { const i = $('#wIn'); if (i) i.focus({ preventScroll: true }); }, 60);
     if (q.type === 'listen' || q.type === 'listenSent') setTimeout(() => speak(q.speak), 350);
   }
   function feedback(ok, gain) {
@@ -372,8 +375,8 @@
       fb.innerHTML = `<div class="feedback ok">${gain ? `<span class="exp">+${gain} EXP</span>` : ''}<b>${Q.combo >= 3 ? `${Q.combo}연속 정답! 대단해요!` : ['정답이에요!', '좋아요!', '완벽해요!'][Q.i % 3]}</b>${esc(q.explain)}</div>
         <div class="row-btns"><button class="btn green" data-act="next">다음 ▶</button></div>`;
     } else {
-      const ans = q.type === 'order' ? q.answer : q.type === 'match' ? '' : q.answer;
-      fb.innerHTML = `<div class="feedback no"><b>아쉬워요, 괜찮아요!</b>${ans ? `정답은 <strong class="en">${esc(ans)}</strong> 예요.<br>` : ''}${esc(q.explain)}</div>
+      const ans = q.type === 'order' ? q.answer : q.type === 'match' ? '' : q.type === 'write' && Q.wkind !== 'wrong' ? '' : q.answer;
+      fb.innerHTML = `<div class="feedback no"><b>아쉬워요, 괜찮아요!</b>${q.type === 'write' && Q.wmsg ? `<span class="wmsg">${Q.wmsg}</span><br>` : ''}${ans ? `정답은 <strong class="en">${esc(ans)}</strong> 예요.<br>` : ''}${q.type === 'write' && Q.wkind !== 'wrong' ? '「다시」를 눌러 고쳐 써 봐요!' : esc(q.explain)}</div>
         <div class="row-btns">${CONTEST ? '<button class="btn ai-btn" data-act="aiexplain">🤖 AI 선생님</button>' : ''}<button class="btn" data-act="retry">다시 도전</button><button class="btn ghost" data-act="next">다음 ▶</button></div>`;
     }
     const qp = $('#qp'); if (qp) { const c = qp.querySelector('.combo'); if (c) c.remove(); if (ok && Q.combo >= 2) { const s = document.createElement('div'); s.className = 'combo'; s.textContent = Q.combo + ' COMBO'; qp.append(s); } }
@@ -583,7 +586,7 @@
   function autoQ(unitId) {
     const u = unitById(unitId || currentUnit().id); const rec = S.units[u.id];
     const si = rec && rec.sets[0] && !rec.sets[1] ? 1 : 0;
-    Q = { mode: 'set', unit: u.id, setIdx: si, list: L.buildSet(UNITS, u.id, si, now() & 0xffff), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
+    Q = { mode: 'set', unit: u.id, setIdx: si, list: L.buildSet(UNITS, u.id, si, now() & 0xffff, CONTEST ? { write: true } : undefined), i: 0, results: [], combo: 0, first: true, phase: 'ask' }; quietify();
   }
   function shiftLesson(dir) {
     const open = UNITS.filter(u => isOpen(u.id)).map(u => u.id);
@@ -709,6 +712,10 @@
         opts = `<div class="s-cover" style="${P(88, 1234, 852, 1392)}">${q.tiles.map((t, k) => `<button class="s-tile ${ord.includes(k) ? 'used' : ''}" data-act="tile" data-v="${k}">${esc(t)}</button>`).join('')}</div>`;
         break;
       }
+      case 'write':
+        banner = q.sentence ? `<span class="s-sentwrap"><span class="s-sent" style="font-size:${sentSize(q.show)}px">${esc(q.show).replace('____', '<i class="blank"></i>')}</span><small>${esc(q.hint)}</small></span>` : `${q.pic ? `<span class="s-side">${q.pic}</span>` : ''}<span class="s-ko">${esc(q.show)}</span>`;
+        opts = `<form class="s-wform" id="wForm" style="${P(88, 1234, 852, 1392)}"><input id="wIn" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="30" placeholder="영어로 쓰기 ✏️"><button type="submit">확인</button><small>띄어쓰기와 a, an도 확인해요</small></form>`;
+        break;
       case 'match': {
         const M = Q.match || (Q.match = { k: 0, done: [], miss: 0 });
         banner = `<span class="s-ko">${esc(q.right[Math.min(M.k, 3)])}</span>`;
@@ -721,6 +728,7 @@
       <div class="s-prompt" id="sprompt" style="${PROMPT_BOX}"><span>${esc(prompt)}</span></div>
       <div class="s-banner" id="sbanner" style="${BANNER_BOX}">${banner}</div>${opts}`;
     if (Q.phase === 'fb') return stageFeedback(Q.lastOk, 0);
+    if (q.type === 'write') setTimeout(() => { const i = $('#wIn'); if (i) i.focus({ preventScroll: true }); }, 60);
     if (q.type === 'listen' || q.type === 'listenSent') setTimeout(() => speak(q.speak), 350);
   }
   function stageFeedback(ok, gain) {
@@ -732,8 +740,9 @@
       if (Q.combo >= 3) say(`${Q.combo}연속 정답!`);
       autoNextT = setTimeout(() => { if (Q && Q.phase === 'fb' && $('#sq')) nextQ(); }, 1900);
     } else {
-      pr.innerHTML = `<span class="s-fb no">아쉬워요, 괜찮아요! ${q.type !== 'match' ? `정답은 <b>${esc(q.answer)}</b>` : ''}</span>`;
-      bn.innerHTML = `<span class="s-explain">${esc(q.explain)}</span><span class="s-fbtns">${CONTEST ? '<button class="s-next ai" data-act="aiexplain">🤖 AI</button>' : ''}<button class="s-next re" data-act="retry">다시</button><button class="s-next" data-act="next">다음 ▶</button></span>`;
+      const hideAns = q.type === 'match' || (q.type === 'write' && Q.wkind !== 'wrong');
+      pr.innerHTML = `<span class="s-fb no">아쉬워요, 괜찮아요! ${hideAns ? (q.type === 'write' ? '「다시」를 눌러 고쳐 써 봐요' : '') : `정답은 <b>${esc(q.answer)}</b>`}</span>`;
+      bn.innerHTML = `<span class="s-explain">${q.type === 'write' && Q.wmsg ? `<span class="wmsg">${Q.wmsg}</span>` : esc(q.explain)}</span><span class="s-fbtns">${CONTEST ? '<button class="s-next ai" data-act="aiexplain">🤖 AI</button>' : ''}<button class="s-next re" data-act="retry">다시</button><button class="s-next" data-act="next">다음 ▶</button></span>`;
     }
   }
   function floatExp(g) {
@@ -1473,6 +1482,14 @@
     else if (t.dataset.act === 'lhint') { const i = $('#tkIn'); if (i) { i.value = t.dataset.t; i.focus(); } }
     else if (t.dataset.act === 'lframe') { const i = $('#awIn'); if (i) { i.value = (i.value ? i.value.trim() + ' ' : '') + t.dataset.t; i.focus(); } }
     else if (t.dataset.act === 'lrole') { AU.tap(); LACT.role = t.dataset.v; LACT.i = 0; renderLact(); if (LACT.a.lines[0][0] !== LACT.role) setTimeout(scriptStep, 400); }
+  }, true);
+  document.addEventListener('submit', e => { // 퀴즈 쓰기 문제
+    if (e.target.id !== 'wForm') return; e.preventDefault(); e.stopPropagation();
+    if (!Q || Q.phase !== 'ask') return; const q = Q.list[Q.i]; if (!q || q.type !== 'write') return;
+    const v = (($('#wIn') || {}).value || '').trim(); if (!v) return;
+    const w = L.writingCheck(v, q.answer); Q.given = v; Q.wkind = w.kind; Q.wmsg = w.ok ? '' : writingMsg(w, q.answer, !q.sentence);
+    if (w.ok && w.kind === 'case') toast(`대문자·소문자도 확인해요: ${q.answer}`, 1600);
+    handle(w.ok);
   }, true);
   document.addEventListener('submit', e => {
     if (view !== 'lact' || !LACT) return;

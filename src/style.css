@@ -1839,3 +1839,18 @@ button.l-ch-h { width: 100%; text-align: left; background: none; color: #fff; pa
 .bt-ava { position: relative; overflow: hidden; flex: 0 0 auto; }
 .bt-ava > * { max-width: 112px; max-height: 112px; }
 .bt-side b { position: relative; z-index: 1; margin-top: 2px; padding: 1px 8px; border-radius: 8px; background: rgba(0,0,0,.35); }
+
+/* 퀴즈 쓰기 문제 (체험판) */
+.s-wform { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 14px; padding: 18px 26px; border-radius: 28px; background: rgba(255,255,255,.92); box-shadow: inset 0 0 0 4px #ffd45c; }
+.s-wform input, #sq .s-wform input { flex: 1; background: #fffdf4; color: #2a1a00; outline: none; box-shadow: inset 0 3px 0 rgba(0,0,0,.06); min-width: 0; height: 84px; padding: 0 22px; border-radius: 20px; border: 4px solid #e8c060; font-family: 'Barlow', sans-serif; font-size: 44px; font-weight: 800; color: #2a1a00; }
+.s-wform button { height: 84px; padding: 0 30px; border-radius: 20px; border: 0; font-size: 36px; font-weight: 900; color: #3a2300; background: linear-gradient(180deg, #fff3b0, #ffd45c); box-shadow: 0 5px 0 #b8862a; }
+.s-wform small { width: 100%; text-align: center; font-size: 24px; color: #6a4a10; }
+.wform { display: flex; gap: 8px; margin: 10px 0 2px; }
+.wform input { flex: 1; min-width: 0; padding: 12px 14px; border-radius: 12px; border: 2px solid #e8c060; font-family: 'Barlow', sans-serif; font-size: 22px; font-weight: 700; }
+.wnote { margin: 2px 0 0; font-size: 12px; color: #6a5a8a; text-align: center; }
+.wmsg u { text-decoration: none; padding: 0 4px; border-radius: 4px; background: #ffd45c; color: #3a2300; }
+.s-explain .wmsg { font-size: 30px; line-height: 1.35; }
+.s-wform input::placeholder { color: #b49a5e; font-weight: 600; }
+.s-wform input:focus { border-color: #ff9d2e; }
+.s-explain .wmsg { font-size: 26px; line-height: 1.3; }
+.wform input { background: #fffdf4; color: #2a1a00; }

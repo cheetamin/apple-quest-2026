@@ -284,3 +284,16 @@ test('대결 보상은 하루 3판까지, 실력 확인은 예상과 결과를 �
   assert.strictEqual(L.selfCheck(s, 2, 1, 5).kind, 'honest');
   assert.strictEqual(L.selfCheck(s, 2, 0, 0), null);
 });
+
+test('체험판 세트 쓰기 문제: 세트마다 1문제(세트1 단어 · 세트2 문장 빈칸), 원래 세트는 그대로', () => {
+  const U = D.UNITS;
+  for (const u of U.slice(0, 11)) {
+    const a = L.buildSet(U, u.id, 0, 123), b = L.buildSet(U, u.id, 0, 123, { write: true }), c = L.buildSet(U, u.id, 1, 77, { write: true });
+    assert.strictEqual(a.filter(q => q.type === 'write').length, 0);
+    assert.strictEqual(b.length, a.length + 1);
+    const w1 = b.find(q => q.type === 'write'), w2 = c.find(q => q.type === 'write');
+    assert.ok(w1 && w1.answer && !w1.sentence, 'unit ' + u.id);
+    assert.ok(w2 && w2.answer && w2.show.includes('____'), 'unit ' + u.id);
+    assert.ok(!/[.,?!]/.test(w2.answer));
+  }
+});
