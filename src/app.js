@@ -627,9 +627,9 @@
 
       <div class="s-railtab" style="${P(30, 222, 156, 266)}">진화 라인</div>
       ${[350, 522, 690].map((cy, k) => `<div class="s-pt ${S.stage === k ? 'cur' : ''} ${S.cards.includes(k) ? '' : 'lock'}" style="${P(88 - 62, cy - 62, 88 + 62, cy + 62)}"><img src="${IMG[k]}" alt="${STAGES[k].name}"></div>`).join('')}
-      ${CONTEST ? (() => { const di = L.dailyInfo(S, now()); return `<button class="s-forest s-daily ${di.done ? 'done' : 'todo'}" style="${P(22, 758, 156, 824)}" data-act="daily" aria-label="오늘의 복습 3문제"><span>${di.done ? '✅' : '📅'}</span>${di.done ? (di.streak ? '🔥' + di.streak + '일' : '복습 끝') : '오늘 복습'}</button>`; })() : ''}
-      <button class="s-forest" style="${P(22, 832, 156, 908)}" data-act="go" data-v="forest"><span>🌳</span>사과숲</button>
-      <button class="s-forest s-village ${L.hungerNow(S, now()) < 30 ? 'alert' : ''}" style="${P(22, 918, 156, 994)}" data-act="go" data-v="village"><span>🏘️</span>마을</button>
+      ${CONTEST ? (() => { const di = L.dailyInfo(S, now()); return `<button class="s-forest s-row s-daily ${di.done ? 'done' : 'todo'}" style="${P(22, 828, 156, 878)}" data-act="daily" aria-label="오늘의 복습 3문제"><span>${di.done ? '✅' : '📅'}</span>${di.done ? (di.streak ? di.streak + '일째' : '복습 끝') : '오늘 복습'}</button>`; })() : ''}
+      <button class="s-forest ${CONTEST ? 's-row' : ''}" style="${CONTEST ? P(22, 886, 156, 936) : P(22, 832, 156, 908)}" data-act="go" data-v="forest"><span>🌳</span>사과숲</button>
+      <button class="s-forest s-village ${CONTEST ? 's-row' : ''} ${L.hungerNow(S, now()) < 30 ? 'alert' : ''}" style="${CONTEST ? P(22, 944, 156, 994) : P(22, 918, 156, 994)}" data-act="go" data-v="village"><span>🏘️</span>마을</button>
       <button class="s-exit" style="${P(24, 112, 154, 196)}" data-act="exit" aria-label="나가기"><span>🚪</span>나가기</button>
 
       <div class="s-tier" style="${P(182, 171, 304, 207)}">${TIER[i]}</div>
