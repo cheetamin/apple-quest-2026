@@ -563,7 +563,7 @@
       ['The jump rope is cheap.', true, '"It\'s cheap!"이라고 했어요.'],
       ['The jump rope is one thousand won.', false, '줄넘기는 500원(five hundred)이에요.'],
     ] },
-    spell: [['hundred', '100, 백'], ['thousand', '1,000, 천'], ['cheap', '값이 싼'], ['pretty', '예쁜'], ['help', '돕다'], ['much', '(값이) 얼마']],
+    spell: [['toy car', '장난감 자동차 (두 낱말)'], ['pencil case', '필통 (두 낱말)'], ['jump rope', '줄넘기 (두 낱말)'], ['hundred', '100, 백'], ['thousand', '1,000, 천'], ['cheap', '값이 싼']],
     write: [
       ['그것은 얼마예요?', 'How ____ is it?', 'much'],
       ['1,000원이에요.', 'It\'s one ____ won.', 'thousand'],
@@ -781,6 +781,7 @@
       ['나는 그림을 그리고 있어.', 'I\'m drawing a ____.', 'picture'],
       ['그는 무엇을 하고 있어?', 'What is ____ doing?', 'he'],
       ['그는 숙제를 하고 있어.', 'He\'s doing ____.', 'homework'],
+      ['나는 게임을 하고 있어.', 'I\'m ____.', 'playing a game'],
     ],
     aiwrite: { task: '지금 나와 가족(또는 친구)이 무엇을 하고 있는지 영어로 2~3문장 써 봐요.', frames: ['I\'m ____ing.', 'My mom is ____ing.', 'My friend is ____ing.'] },
     script: { roles: ['Dami', 'Dad'], lines: [

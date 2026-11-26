@@ -416,7 +416,75 @@
     return true;
   }
 
-  root.AQ_LOGIC = { completeActivity, activityDone, phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
+  /* ---------- 공모전 정교화 (학급 실태 조사 근거) ---------- */
+  // ① 쓰기 오류 맞춤 판정: 조사에서 많이 나온 띄어쓰기(toycar)·관사 빠뜨림(playing game)·위치 낱말 혼동(in/under)을 따로 알려 줌
+  const W_ART = new Set(['a', 'an', 'the']);
+  const W_PREP = new Set(['in', 'on', 'under', 'at', 'to', 'by', 'for', 'with', 'of', 'from', 'behind', 'near', 'next']);
+  function editDist(a, b) {
+    const d = Array.from({ length: a.length + 1 }, (_, i) => [i]);
+    for (let j = 1; j <= b.length; j++) d[0][j] = j;
+    for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    return d[a.length][b.length];
+  }
+  function writingCheck(input, answer) {
+    const clean = x => String(x == null ? '' : x).replace(/[’‘`]/g, "'").replace(/\s+/g, ' ').trim().replace(/[.!?]+$/, '').trim();
+    const v = clean(input), a = clean(answer);
+    if (!v) return { ok: false, kind: 'empty' };
+    if (v === a) return { ok: true, kind: 'exact' };
+    const lv = v.toLowerCase(), la = a.toLowerCase();
+    if (lv === la) return { ok: true, kind: 'case', fix: a };
+    if (lv.replace(/ /g, '') === la.replace(/ /g, '')) return { ok: false, kind: 'space', fix: a, want: la.split(' ').length, got: lv.split(' ').length };
+    const tv = lv.split(' '), ta = la.split(' ');
+    const noArt = t => t.filter(w => !W_ART.has(w)).join(' ');
+    if (tv.length !== ta.length && noArt(tv) === noArt(ta)) {
+      const nA = ta.filter(w => W_ART.has(w)).length, nV = tv.filter(w => W_ART.has(w)).length;
+      if (nA > nV) { const idx = ta.findIndex((w, i) => W_ART.has(w) && tv.filter(x => x === w).length < ta.slice(0, i + 1).filter(x => x === w).length); return { ok: false, kind: 'article', fix: a, at: idx, word: ta[idx] }; }
+      return { ok: false, kind: 'articleExtra', fix: a };
+    }
+    if (tv.length === ta.length) {
+      const diff = ta.map((w, i) => (w !== tv[i] ? i : -1)).filter(i => i >= 0);
+      if (diff.length === 1 && W_PREP.has(ta[diff[0]]) && W_PREP.has(tv[diff[0]])) return { ok: false, kind: 'prep', fix: a, got: tv[diff[0]] };
+    }
+    if (la.length >= 3 && editDist(lv, la) === 1) return { ok: false, kind: 'typo', fix: a };
+    return { ok: false, kind: 'wrong' };
+  }
+  // ③ 오늘의 복습: 하루 한 번 보상, 연속 일수(주말 일시정지 규칙 따름)
+  function dailyInfo(s, now) {
+    const d = s.daily || {}; const today = dayKey(now);
+    const alive = d.lastT && (d.last === today || inactiveDays(d.lastT, now, s.rules && s.rules.pauseWeekends) === 0);
+    return { done: d.last === today, streak: alive ? d.streak || 0 : 0, best: d.best || 0 };
+  }
+  function completeDaily(s, ok, n, now) {
+    const today = dayKey(now); s.daily = s.daily || { streak: 0, best: 0 };
+    if (s.daily.last === today) return { first: false, coins: 0, streak: s.daily.streak, bonus: false };
+    const cont = s.daily.lastT && inactiveDays(s.daily.lastT, now, s.rules && s.rules.pauseWeekends) === 0;
+    s.daily.streak = cont ? (s.daily.streak || 0) + 1 : 1;
+    s.daily.last = today; s.daily.lastT = now; s.daily.best = Math.max(s.daily.best || 0, s.daily.streak);
+    const bonus = s.daily.streak % 5 === 0, coins = 3 + (ok >= n ? 1 : 0) + (bonus ? 5 : 0);
+    s.coins = (s.coins || 0) + coins;
+    return { first: true, coins, streak: s.daily.streak, bonus };
+  }
+  // ② 애플왕과 대결: 하루 3판까지 보상(이기면 🍎5, 져도 참여 🍎1)
+  function completeBattle(s, win, now) {
+    const today = dayKey(now); const b = s.battle = s.battle || { wins: 0, plays: 0 };
+    if (b.day !== today) { b.day = today; b.todayPlays = 0; }
+    b.plays = (b.plays || 0) + 1; if (win) b.wins = (b.wins || 0) + 1;
+    b.todayPlays++;
+    const coins = b.todayPlays <= 3 ? (win ? 5 : 1) : 0;
+    s.coins = (s.coins || 0) + coins;
+    return { coins, todayPlays: b.todayPlays, wins: b.wins };
+  }
+  // ⑤ 나의 실력 확인: 활동 전 자신감(3 자신 있어요 · 2 조금 · 1 아직)과 실제 결과 비교
+  function selfCheck(s, pred, ok, n) {
+    if (!n) return null;
+    const acc = ok / n, good = acc >= 0.8;
+    const kind = pred === 3 ? (good ? 'match' : 'over') : (good ? 'under' : 'honest');
+    s.selfCheck = s.selfCheck || { match: 0, over: 0, under: 0, honest: 0 };
+    s.selfCheck[kind]++;
+    return { kind, acc, ok, n };
+  }
+
+  root.AQ_LOGIC = { writingCheck, dailyInfo, completeDaily, completeBattle, selfCheck, completeActivity, activityDone, phonicsOnset, buyItem, toggleWear, hungerNow, feed, loveLevel, buildHouse, buyBuilding, newState, level, dayKey, unitRec, unitsDone, doneIds, evoRequirements, canEvolve, evolve, expProgress,
     award, recordAnswer, inactiveDays, applyDecay, markStudy, completeSet, completeBoss, bossOpen, unitStatus,
     buildSet, buildMixed, silentQ, checkAnswer, shuffle, rng, tokenize, norm, DAY };
   if (typeof module !== 'undefined') module.exports = root.AQ_LOGIC;

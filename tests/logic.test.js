@@ -243,3 +243,44 @@ test('차시 활동: 하루 한 번 경험치, 차시를 모두 끝내면 사과
   assert.ok(!r.chapterDone, '차시 보너스는 한 번'); assert.strictEqual(r.gain, D.DEFAULT_RULES.expReview, '다음 날은 다시 경험치');
   assert.ok(L.activityDone(s, 9, 'order')); assert.ok(!L.activityDone(s, 9, 'speak'));
 });
+
+test('쓰기 오류 맞춤 판정: 띄어쓰기·관사·위치 낱말·대소문자·한 글자', () => {
+  const W = L.writingCheck;
+  assert.strictEqual(W('toy car', 'toy car').kind, 'exact');
+  assert.strictEqual(W('Monday', 'Monday').ok, true);
+  assert.deepStrictEqual([W('monday', 'Monday').ok, W('monday', 'Monday').kind], [true, 'case']);
+  assert.deepStrictEqual([W('toycar', 'toy car').ok, W('toycar', 'toy car').kind], [false, 'space']);
+  const a = W('playing game', 'playing a game'); assert.deepStrictEqual([a.ok, a.kind, a.word, a.at], [false, 'article', 'a', 1]);
+  assert.strictEqual(W('in', 'under').kind, 'prep');
+  assert.strictEqual(W("It's in the desk", "It's under the desk").kind, 'prep');
+  assert.strictEqual(W('Frday', 'Friday').kind, 'typo');
+  assert.strictEqual(W('dog', 'toy car').kind, 'wrong');
+  assert.strictEqual(W('  Toy  car. ', 'toy car').ok, true);
+  assert.strictEqual(W('', 'x').kind, 'empty');
+});
+test('오늘의 복습: 하루 한 번 보상, 연속 일수, 주말은 건너뜀', () => {
+  const s = L.newState(D.DEFAULT_RULES); s.coins = 0;
+  const mon = new Date(2026, 10, 23, 10).getTime(), tue = mon + 864e5, fri = mon + 4 * 864e5, nextMon = mon + 7 * 864e5, nextWed = mon + 9 * 864e5;
+  let r = L.completeDaily(s, 3, 3, mon); assert.deepStrictEqual([r.first, r.streak, r.coins], [true, 1, 4]);
+  r = L.completeDaily(s, 2, 3, mon + 3600e3); assert.strictEqual(r.first, false);
+  r = L.completeDaily(s, 2, 3, tue); assert.strictEqual(r.streak, 2);
+  assert.strictEqual(L.dailyInfo(s, tue).done, true);
+  // 수·목 건너뜀 → 금요일엔 1부터
+  r = L.completeDaily(s, 3, 3, fri); assert.strictEqual(r.streak, 1);
+  // 금 → (주말) → 월: 이어짐
+  r = L.completeDaily(s, 3, 3, nextMon); assert.strictEqual(r.streak, 2);
+  assert.strictEqual(L.dailyInfo(s, nextWed).streak, 0); // 화요일을 빠뜨리면 끊김
+});
+test('대결 보상은 하루 3판까지, 실력 확인은 예상과 결과를 비교', () => {
+  const s = L.newState(D.DEFAULT_RULES); s.coins = 0; const t = Date.now();
+  assert.strictEqual(L.completeBattle(s, true, t).coins, 5);
+  assert.strictEqual(L.completeBattle(s, false, t).coins, 1);
+  assert.strictEqual(L.completeBattle(s, true, t).coins, 5);
+  assert.strictEqual(L.completeBattle(s, true, t).coins, 0);
+  assert.strictEqual(s.coins, 11); assert.strictEqual(s.battle.wins, 3);
+  assert.strictEqual(L.selfCheck(s, 3, 5, 5).kind, 'match');
+  assert.strictEqual(L.selfCheck(s, 3, 2, 5).kind, 'over');
+  assert.strictEqual(L.selfCheck(s, 1, 5, 5).kind, 'under');
+  assert.strictEqual(L.selfCheck(s, 2, 1, 5).kind, 'honest');
+  assert.strictEqual(L.selfCheck(s, 2, 0, 0), null);
+});
