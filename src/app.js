@@ -996,7 +996,7 @@
     if (/\d{2,3}[- ]?\d{3,4}[- ]?\d{4}/.test(text)) { toast('전화번호 같은 내 정보는 적지 않아요!'); return; }
     const c = aiContext();
     AIH.log.push({ me: true, text }); AIH.busy = true; aiRefresh();
-    const r = await api('/api/ai/ask', { kind, text, grade: c.grade, unit: c.unit, current: kind === 'hint' ? c.current : undefined }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/ask', { kind, text, grade: c.grade, unit: c.unit, current: kind === 'hint' ? c.current : undefined }, { token: SESS.token, timeout: 40000 });
     AIH.busy = false;
     AIH.log.push(r.ok ? { text: r.text } : { text: r.error || 'AI 도우미와 연결이 안 돼요.', err: true });
     if (AIH.log.length > 30) AIH.log.splice(0, AIH.log.length - 30);
@@ -1316,7 +1316,7 @@
       body = { type: 'lesson-write', prompt: isSpell ? `우리말 '${it[1]}'을 영어로 쓰기` : `${it[0]} → 빈칸 쓰기`, show: isSpell ? it[1] : it[1], options: [], answer: isSpell ? it[0] : it[2], given: LACT.st.given || '', explain: isSpell ? `${it[0]} = ${it[1]}` : it[1].replace('____', it[2]) };
     }
     openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🤖 AI 애플 선생님</h3><div class="ai-box"><p class="ai-wait">생각하는 중이에요<span>…</span></p></div>`);
-    const r = await api('/api/ai/explain', body, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/explain', body, { token: SESS.token, timeout: 40000 });
     const box = $('.sheet .ai-box'); if (!box) return;
     box.innerHTML = r.ok ? `<p>${esc(r.text).replace(/\n/g, '<br>')}</p><p class="voice-note">AI가 만든 설명이에요. 이상한 점이 있으면 선생님께 물어보세요.</p>` : `<p>${esc(r.error || 'AI 선생님과 연결이 안 돼요.')}</p>`;
   }
@@ -1419,7 +1419,7 @@
     if (!SESS) { toast('🤖 AI 짝꿍은 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     const { a } = LACT; LACT.sent++; const last = LACT.sent >= a.turns;
     LACT.log.push({ me: true, text }); LACT.busy = true; renderLact();
-    const r = await api('/api/ai/talk', { unit: LU, scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/talk', { unit: LU, scenario: a.scenario, text, last, history: LACT.log.slice(0, -1).map(m => ({ me: !!m.me, text: m.text })) }, { token: SESS.token, timeout: 40000 });
     LACT.busy = false;
     if (r.ok) { LACT.log.push({ text: r.en, ko: r.ko }); sayP(r.en); if (last) LACT.end = true; }
     else { LACT.log.push({ text: r.error || 'AI 짝꿍과 연결이 안 돼요.', err: true }); LACT.fail = true; LACT.sent--; }
@@ -1440,7 +1440,7 @@
     if (v.split(/\s+/).length < 3) { toast('영어로 2~3문장 써 볼까요?'); return; }
     if (!SESS) { toast('🤖 AI 쓰기 도우미는 로그인한 친구만 쓸 수 있어요.'); LACT.fail = true; renderLact(); return; }
     LACT.busy = true; renderLact();
-    const r = await api('/api/ai/write', { unit: LU, text: v }, { token: SESS.token, timeout: 25000 });
+    const r = await api('/api/ai/write', { unit: LU, text: v }, { token: SESS.token, timeout: 40000 });
     LACT.busy = false; if (r.ok) LACT.st.fb = r.text; else { toast(r.error || 'AI 도우미와 연결이 안 돼요.', 2600); LACT.fail = true; }
     renderLact();
   }
@@ -1754,7 +1754,7 @@
       const q = Q.list[Q.i];
       if (!SESS) { toast('🤖 AI 선생님은 로그인한 친구만 쓸 수 있어요.'); return; }
       openSheet(`<button class="close" data-act="closeSheet" aria-label="닫기">✕</button><h3>🤖 AI 애플 선생님</h3><div class="ai-box"><p class="ai-wait">생각하는 중이에요<span>…</span></p></div>`);
-      const r = await api('/api/ai/explain', { type: q.type, prompt: q.prompt, show: q.type === 'phonics' ? '?' + q.show : (q.show || ''), options: q.options || q.tiles || [], answer: q.answer === 'match' ? q.explain : q.answer, given: Q.given || '', explain: q.explain }, { token: SESS.token, timeout: 25000 });
+      const r = await api('/api/ai/explain', { type: q.type, prompt: q.prompt, show: q.type === 'phonics' ? '?' + q.show : (q.show || ''), options: q.options || q.tiles || [], answer: q.answer === 'match' ? q.explain : q.answer, given: Q.given || '', explain: q.explain }, { token: SESS.token, timeout: 40000 });
       const box = $('.sheet .ai-box'); if (!box) return;
       box.innerHTML = r.ok ? `<p>${esc(r.text).replace(/\n/g, '<br>')}</p><p class="voice-note">AI가 만든 설명이에요. 이상한 점이 있으면 선생님께 물어보세요.</p>` : `<p>${esc(r.error || 'AI 선생님과 연결이 안 돼요.')}</p>`;
     },

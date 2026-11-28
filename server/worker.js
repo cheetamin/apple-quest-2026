@@ -7,7 +7,7 @@
  *   RESEND_API_KEY   (선택, 비밀) 선생님 등록 알림 메일 발송(resend.com 무료)
  *   NOTIFY_EMAIL     (선택, 비밀) 알림 받을 제작자 메일 주소
  *   (AI 선생님) 기본은 Cloudflare Workers AI 무료 사용량(바인딩 AI, 키 필요 없음). ANTHROPIC_API_KEY(비밀)를 넣으면 Claude로 바뀜
- *   AI_CF_MODEL (선택) Workers AI 모델을 직접 정할 때 (기본: qwen3-30b → gemma-4 → llama-3.1-8b 순서로 시도)
+ *   AI_CF_MODEL (선택) Workers AI 모델을 직접 정할 때 (기본: gemma-4-26b → glm-4.7-flash → llama-3.3-70b-fast 순서로 시도)
  *   AI_DAILY_LIMIT   (선택) AI 하루 최대 횟수(무료 700 — Workers AI 무료 1만 뉴런 안 · Claude 300) · AI_STUDENT_LIMIT (선택) 학생 1명 하루 최대(기본 120) · AI_MODEL (선택, 기본 claude-haiku-5-5)
  * 바인딩: DB = D1 데이터베이스(원래 버전), DB_CONTEST = 공모전 체험판 전용 D1 (/contest/api/... 주소)
  */
@@ -374,15 +374,22 @@ async function aiRun(env, system, user, maxTok = 360) { // 유료(Claude) 키가
     const j = await r.json().catch(() => null);
     text = j && Array.isArray(j.content) ? j.content.filter(c => c.type === 'text').map(c => c.text).join('') : '';
   } else { // 하루 무료 사용량 안에서만, 넘으면 오류로 멈춤 → 요금 없음
-    const models = [env.AI_CF_MODEL, '@cf/qwen/qwen3-30b-a3b-fp8', '@cf/google/gemma-4-26b-a4b-it', '@cf/meta/llama-3.1-8b-instruct'].filter(Boolean);
+    // 2026-11-20 Workers AI 모델 정리로 qwen3-30b · llama-3.1-8b가 없어짐 → 현재 모델로 교체, 생각(추론) 모드는 끄고 빠르게 답하게 함
+    const models = [env.AI_CF_MODEL, '@cf/google/gemma-4-26b-a4b-it', '@cf/zai-org/glm-4.7-flash', '@cf/meta/llama-3.3-70b-instruct-fp8-fast'].filter(Boolean);
+    const deadline = Date.now() + 24000; // 학생 화면이 오래 '생각 중'에 머물지 않게 전체 시간 제한
     let lastErr = '';
+    const strip = t => String(t || '').replace(/<think>[\s\S]*?<\/think>/g, '').replace(/<think>[\s\S]*$/, '').trim();
     for (const m of models) {
+      const left = deadline - Date.now(); if (left < 3000) break;
       let out;
-      try { out = await env.AI.run(m, { messages: [{ role: 'system', content: system }, { role: 'user', content: user + (m.includes('qwen3') ? '\n/no_think' : '') }], max_tokens: m.includes('gemma-4') ? 1600 : maxTok + 180 }); }
-      catch (e) { lastErr = String(e && e.message || e); if (/neuron|allocation|daily|quota|4006/i.test(lastErr)) return { err: fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: lastErr.slice(0, 120) }) }; continue; }
-      const t = typeof out === 'string' ? out : out && (out.response || (out.choices && out.choices[0] && out.choices[0].message && out.choices[0].message.content) || '');
-      if (String(t || '').replace(/<think>[\s\S]*?<\/think>/g, '').trim()) { text = t; model = m; break; }
-      lastErr = 'empty:' + JSON.stringify(out).slice(0, 160);
+      const opts = { messages: [{ role: 'system', content: system }, { role: 'user', content: user }], max_tokens: maxTok + 200 };
+      if (!m.includes('llama')) opts.chat_template_kwargs = { enable_thinking: false };
+      try { out = await Promise.race([env.AI.run(m, opts), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout ' + m)), Math.min(left, 15000)))]); }
+      catch (e) { lastErr += ' | ' + m.split('/').pop() + ': ' + String(e && e.message || e).slice(0, 140); if (/neuron|allocation|daily|quota|4006/i.test(lastErr)) return { err: fail('AI 선생님이 오늘은 많이 지쳤어요. 내일 다시 물어봐 주세요!', 429, { detail: lastErr.slice(0, 200) }) }; continue; }
+      const msg = out && out.choices && out.choices[0] && out.choices[0].message;
+      const t = typeof out === 'string' ? out : out && (typeof out.response === 'string' ? out.response : '') || (msg && msg.content) || '';
+      if (strip(t)) { text = strip(t); model = m; break; }
+      lastErr += ' | ' + m.split('/').pop() + ' empty:' + JSON.stringify(out).slice(0, 120);
     }
     if (!text) return { err: fail('AI 선생님이 대답을 못 했어요. 다시 눌러 주세요.', 502, { detail: lastErr.slice(0, 300) }) };
   }
