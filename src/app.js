@@ -1801,6 +1801,25 @@
       TS.class_code = r.class_code; lsSet(TSESS_KEY, TS); closeSheet(); toast(`🔑 학급 코드가 ${r.class_code}(으)로 바뀌었어요!`); renderTeach();
     },
     tcopycode: () => { if (TS && TS.class_code) copyText(TS.class_code, '학급 코드를 복사했어요!'); },
+    sdemo: async (d, el) => { // 체험 학생: 칸을 채우고 바로 로그인(처음이면 계정이 자동으로 만들어짐)
+      if (!DEMO) return; AU.tap(); const kid = DEMO.kids.find(k => k[0] === +d.v); const form = $('#slogin'); if (!kid || !form) return;
+      const sp = $('#sp-s'); sp.dataset.code = DEMO.school_code; sp.dataset.name = DEMO.school_name;
+      const q = $('#sp-s-q'); if (q) q.value = DEMO.school_name; const sel = sp.querySelector('.sp-sel'); if (sel) sel.innerHTML = `✅ <b>${esc(DEMO.school_name)}</b>`;
+      $('#s-code').value = DEMO.code; $('#s-g').value = String(DEMO.grade); $('#s-c').value = String(DEMO.cls); $('#s-n').value = String(kid[0]);
+      $('#s-nick').value = kid[1]; $('#s-pin').value = DEMO.pin;
+      el.disabled = true; await studentLoginSubmit(form); el.disabled = false;
+    },
+    tdemo: async (d, el) => { // 체험 선생님: 로그인, 아직 반이 없으면 등록(체험판은 바로 승인) 뒤 로그인
+      if (!DEMO) return; AU.tap(); el.disabled = true; TERR = '';
+      const cls = { school_code: DEMO.school_code, school_name: DEMO.school_name, grade: DEMO.grade, cls: DEMO.cls };
+      let r = await api('/api/teacher/login', { class_code: DEMO.code, password: DEMO.tpw });
+      if (!r.ok && !r.offline) { const rg = await api('/api/teacher/register', { ...cls, teacher_name: DEMO.teacher, contact: '', password: DEMO.tpw, class_code: DEMO.code }); if (rg.ok) r = await api('/api/teacher/login', { class_code: DEMO.code, password: DEMO.tpw }); }
+      el.disabled = false;
+      if (!r.ok) { const e = $('#t-err'); if (e) e.textContent = r.error || '들어가지 못했어요.'; return; }
+      TS = { token: r.token, school_name: r.school_name, grade: r.grade, cls: r.cls, teacher_name: r.teacher_name, export_key: r.export_key, class_code: r.class_code };
+      lsSet(TSESS_KEY, TS); await api('/api/teacher/ai', { off: false }, { token: TS.token }); // 체험 반은 AI 기능을 늘 켠 상태로 시작
+      toast('✅ 체험 선생님으로 들어왔어요!'); loadTeach();
+    },
     scode: async () => {
       const inp = $('#s-code'), ok = $('#s-code-ok'); if (!inp) return;
       const code = inp.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); inp.value = code;
@@ -2015,6 +2034,10 @@
   const API = (AQ_DATA.API_BASE || '').replace(/\/+$/, '');
   const PFX = CONTEST ? 'aq-contest-' : 'aq-'; // 체험판은 로그인 정보도 따로 저장
   const SESS_KEY = PFX + 'session-v1', TSESS_KEY = PFX + 'teacher-v1', LAST_SCHOOL = PFX + 'last-school';
+  // 체험판 심사용 체험 계정: 체험판 전용 DB(/contest)에만 있는 가상의 학교·반 — 실제 학생 기록과 섞이지 않음
+  const DEMO = CONTEST ? { school_code: 'M-S10-애플왕체험초등학교', school_name: '애플왕체험초등학교', grade: 4, cls: 1, code: 'AQDEMO', teacher: '김사과', tpw: 'apple2026', pin: '1234',
+    kids: [[1, '사과용사'], [2, '풋사과'], [3, '영어왕']] } : null;
+  const isDemoClass = () => !!(DEMO && TS && TS.class_code === DEMO.code);
   const lsGet = k => { try { return JSON.parse(localStorage.getItem(k) || 'null'); } catch (e) { return null; } };
   const lsSet = (k, v) => { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
   let SESS = API ? lsGet(SESS_KEY) : null, TS = API ? lsGet(TSESS_KEY) : null, TV = 'login', TLIST = null, TERR = '', adminPw = '', ADMIN = null;
@@ -2125,6 +2148,8 @@
       <h3>모험을 시작해요!</h3>
       <p class="sub">처음이면 새 모험이 시작되고, 전에 했다면 <b>어느 기기에서든</b> 이어서 할 수 있어요.</p>
       <div class="who-row"><span class="who on">🎒 학생</span><button type="button" class="who" data-act="tfromlogin">👩‍🏫 선생님</button></div>
+      ${DEMO ? `<div class="demo-quick"><b>🎁 심사용 체험 계정</b><small>학급 코드 <b>${DEMO.code}</b> · ${DEMO.school_name} ${DEMO.grade}학년 ${DEMO.cls}반 · 비밀번호 ${DEMO.pin}<br>버튼만 누르면 바로 들어가요. (아래 칸에 직접 입력해 봐도 돼요)</small>
+        <div class="dq-btns">${DEMO.kids.map(([n, nick]) => `<button type="button" class="btn" data-act="sdemo" data-v="${n}">${n}번 ${nick}</button>`).join('')}</div></div>` : ''}
       <label class="lb" for="s-code">학급 코드 <small>(선생님께 받은 코드 · 있으면 학교·반이 자동으로 채워져요)</small></label>
       <div class="sp-row"><input class="field code-in" id="s-code" maxlength="8" placeholder="예: DH0401" autocomplete="off" autocapitalize="characters"><button type="button" class="btn sp-go" data-act="scode">확인</button></div>
       <p class="code-ok" id="s-code-ok"></p>
@@ -2189,6 +2214,8 @@
     if (!API) { main.innerHTML = h + `<div class="glass" style="color:#eef3ff;line-height:1.6">학급 서버가 연결되면 사용할 수 있어요.<br><small style="color:#a9bce0">제작자가 서버 주소를 설정하면 열려요.</small></div>`; return; }
     if (!TS) {
       h += `<div class="tabs"><button class="${TV === 'login' ? 'on' : ''}" data-act="ttab" data-v="login">로그인</button><button class="${TV === 'reg' ? 'on' : ''}" data-act="ttab" data-v="reg">처음 등록하기</button></div>
+        ${DEMO ? `<div class="demo-quick"><b>🎁 심사용 체험 선생님</b><small>학급 코드 <b>${DEMO.code}</b> · 비밀번호 <b>${DEMO.tpw}</b> · ${DEMO.school_name} ${DEMO.grade}학년 ${DEMO.cls}반 ${DEMO.teacher} 선생님</small>
+          <div class="dq-btns"><button type="button" class="btn" data-act="tdemo">👩‍🏫 체험 선생님으로 바로 로그인</button></div></div>` : ''}
         <form class="glass tform" id="${TV === 'login' ? 'tlogin' : 'treg'}" autocomplete="off">
           ${TV === 'login' ? `<label class="lb" for="t-code">학급 코드 <small>(있으면 학교·반 대신 코드로 들어와요)</small></label><input class="field code-in" id="t-code" maxlength="8" placeholder="예: DH0401" autocomplete="off" autocapitalize="characters">
           <p class="login-note" style="margin:2px 0 6px">또는 학교·학년·반으로</p>` : ''}
@@ -2212,7 +2239,7 @@
     const needReview = L2.filter(x => !x.lastStudy || now() - x.lastStudy > 7 * L.DAY).length;
     h += `<div class="glass tinfo"><b>🏫 ${esc(TS.school_name)} ${TS.grade}학년 ${TS.cls}반</b><span>${esc(TS.teacher_name || '')} 선생님</span></div>
       ${!TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><p style="margin:6px 0 10px">아직 학급 코드가 없어요. 직접 정해 보세요! (예: 대한초 4학년 1반 → DH0401)</p><button class="btn" data-act="tsetcode">✏️ 학급 코드 만들기</button></div>` : ''}
-      ${TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><b>${esc(TS.class_code)}</b><p>학생들은 첫 화면의 <b>학급 코드</b> 칸에 이 코드를 넣으면 학교·학년·반이 자동으로 채워져요. 선생님도 이 코드와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="tcopycode">코드 복사하기</button><button class="btn ghost" data-act="tsetcode">✏️ 코드 바꾸기</button></div></div>` : ''}
+      ${TS.class_code ? `<div class="code-card"><small>🔑 우리 반 학급 코드</small><b>${esc(TS.class_code)}</b><p>학생들은 첫 화면의 <b>학급 코드</b> 칸에 이 코드를 넣으면 학교·학년·반이 자동으로 채워져요. 선생님도 이 코드와 비밀번호로 로그인할 수 있어요.</p><div class="row-btns"><button class="btn" data-act="tcopycode">코드 복사하기</button>${isDemoClass() ? '' : '<button class="btn ghost" data-act="tsetcode">✏️ 코드 바꾸기</button>'}</div></div>` : ''}
       ${CONTEST ? `<div class="glass ai-switch"><span>🤖 우리 반 AI 기능 <small>(AI 선생님 · 도우미 · 대화 짝꿍 · 쓰기 도우미)</small></span><button class="sw-btn ${TS.ai_off ? 'off' : 'on'}" data-act="tai">${TS.ai_off ? '꺼짐' : '켜짐'}</button></div>` : ''}
       <div class="stats" style="margin-top:10px"><div class="stat"><small>등록 학생</small><b>${L2.length}<em>명</em></b></div><div class="stat"><small>오늘 학습</small><b>${active}<em>명</em></b></div>
       <div class="stat"><small>평균 정답률</small><b>${accAvg}<em>%</em></b></div><div class="stat"><small>7일 넘게 쉼</small><b>${needReview}<em>명</em></b></div></div>
@@ -2220,7 +2247,7 @@
       <div class="section-h">우리 반 학생</div>
       <div class="ttable-wrap"><table class="ttable"><thead><tr><th>번호</th><th>닉네임</th><th>교재</th><th>단계</th><th>Lv</th><th>완료</th><th>정답률</th><th>마지막 학습</th><th>자주 틀린 단어</th><th></th></tr></thead><tbody>
       ${L2.map(x => `<tr><td>${x.num}</td><td>${esc(x.nickname)}${x.pin_reset ? ' <small class="tag-reset">비번 초기화됨</small>' : ''}</td><td>${esc(x.course || '-')}</td><td>${esc(x.stage || '풋애플')}</td><td>${x.level || 1}</td><td>${x.unitsDone || 0}/11</td><td>${x.accuracy || 0}%</td><td>${fmtDate(x.lastStudy)}</td><td class="tw">${esc((x.wrongTop || []).slice(0, 3).join(', '))}</td>
-        <td class="tact"><button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button></td></tr>`).join('') || '<tr><td colspan="10" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
+        <td class="tact">${isDemoClass() ? '<small>체험</small>' : `<button data-act="tpin" data-v="${x.id}" data-n="${x.num}">비번 초기화</button><button data-act="tdel" data-v="${x.id}" data-n="${x.num}">삭제</button>`}</td></tr>`).join('') || '<tr><td colspan="10" style="text-align:center;padding:16px">아직 들어온 학생이 없어요.</td></tr>'}
       </tbody></table></div>
       <div class="row-btns"><button class="btn ghost" data-act="treload">🔄 새로고침</button><button class="btn ghost" data-act="tcsv">📋 표 복사</button></div>
       <div class="section-h">📊 구글 시트로 보기</div>
@@ -2228,7 +2255,7 @@
         <code class="formula">${esc(sheetFormula())}</code>
         <button class="btn" data-act="tcopyf">수식 복사하기</button>
         <p class="login-note">이 수식에는 우리 반 전용 열쇠가 들어 있어요. 다른 사람과 공유하지 마세요.</p></div>
-      <div class="row-btns"><button class="btn danger" data-act="tdelall">학년 말: 우리 반 기록 모두 지우기</button></div>
+      ${isDemoClass() ? '<p class="sv-note">🎁 심사용 체험 반이라 학생 삭제 · 비밀번호 초기화 · 기록 지우기 버튼은 숨겨 두었어요. 실제 반에서는 이 자리에 보여요.</p>' : '<div class="row-btns"><button class="btn danger" data-act="tdelall">학년 말: 우리 반 기록 모두 지우기</button></div>'}
       <div class="row-btns"><button class="btn ghost" data-act="tlogout">로그아웃</button></div>`;
     main.innerHTML = h;
     if (!renderTeach.shown) { main.scrollTop = 0; window.scrollTo(0, 0); renderTeach.shown = true; }
